@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"sort"
 	"strconv"
 
 	m "template-go-vercel/api/_pkg"
 
+	"github.com/joho/godotenv"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
 )
@@ -19,10 +22,35 @@ import (
 
 // MatchHandler обрабатывает запросы к маршруту /match/{id}
 func Matches(w http.ResponseWriter, r *http.Request) {
-	credentialsFile := "credentials.json"
+	if err := godotenv.Load(); err != nil {
+		log.Print("No .env file found")
+	}
+	googleCreds := fmt.Sprintf(`{
+		"type": "service_account",
+		"project_id": "%s",
+		"private_key_id": "%s",
+		"private_key": "%s",
+		"client_email": "%s",
+		"client_id": "%s",
+		"project_id": "%s",		
+		"auth_uri": "https://accounts.google.com/o/oauth2/auth",
+		"token_uri": "https://oauth2.googleapis.com/token",
+		"auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+		"client_x509_cert_url": "%s",
+		"universe_domain": "googleapis.com"
+	}`,
+		os.Getenv("GOOGLE_PROJECT_ID"),
+		os.Getenv("GOOGLE_PRIVATE_KEY_ID"),
+		os.Getenv("GOOGLE_PRIVATE_KEY"),
+		os.Getenv("GOOGLE_CLIENT_EMAIL"),
+		os.Getenv("GOOGLE_CLIENT_ID"),
+		os.Getenv("GOOGLE_PROJECT_ID"),
+		os.Getenv("GOOGLE_CLIENT_X509_CERT_URL"),
+	)
+
 	ctx := context.Background()
 	// 3. Создаем сервис Sheets с учетными данными из файла
-	srv, err := sheets.NewService(ctx, option.WithCredentialsFile(credentialsFile))
+	srv, err := sheets.NewService(ctx, option.WithCredentialsJSON([]byte(googleCreds)))
 	if err != nil {
 		http.Error(w, "Не удалось создать клиента Sheets: %v", http.StatusBadRequest)
 		return
