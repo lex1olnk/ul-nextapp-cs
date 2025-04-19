@@ -1,10 +1,10 @@
 package main
 
 import (
+	api "fastcup/api"
 	"flag"
 	"log"
 	"net/http"
-	api "template-go-vercel/api"
 )
 
 var port string

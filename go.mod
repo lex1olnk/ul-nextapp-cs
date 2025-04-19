@@ -1,10 +1,11 @@
-module template-go-vercel
+module fastcup
 
-go 1.23.0
+go 1.24.2
 
-toolchain go1.24.2
-
-require google.golang.org/api v0.229.0
+require (
+	github.com/joho/godotenv v1.5.1
+	google.golang.org/api v0.229.0
+)
 
 require (
 	cloud.google.com/go/auth v0.16.0 // indirect
@@ -17,7 +18,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.60.0 // indirect
 	go.opentelemetry.io/otel v1.35.0 // indirect

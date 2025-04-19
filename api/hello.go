@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	m "template-go-vercel/api/_pkg"
+	m "fastcup/api/_pkg"
 )
 
 func Hello(w http.ResponseWriter, req *http.Request) {

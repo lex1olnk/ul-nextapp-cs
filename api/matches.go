@@ -12,7 +12,7 @@ import (
 	"sort"
 	"strconv"
 
-	m "template-go-vercel/api/_pkg"
+	m "fastcup/api/_pkg"
 
 	"github.com/joho/godotenv"
 	"google.golang.org/api/option"
@@ -20,6 +20,8 @@ import (
 )
 
 // GraphQLRequest структура для GraphQL-запроса
+//
+//go:embed templates/top.html
 var templateFS embed.FS
 
 // MatchHandler обрабатывает запросы к маршруту /match/{id}
@@ -100,7 +102,6 @@ func Matches(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl, err := template.ParseFS(templateFS, "templates/top.html")
-
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
