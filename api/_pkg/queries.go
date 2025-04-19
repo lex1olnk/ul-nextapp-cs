@@ -47,7 +47,7 @@ var matchKillsQuery = `
 	}
 `
 
-var matchCluches = `query GetMatchClutches($matchId: Int!) {
+var matchCluchesQuery = `query GetMatchClutches($matchId: Int!) {
   clutches: match_clutches(where: {match_id: {_eq: $matchId}}) {
     roundId: round_id
     userId: user_id

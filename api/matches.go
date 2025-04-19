@@ -64,7 +64,7 @@ func Matches(w http.ResponseWriter, r *http.Request) {
 	spreadsheetId := "1YbgNUsnq40fqx1V5BetVy131mIgzB0azDLE07YWxGso"
 
 	// 5. Диапазон для чтения, например, "Sheet1!A1:C10"
-	readRange := "src!A1:A10"
+	readRange := "src!A1:A100"
 
 	// 6. Получаем значения указываем диапазон
 	resp, err := srv.Spreadsheets.Values.Get(spreadsheetId, readRange).Do()
@@ -98,6 +98,11 @@ func Matches(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "damages error", http.StatusBadRequest)
 				return
 			}
+
+			if !m.GetMatchClutches(w, matchID, stats) {
+				http.Error(w, "clutches error", http.StatusBadRequest)
+				return
+			}
 		}
 	}
 
@@ -112,20 +117,24 @@ func Matches(w http.ResponseWriter, r *http.Request) {
 		p.KPR = float64(p.Kills) / float64(p.Rounds)
 		p.DPR = float64(p.Deaths) / float64(p.Rounds)
 		p.KASTScore = p.KASTScore / float64(p.Rounds) * 100
-		p.Impact = (0.7*float64(p.FirstKill) +
-			0.8*float64(p.MultiKills[0]) +
-			1.08*float64(p.MultiKills[1]) +
-			1.24*float64(p.MultiKills[2]) +
-			1.4*float64(p.MultiKills[3]) +
-			1.6*float64(p.MultiKills[4])) / float64(p.Rounds)
+		p.Impact = (1*float64(p.FirstKill) +
+			.8*float64(p.MultiKills[1]) +
+			1.08*float64(p.MultiKills[2]) +
+			1.24*float64(p.MultiKills[3]) +
+			1.4*float64(p.MultiKills[4]) +
+			float64(p.Clutches[0]) +
+			2*float64(p.Clutches[1]) +
+			3*float64(p.Clutches[2]) +
+			4*float64(p.Clutches[3]) +
+			5*float64(p.Clutches[4])) / float64(p.Rounds)
 		p.Headshots = 100 * p.Headshots / p.Rounds
 		p.AverageDamage /= float64(p.Rounds)
 
-		p.Rating = 0.00134*p.KASTScore/.73 +
-			0.514*p.KPR/.7 +
-			-0.359*p.DPR/0.62 +
-			0.327*p.Impact/0.3 +
-			0.00194*p.AverageDamage/0.80
+		p.Rating = 0.0073*p.KASTScore +
+			0.359*p.KPR +
+			-0.532*p.DPR +
+			0.237*p.Impact +
+			0.00327*p.AverageDamage + 0.1587
 		slice = append(slice, *p)
 
 	}

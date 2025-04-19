@@ -49,6 +49,20 @@ func GetMatchMembers(w http.ResponseWriter, matchID int, stats *Stats) []int {
 	return stats.GetMatchData(responseBody.Data.Match)
 }
 
+func GetMatchClutches(w http.ResponseWriter, matchID int, stats *Stats) bool {
+	query := matchCluchesQuery
+
+	variables := map[string]int{
+		"matchId": matchID,
+	}
+	var responseBody GraphQLClutchResponse
+	if !SendGraphQLRequest(w, query, variables, &responseBody) {
+		return false
+	}
+	stats.GetMatchClutches(responseBody.Data.Clutches)
+	return true
+}
+
 func GetMatchKills(w http.ResponseWriter, matchID int, stats *Stats, currentPlayers []int) bool {
 	query := matchKillsQuery
 
@@ -97,6 +111,15 @@ func (stats *Stats) GetMatchData(match Match) []int {
 		stats.Players[user.ID].Rounds += len(match.Rounds)
 	}
 	return currentPlayers
+}
+
+func (stats *Stats) GetMatchClutches(clutches []Clutch) {
+	for _, clutch := range clutches {
+		if clutch.Success {
+			stats.Players[clutch.UserId].Clutches[clutch.Amount-1]++
+			stats.Players[clutch.UserId].ClutchScore += clutch.Amount
+		}
+	}
 }
 
 func CalculateTrade(index int, killer Kill, kills []Kill, stats *Stats) int {

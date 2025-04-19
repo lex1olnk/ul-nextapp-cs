@@ -16,6 +16,21 @@ func NewStats() *Stats {
 	}
 }
 
+type Clutch struct {
+	RoundId   int       `json:"roundId"`
+	UserId    int       `json:"userId"`
+	CreatedAt time.Time `json:"createdAt"`
+	Success   bool      `json:"success`
+	Amount    int       `json:"amount"`
+	Typename  string    `json:"__typename"`
+}
+
+type GraphQLClutchResponse struct {
+	Data struct {
+		Clutches []Clutch `json:"clutches"`
+	} `json:"data"`
+}
+
 type Kill struct {
 	RoundId             int       `json:"roundId"`
 	CreatedAt           time.Time `json:"createdAt"`
@@ -55,7 +70,6 @@ type PlayerStats struct {
 	FirstDeath    int
 	FirstKill     int
 	Headshots     int
-	Clutches      int
 	Team          int
 	Rounds        int
 	Traded        int // разменял другого игрока
@@ -65,6 +79,8 @@ type PlayerStats struct {
 	KASTScore     float64
 	Impact        float64
 	MultiKills    [5]int
+	Clutches      [5]int
+	ClutchScore   int
 	Rating        float64
 }
 
