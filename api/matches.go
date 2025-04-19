@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"html/template"
 	"log"
@@ -19,6 +20,7 @@ import (
 )
 
 // GraphQLRequest структура для GraphQL-запроса
+var templateFS embed.FS
 
 // MatchHandler обрабатывает запросы к маршруту /match/{id}
 func Matches(w http.ResponseWriter, r *http.Request) {
@@ -97,7 +99,8 @@ func Matches(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	tmpl, err := template.ParseFiles("templates/top.html")
+	tmpl, err := template.ParseFS(templateFS, "templates/top.html")
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
