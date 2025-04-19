@@ -18,8 +18,6 @@ func main() {
 	// New mux
 	mux := http.NewServeMux()
 	// Route
-	fs := http.FileServer(http.Dir("./static"))
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 	mux.Handle("/hello", http.HandlerFunc(api.Hello))
 
 	mux.Handle("/matches", http.HandlerFunc(api.Matches))
