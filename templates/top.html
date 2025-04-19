@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CS2 Stats</title>
+    <link href='https://fonts.googleapis.com/css?family=Inter' rel='stylesheet'>
+    <link rel="stylesheet" type="text/css" href="/static/css/style.css">
+</head>
+<body>
+    <h1>Статистика игроков УЛЬ MIX</h1>
+    <div class="parent">
+        <table class="table">
+            <thead class="tHead">
+                <tr>
+                    <th>FID</th>
+                    <th class="rowNickname">Nickname</th>
+                    <th class="srow">Kills</th>
+                    <th class="srow">Deaths</th>
+                    <th class="srow">Assists</th>
+                    <th class="srow">ADR</th>
+                    <th class="srow">HS%</th>
+                    <th class="srow">FK</th>
+                    <th class="srow">FD</th>
+                    <th class="srow">Trade</th>
+                    <th class="srow">KAST</th>
+                    <th class="srow">Impact</th>
+                    <th class="srow">Rounds</th>
+                    <th class="srow">Rating</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Players}}
+                <tr>
+                    <td class="hide-on-medium">{{.ID}}</td>
+                    <td class="rowNickname">{{.Nickname}}</td>
+                    <td class="srow">{{.Kills}}</td>
+                    <td class="srow">{{.Deaths}}</td>
+                    <td class="srow hide-on-small">{{.Assists}}</td>
+                    <td class="srow hide-on-large">{{printf "%.2f" .AverageDamage}}</td>
+                    <td class="srow hide-on-medium">{{.Headshots}}</td>
+                    <td class="srow hide-on-small">{{.FirstKill}}</td>
+                    <td class="srow hide-on-extra-small">{{.FirstDeath}}</td>
+                    <td class="srow hide-on-medium">{{.Exchanged}}</td>
+                    <td class="srow hide-on-large">{{printf "%.0f" .KASTScore}}</td>
+                    <td class="srow hide-on-small">{{printf "%.2f" .Impact}}</td>
+                    <td class="srow hide-on-extra-small">{{.Rounds}}</td>
+                    <td class="srow rating">{{printf "%.2f" .Rating}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
