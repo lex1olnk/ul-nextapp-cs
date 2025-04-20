@@ -141,6 +141,51 @@ func CalculateTrade(index int, killer Kill, kills []Kill, stats *Stats) int {
 
 }
 
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	
+	"your-project/db"
+)
+
+func GetMixes(w http.ResponseWriter, r *http.Request) {
+	conn, err := db.Pool.Acquire(context.Background())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer conn.Release()
+
+	rows, err := conn.Query(context.Background(), "SELECT * FROM mixes")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var mixes []Mix
+	for rows.Next() {
+		var m Mix
+		err := rows.Scan(&m.ID, &m.Title, &m.Author, &m.Rating)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		mixes = append(mixes, m)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(mixes)
+}
+
+type Mix struct {
+	ID     int    `json:"id"`
+	Title  string `json:"title"`
+	Author string `json:"author"`
+	Rating int    `json:"rating"`
+}
+
 type roundType struct {
 	kills     int
 	isDead    bool
@@ -154,6 +199,7 @@ func (stats *Stats) ProcessKills(kills []Kill, currentPlayers []int) {
 	for i := range currentPlayers {
 		if _, ok := roundKAST[currentPlayers[i]]; !ok {
 			roundKAST[currentPlayers[i]] = &roundType{}
+			roundKAST[currentPlayers[i]].isDead = true
 		}
 	}
 
