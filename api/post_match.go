@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -12,7 +11,6 @@ import (
 	m "fastcup/api/_pkg"
 	"fastcup/api/_pkg/db"
 
-	"github.com/joho/godotenv"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
 )
@@ -28,9 +26,6 @@ func PostMatches(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	if err := godotenv.Load(); err != nil {
-		log.Print("No .env file found")
-	}
 	googleCreds := fmt.Sprintf(`{
 		"type": "service_account",
 		"project_id": "%s",
