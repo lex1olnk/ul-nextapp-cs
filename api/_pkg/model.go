@@ -7,12 +7,10 @@ import (
 )
 
 const (
-	kastWeight     = 0.0073
-	kprWeight      = 0.359
-	dprWeight      = -0.532
-	impactWeight   = 0.237
-	damageWeight   = 0.00327
-	ratingConstant = 0.1587
+	kastWeight   = 0.0045
+	kdprWeight   = 0.2
+	impactWeight = 0.747
+	damageWeight = 0.00328
 )
 
 type Model struct {
@@ -136,11 +134,9 @@ func (p *PlayerStats) CalculateClutchScore() int {
 
 func (p *PlayerStats) CalculateRating() float64 {
 	return kastWeight*p.KASTScore +
-		kprWeight*p.KPR +
-		dprWeight*p.DPR +
+		kdprWeight*(float64(p.Kills)/float64(p.Deaths)) +
 		impactWeight*p.Impact +
-		damageWeight*p.Damage +
-		ratingConstant
+		damageWeight*p.Damage
 }
 
 type Stats struct {
