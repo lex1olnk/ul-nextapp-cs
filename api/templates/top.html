@@ -133,7 +133,7 @@
                     <td class="srow">{{.Kills}}</td>
                     <td class="srow">{{.Deaths}}</td>
                     <td class="srow hide-on-small">{{.Assists}}</td>
-                    <td class="srow hide-on-large">{{.Damage}}</td>
+                    <td class="srow hide-on-large">{{printf "%.0f" .Damage}}</td>
                     <td class="srow hide-on-medium">{{.Headshots}}</td>
                     <td class="srow hide-on-small">{{.FirstKill}}</td>
                     <td class="srow hide-on-extra-small">{{.FirstDeath}}</td>

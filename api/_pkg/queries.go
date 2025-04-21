@@ -1,37 +1,39 @@
 package pkg
 
 var GetPlayersStats = `SELECT 
-    p.player_id,
-    p.nickname,
-    p.fastcup_id,
-    p.UL_rating,
-    COUNT(mp.match_id) AS total_matches,
-    COALESCE(SUM(mp.kills), 0) AS total_kills,
-    COALESCE(SUM(mp.deaths), 0) AS total_deaths,
-    COALESCE(SUM(mp.assists), 0) AS total_assists,
-    COALESCE(SUM(mp.headshots), 0) AS total_headshots,
-    COALESCE(SUM(mp.damage), 0) AS total_damage,
-    COALESCE(SUM(mp.exchanged), 0) AS total_exchanged,
-    COALESCE(SUM(mp.firstdeaths), 0) AS total_firstdeaths,
-    COALESCE(SUM(mp.firstkills), 0) AS total_firstkills,
-    ARRAY[
-        COALESCE(SUM(mp.multi_kills[1]), 0),
-        COALESCE(SUM(mp.multi_kills[2]), 0),
-        COALESCE(SUM(mp.multi_kills[3]), 0),
-        COALESCE(SUM(mp.multi_kills[4]), 0),
-        COALESCE(SUM(mp.multi_kills[5]), 0)
-    ] AS total_multi_kills,
-    ARRAY[
-        COALESCE(SUM(mp.clutches[1]), 0),
-        COALESCE(SUM(mp.clutches[2]), 0),
-        COALESCE(SUM(mp.clutches[3]), 0),
-        COALESCE(SUM(mp.clutches[4]), 0),
-        COALESCE(SUM(mp.clutches[5]), 0)
-    ] AS total_clutches
-FROM players p
-LEFT JOIN match_players mp ON p.player_id = mp.player_id
-GROUP BY p.player_id, p.nickname, p.fastcup_id, p.UL_rating
-ORDER BY p.nickname;`
+	p.player_id,
+	p.nickname,
+	p.UL_rating,
+	COUNT(mp.match_id) AS matches,
+	COALESCE(SUM(mp.kills), 0) AS kills,
+	COALESCE(SUM(mp.deaths), 0) AS deaths,
+	COALESCE(SUM(mp.assists), 0) AS assists,
+	COALESCE(SUM(mp.headshots), 0) AS headshots,
+	COALESCE(SUM(mp.kastscore), 0) AS kastscore,
+	COALESCE(SUM(mp.damage), 0) AS damage,
+	COALESCE(SUM(mp.exchanged), 0) AS exchanged,
+	COALESCE(SUM(mp.firstdeaths), 0) AS firstdeaths,
+	COALESCE(SUM(mp.firstkills), 0) AS firstkills,
+	ARRAY[
+	COALESCE(SUM(mp.multi_kills[1]), 0),
+	COALESCE(SUM(mp.multi_kills[2]), 0),
+	COALESCE(SUM(mp.multi_kills[3]), 0),
+	COALESCE(SUM(mp.multi_kills[4]), 0),
+	COALESCE(SUM(mp.multi_kills[5]), 0)
+	] AS total_multi_kills,
+	ARRAY[
+	COALESCE(SUM(mp.clutches[1]), 0),
+	COALESCE(SUM(mp.clutches[2]), 0),
+	COALESCE(SUM(mp.clutches[3]), 0),
+	COALESCE(SUM(mp.clutches[4]), 0),
+	COALESCE(SUM(mp.clutches[5]), 0)
+	] AS total_clutches,
+	COALESCE(SUM(m.rounds), 0) AS total_rounds
+	FROM players p
+	LEFT JOIN match_players mp ON p.player_id = mp.player_id
+	LEFT JOIN matches m ON mp.match_id = m.match_id
+	GROUP BY p.player_id, p.nickname, p.UL_rating
+	ORDER BY p.nickname`
 
 var matchDamageQuery = `
 	query GetMatchDamages($matchId: Int!) {

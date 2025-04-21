@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -256,7 +257,6 @@ func CalculateTrade(index int, killer Kill, kills []Kill, stats *Stats) int {
 			return 0
 		}
 		if killer.VictimId == kills[i].KillerId {
-			stats.Players[killer.KillerId].Traded++
 			stats.Players[kills[i].VictimId].Exchanged++
 			return kills[i].VictimId
 		}
@@ -266,6 +266,59 @@ func CalculateTrade(index int, killer Kill, kills []Kill, stats *Stats) int {
 	//fmt.Println(difference)
 	// Время убийства
 
+}
+
+func GetAggregatedPlayerStats(ctx context.Context, pool *pgxpool.Pool) ([]PlayerStats, error) {
+	query := GetPlayersStats
+
+	rows, err := pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("database query error: %w", err)
+	}
+	defer rows.Close()
+
+	var stats []PlayerStats
+	for rows.Next() {
+		var s PlayerStats
+		if err := rows.Scan(
+			&s.ID,
+			&s.Nickname,
+			&s.ULRating,
+			&s.Matches,
+			&s.Kills,
+			&s.Deaths,
+			&s.Assists,
+			&s.Headshots,
+			&s.KASTScore,
+			&s.Damage,
+			&s.Exchanged,
+			&s.FirstDeath,
+			&s.FirstKill,
+			&s.MultiKills,
+			&s.Clutches,
+			&s.Rounds,
+		); err != nil {
+			return nil, fmt.Errorf("data scanning error: %w", err)
+		}
+		stats = append(stats, s)
+	}
+
+	return stats, nil
+}
+
+func ProcessPlayerStats(players []PlayerStats) []PlayerStats {
+	var processed []PlayerStats
+
+	for _, p := range players {
+		p.CalculateDerivedStats()
+		processed = append(processed, p)
+	}
+
+	sort.Slice(processed, func(i, j int) bool {
+		return processed[i].Rating > processed[j].Rating
+	})
+
+	return processed
 }
 
 /*
@@ -388,6 +441,6 @@ func (stats *Stats) ProcessDamage(Damages []Damage) {
 		if _, ok := stats.Players[damage.InflictorId]; !ok {
 			stats.Players[damage.InflictorId] = &PlayerStats{}
 		}
-		stats.Players[damage.InflictorId].Damage += damage.DamageNormalized
+		stats.Players[damage.InflictorId].Damage += float64(damage.DamageNormalized)
 	}
 }

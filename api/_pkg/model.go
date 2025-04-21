@@ -1,6 +1,19 @@
 package pkg
 
-import "time"
+import (
+	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+const (
+	kastWeight     = 0.0073
+	kprWeight      = 0.359
+	dprWeight      = -0.532
+	impactWeight   = 0.237
+	damageWeight   = 0.00327
+	ratingConstant = 0.1587
+)
 
 type Model struct {
 	Name string
@@ -63,26 +76,71 @@ type GraphQLRequest struct {
 type PlayerStats struct {
 	ID          int
 	Nickname    string
-	ULRating    *int
+	ULRating    float64
+	Matches     int
 	Kills       int
 	Deaths      int
 	Assists     int
-	Damage      int
-	Matches     int
+	Headshots   int
+	KASTScore   float64
+	Damage      float64
+	Exchanged   int
 	FirstDeath  int
 	FirstKill   int
-	Headshots   int
+	MultiKills  pgtype.FlatArray[int]
+	Clutches    pgtype.FlatArray[int]
 	Rounds      int
-	Traded      int // разменял другого игрока
-	Exchanged   int // Был разменят
 	KPR         float64
 	DPR         float64
-	KASTScore   float64
 	Impact      float64
-	MultiKills  [5]int
-	Clutches    [5]int
 	ClutchScore int
 	Rating      float64
+}
+
+func (p *PlayerStats) CalculateDerivedStats() {
+	if p.Rounds == 0 {
+		return
+	}
+
+	p.KPR = float64(p.Kills) / float64(p.Rounds)
+	p.DPR = float64(p.Deaths) / float64(p.Rounds)
+	p.KASTScore = (p.KASTScore / float64(p.Rounds)) * 100
+	p.Impact = p.CalculateImpact()
+	p.ClutchScore = p.CalculateClutchScore()
+	p.Headshots = (p.Headshots * 100) / p.Rounds
+	p.Damage /= float64(p.Rounds)
+	p.Rating = p.CalculateRating()
+}
+
+func (p *PlayerStats) CalculateImpact() float64 {
+	return (1*float64(p.FirstKill) +
+		-0.5*float64(p.FirstDeath) +
+		0.8*float64(p.MultiKills[1]) +
+		1.08*float64(p.MultiKills[2]) +
+		1.24*float64(p.MultiKills[3]) +
+		1.4*float64(p.MultiKills[4]) +
+		float64(p.Clutches[0]) +
+		2*float64(p.Clutches[1]) +
+		3*float64(p.Clutches[2]) +
+		4*float64(p.Clutches[3]) +
+		5*float64(p.Clutches[4])) / float64(p.Rounds)
+}
+
+func (p *PlayerStats) CalculateClutchScore() int {
+	total := 0
+	for _, c := range p.Clutches {
+		total += c
+	}
+	return total
+}
+
+func (p *PlayerStats) CalculateRating() float64 {
+	return kastWeight*p.KASTScore +
+		kprWeight*p.KPR +
+		dprWeight*p.DPR +
+		impactWeight*p.Impact +
+		damageWeight*p.Damage +
+		ratingConstant
 }
 
 type Stats struct {
