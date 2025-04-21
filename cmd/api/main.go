@@ -15,12 +15,15 @@ func init() {
 }
 
 func main() {
+
 	// New mux
 	mux := http.NewServeMux()
 	// Route
 	mux.Handle("/hello", http.HandlerFunc(api.Hello))
 
-	mux.Handle("/matches", http.HandlerFunc(api.Matches))
+	mux.HandleFunc("GET /matches", http.HandlerFunc(api.GetMatches))
+
+	mux.HandleFunc("GET /post_matches", http.HandlerFunc(api.PostMatches))
 
 	log.Println("Listening...")
 	log.Fatal(http.ListenAndServe(":"+port, mux))

@@ -61,27 +61,28 @@ type GraphQLRequest struct {
 }
 
 type PlayerStats struct {
-	ID            int
-	Nickname      string
-	Kills         int
-	Deaths        int
-	Assists       int
-	AverageDamage float64
-	FirstDeath    int
-	FirstKill     int
-	Headshots     int
-	Team          int
-	Rounds        int
-	Traded        int // разменял другого игрока
-	Exchanged     int // Был разменят
-	KPR           float64
-	DPR           float64
-	KASTScore     float64
-	Impact        float64
-	MultiKills    [5]int
-	Clutches      [5]int
-	ClutchScore   int
-	Rating        float64
+	ID          int
+	Nickname    string
+	ULRating    *int
+	Kills       int
+	Deaths      int
+	Assists     int
+	Damage      int
+	Matches     int
+	FirstDeath  int
+	FirstKill   int
+	Headshots   int
+	Rounds      int
+	Traded      int // разменял другого игрока
+	Exchanged   int // Был разменят
+	KPR         float64
+	DPR         float64
+	KASTScore   float64
+	Impact      float64
+	MultiKills  [5]int
+	Clutches    [5]int
+	ClutchScore int
+	Rating      float64
 }
 
 type Stats struct {
@@ -125,8 +126,8 @@ type Match struct {
 	BestOf               int         `json:"best_of"`
 	GameID               int         `json:"game_id"`
 	HasWinner            bool        `json:"has_winner"`
-	StartedAt            string      `json:"started_at"`
-	FinishedAt           *string     `json:"finished_at"`
+	StartedAt            time.Time   `json:"started_at"`
+	FinishedAt           *time.Time  `json:"finished_at"`
 	MaxRoundsCount       int         `json:"max_rounds_count"`
 	ServerInstanceID     *int        `json:"server_instance_id"`
 	CancellationReason   *string     `json:"cancellation_reason"`

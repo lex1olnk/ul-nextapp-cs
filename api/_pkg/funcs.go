@@ -2,11 +2,19 @@ package pkg
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
+	"time"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func SendGraphQLRequest(w http.ResponseWriter, query string, variables map[string]int, responseBody interface{}) bool {
+func SendGraphQLRequest(query string, variables map[string]int, responseBody interface{}) bool {
 	requestBody := GraphQLRequest{
 		Query:     query,
 		Variables: variables,
@@ -15,26 +23,23 @@ func SendGraphQLRequest(w http.ResponseWriter, query string, variables map[strin
 	// Кодируем тело запроса в JSON
 	requestBodyJSON, err := json.Marshal(requestBody)
 	if err != nil {
-		http.Error(w, "Error encoding request body", http.StatusInternalServerError)
 		return false
 	}
 
 	resp, err := http.Post("https://hasura.fastcup.net/v1/graphql", "application/json", bytes.NewBuffer(requestBodyJSON))
 	if err != nil {
-		http.Error(w, "Error fetching match data", http.StatusInternalServerError)
 		return false
 	}
 	defer resp.Body.Close()
 
 	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
-		http.Error(w, "Error decoding response body", http.StatusInternalServerError)
 		return false
 	}
 
 	return true
 }
 
-func GetMatchMembers(w http.ResponseWriter, matchID int, stats *Stats) []int {
+func GetMatchMembers(matchID int, stats *Stats) Match {
 	query := fullMatchQuery
 
 	variables := map[string]int{
@@ -42,28 +47,28 @@ func GetMatchMembers(w http.ResponseWriter, matchID int, stats *Stats) []int {
 		"gameId":  3,
 	}
 	var responseBody GetMatchStatsResponse
-	if !SendGraphQLRequest(w, query, variables, &responseBody) {
-		return nil
+	if !SendGraphQLRequest(query, variables, &responseBody) {
+		return Match{}
 	}
-
-	return stats.GetMatchData(responseBody.Data.Match)
+	stats.AddMatchData(responseBody.Data.Match)
+	return responseBody.Data.Match
 }
 
-func GetMatchClutches(w http.ResponseWriter, matchID int, stats *Stats) bool {
+func GetMatchClutches(matchID int, stats *Stats) bool {
 	query := matchCluchesQuery
 
 	variables := map[string]int{
 		"matchId": matchID,
 	}
 	var responseBody GraphQLClutchResponse
-	if !SendGraphQLRequest(w, query, variables, &responseBody) {
+	if !SendGraphQLRequest(query, variables, &responseBody) {
 		return false
 	}
-	stats.GetMatchClutches(responseBody.Data.Clutches)
+	stats.AddMatchClutches(responseBody.Data.Clutches)
 	return true
 }
 
-func GetMatchKills(w http.ResponseWriter, matchID int, stats *Stats, currentPlayers []int) bool {
+func GetMatchKills(matchID int, stats *Stats, currentPlayers []int) bool {
 	query := matchKillsQuery
 
 	variables := map[string]int{
@@ -72,7 +77,7 @@ func GetMatchKills(w http.ResponseWriter, matchID int, stats *Stats, currentPlay
 	}
 
 	var responseBody GraphQLKillsResponse
-	if !SendGraphQLRequest(w, query, variables, &responseBody) {
+	if !SendGraphQLRequest(query, variables, &responseBody) {
 		return false
 	}
 
@@ -80,7 +85,7 @@ func GetMatchKills(w http.ResponseWriter, matchID int, stats *Stats, currentPlay
 	return true
 }
 
-func GetMatchDamages(w http.ResponseWriter, matchID int, stats *Stats) bool {
+func GetMatchDamages(matchID int, stats *Stats) bool {
 	query := matchDamageQuery
 
 	variables := map[string]int{
@@ -90,7 +95,7 @@ func GetMatchDamages(w http.ResponseWriter, matchID int, stats *Stats) bool {
 
 	// Декодируем JSON-ответ
 	var responseBody GraphQLDamagesResponse
-	if !SendGraphQLRequest(w, query, variables, &responseBody) {
+	if !SendGraphQLRequest(query, variables, &responseBody) {
 		return false
 	}
 
@@ -98,8 +103,7 @@ func GetMatchDamages(w http.ResponseWriter, matchID int, stats *Stats) bool {
 	return true
 }
 
-func (stats *Stats) GetMatchData(match Match) []int {
-	var currentPlayers []int
+func (stats *Stats) AddMatchData(match Match) {
 	for _, player := range match.Members {
 		user := player.Private.User
 		if _, ok := stats.Players[user.ID]; !ok {
@@ -107,19 +111,140 @@ func (stats *Stats) GetMatchData(match Match) []int {
 			stats.Players[user.ID].ID = user.ID
 			stats.Players[user.ID].Nickname = user.NickName
 		}
-		currentPlayers = append(currentPlayers, user.ID)
 		stats.Players[user.ID].Rounds += len(match.Rounds)
 	}
-	return currentPlayers
 }
 
-func (stats *Stats) GetMatchClutches(clutches []Clutch) {
+func (stats *Stats) AddMatchClutches(clutches []Clutch) {
 	for _, clutch := range clutches {
 		if clutch.Success {
 			stats.Players[clutch.UserId].Clutches[clutch.Amount-1]++
 			stats.Players[clutch.UserId].ClutchScore += clutch.Amount
 		}
 	}
+}
+
+func CreateMatch(pool *pgxpool.Pool, matchID int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback(ctx)
+		}
+	}()
+
+	fmt.Println("STEP 1")
+	// Проверка существования матча
+	var exists bool
+	err = tx.QueryRow(ctx,
+		"SELECT EXISTS(SELECT 1 FROM matches WHERE match_id = $1)",
+		matchID).Scan(&exists)
+
+	if err != nil {
+		return fmt.Errorf("match check failed: %w", err)
+	}
+	if exists {
+		return errors.New("match already exists")
+	}
+	fmt.Println("STEP 2")
+	// Получение данных матча
+	stats := NewStats()
+	match := GetMatchMembers(matchID, stats)
+	if err != nil {
+		return fmt.Errorf("failed to get match members: %w", err)
+	}
+	fmt.Println("STEP 3")
+	// Обработка игроков
+	var playerIDs []int
+	for userID, player := range stats.Players {
+		var exist bool
+
+		err = tx.QueryRow(ctx,
+			"SELECT EXISTS(SELECT 1 FROM players WHERE player_id = $1)",
+			userID).Scan(&exist)
+
+		if err != nil {
+			return fmt.Errorf("player check failed: %w", err)
+		}
+
+		if exist {
+			continue
+		}
+		_, err := tx.Exec(ctx,
+			`INSERT INTO players (player_id, ul_rating, nickname)
+			VALUES ($1, $2, $3)`,
+			userID,
+			0.0,
+			player.Nickname,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to upsert player: %w", err)
+		}
+		playerIDs = append(playerIDs, userID)
+	}
+	fmt.Println("STEP 4")
+	// Вставка данных матча
+	_, err = tx.Exec(ctx,
+		`INSERT INTO matches 
+		(match_id, rounds, started_at, finished_at)
+		VALUES ($1, $2, $3, $4)`,
+		matchID,
+		len(match.Rounds),
+		match.StartedAt,
+		match.FinishedAt,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to insert match: %w", err)
+	}
+
+	if !GetMatchKills(matchID, stats, playerIDs) {
+		return errors.New("failed to take kills")
+	}
+
+	if !GetMatchDamages(matchID, stats) {
+		return errors.New("failed to take damages")
+	}
+
+	if !GetMatchClutches(matchID, stats) {
+		return errors.New("failed to take clutches")
+	}
+	fmt.Println("inserting")
+
+	// Вставка статистики игроков
+	for userID, player := range stats.Players {
+		_, err = tx.Exec(ctx,
+			`INSERT INTO match_players 
+			(match_id, player_id, kills, deaths, assists, headshots, exchanged, 
+			firstdeaths, firstkills, damage, multi_kills, clutches)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+			matchID,
+			userID,
+			player.Kills,
+			player.Deaths,
+			player.Assists,
+			player.Headshots,
+			player.Exchanged,
+			player.FirstDeath,
+			player.FirstKill,
+			player.Damage,
+			pgtype.FlatArray[int](player.MultiKills[:]),
+			pgtype.FlatArray[int](player.Clutches[:]),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to insert player stats: %w", err)
+		}
+	}
+
+	// Фиксируем транзакцию
+	if err = tx.Commit(ctx); err != nil {
+		return fmt.Errorf("transaction commit failed: %w", err)
+	}
+	return nil
 }
 
 func CalculateTrade(index int, killer Kill, kills []Kill, stats *Stats) int {
@@ -141,14 +266,7 @@ func CalculateTrade(index int, killer Kill, kills []Kill, stats *Stats) int {
 
 }
 
-import (
-	"context"
-	"encoding/json"
-	"net/http"
-	
-	"your-project/db"
-)
-
+/*
 func GetMixes(w http.ResponseWriter, r *http.Request) {
 	conn, err := db.Pool.Acquire(context.Background())
 	if err != nil {
@@ -177,7 +295,7 @@ func GetMixes(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(mixes)
-}
+}*/
 
 type Mix struct {
 	ID     int    `json:"id"`
@@ -268,6 +386,6 @@ func (stats *Stats) ProcessDamage(Damages []Damage) {
 		if _, ok := stats.Players[damage.InflictorId]; !ok {
 			stats.Players[damage.InflictorId] = &PlayerStats{}
 		}
-		stats.Players[damage.InflictorId].AverageDamage += float64(damage.DamageNormalized)
+		stats.Players[damage.InflictorId].Damage += damage.DamageNormalized
 	}
 }

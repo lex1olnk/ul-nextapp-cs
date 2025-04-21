@@ -1,40 +1,10 @@
--- Создание таблицы пользователей
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
-    role VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Создание таблицы постов
-CREATE TABLE posts (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    body TEXT NOT NULL,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    status VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Создание таблицы подписок
-CREATE TABLE follows (
-    following_user_id INTEGER NOT NULL REFERENCES users(id),
-    followed_user_id INTEGER NOT NULL REFERENCES users(id),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (following_user_id, followed_user_id)
-);
-
 -- Создание таблицы игроков
 CREATE TABLE players (
     player_id SERIAL PRIMARY KEY,
-    fastcup_id VARCHAR(255) NOT NULL UNIQUE,
     UL_rating FLOAT DEFAULT 0.0,
     nickname VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- Создание индекса для fastcup_id
-CREATE INDEX idx_fastcup_id ON players(fastcup_id);
 
 -- Создание таблицы матчей
 CREATE TABLE matches (

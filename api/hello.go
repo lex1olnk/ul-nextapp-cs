@@ -14,3 +14,4 @@ func Hello(w http.ResponseWriter, req *http.Request) {
 	resp := "Hello " + model.Name
 	w.Write([]byte(resp))
 }
+

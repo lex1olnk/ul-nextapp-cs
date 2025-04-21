@@ -1,0 +1,2 @@
+ALTER TABLE match_players 
+DROP COLUMN KASTScore;

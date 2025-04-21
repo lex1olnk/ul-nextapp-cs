@@ -5,18 +5,11 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
-	"os"
-	"regexp"
 	"sort"
-	"strconv"
 
 	m "fastcup/api/_pkg"
-
-	"github.com/joho/godotenv"
-	"google.golang.org/api/option"
-	"google.golang.org/api/sheets/v4"
+	"fastcup/api/_pkg/db"
 )
 
 // GraphQLRequest структура для GraphQL-запроса
@@ -25,85 +18,84 @@ import (
 var templateFS embed.FS
 
 // MatchHandler обрабатывает запросы к маршруту /match/{id}
-func Matches(w http.ResponseWriter, r *http.Request) {
-	if err := godotenv.Load(); err != nil {
-		log.Print("No .env file found")
-	}
-	googleCreds := fmt.Sprintf(`{
-		"type": "service_account",
-		"project_id": "%s",
-		"private_key_id": "%s",
-		"private_key": "%s",
-		"client_email": "%s",
-		"client_id": "%s",
-		"project_id": "%s",		
-		"auth_uri": "https://accounts.google.com/o/oauth2/auth",
-		"token_uri": "https://oauth2.googleapis.com/token",
-		"auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-		"client_x509_cert_url": "%s",
-		"universe_domain": "googleapis.com"
-	}`,
-		os.Getenv("GOOGLE_PROJECT_ID"),
-		os.Getenv("GOOGLE_PRIVATE_KEY_ID"),
-		os.Getenv("GOOGLE_PRIVATE_KEY"),
-		os.Getenv("GOOGLE_CLIENT_EMAIL"),
-		os.Getenv("GOOGLE_CLIENT_ID"),
-		os.Getenv("GOOGLE_PROJECT_ID"),
-		os.Getenv("GOOGLE_CLIENT_X509_CERT_URL"),
-	)
-
-	ctx := context.Background()
-	// 3. Создаем сервис Sheets с учетными данными из файла
-	srv, err := sheets.NewService(ctx, option.WithCredentialsJSON([]byte(googleCreds)))
-	if err != nil {
-		http.Error(w, "Не удалось создать клиента Sheets: %v", http.StatusBadRequest)
+func GetMatches(w http.ResponseWriter, r *http.Request) {
+	if err := db.Init(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer db.Close()
 
-	// 4. ID документа (из URL Google Sheets)
-	spreadsheetId := "1YbgNUsnq40fqx1V5BetVy131mIgzB0azDLE07YWxGso"
-
-	// 5. Диапазон для чтения, например, "Sheet1!A1:C10"
-	readRange := "src!A1:A100"
-
-	// 6. Получаем значения указываем диапазон
-	resp, err := srv.Spreadsheets.Values.Get(spreadsheetId, readRange).Do()
+	// Выполнение запроса
+	rows, err := db.Pool.Query(context.Background(), `
+		SELECT 
+		p.player_id,
+		p.nickname,
+		p.UL_rating,
+		COUNT(mp.match_id) AS matches,
+		COALESCE(SUM(mp.kills), 0) AS kills,
+		COALESCE(SUM(mp.deaths), 0) AS deaths,
+		COALESCE(SUM(mp.assists), 0) AS assists,
+		COALESCE(SUM(mp.headshots), 0) AS headshots,
+		COALESCE(SUM(mp.damage), 0) AS damage,
+		COALESCE(SUM(mp.exchanged), 0) AS exchanged,
+		COALESCE(SUM(mp.firstdeaths), 0) AS firstdeaths,
+		COALESCE(SUM(mp.firstkills), 0) AS firstkills,
+		ARRAY[
+		COALESCE(SUM(mp.multi_kills[1]), 0),
+		COALESCE(SUM(mp.multi_kills[2]), 0),
+		COALESCE(SUM(mp.multi_kills[3]), 0),
+		COALESCE(SUM(mp.multi_kills[4]), 0),
+		COALESCE(SUM(mp.multi_kills[5]), 0)
+		] AS total_multi_kills,
+		ARRAY[
+		COALESCE(SUM(mp.clutches[1]), 0),
+		COALESCE(SUM(mp.clutches[2]), 0),
+		COALESCE(SUM(mp.clutches[3]), 0),
+		COALESCE(SUM(mp.clutches[4]), 0),
+		COALESCE(SUM(mp.clutches[5]), 0)
+		] AS total_clutches,
+		COALESCE(SUM(m.rounds), 0) AS total_rounds
+		FROM players p
+		LEFT JOIN match_players mp ON p.player_id = mp.player_id
+		LEFT JOIN matches m ON mp.match_id = m.match_id
+		GROUP BY p.player_id, p.nickname, p.UL_rating
+		ORDER BY p.nickname`)
 	if err != nil {
-		http.Error(w, "Не удалось получить данные из таблицы: %v", http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Database error: %v", err), http.StatusInternalServerError)
+		return
 	}
-	stats := m.NewStats()
+	defer rows.Close()
 
-	re := regexp.MustCompile(`matches/(\d+)`)
-	// 7. Проверяем и выводим данные
-	if len(resp.Values) == 0 {
-		fmt.Println("Данные не найдены.")
-	} else {
-		fmt.Println("Полученные данные:")
+	var stats []m.PlayerStats
 
-		for _, row := range resp.Values {
-			url := re.FindStringSubmatch(row[0].(string))
-			matchID, err := strconv.Atoi(url[1])
-			if err != nil {
-				// ... handle error
-				panic(err)
-			}
-			currentPlayers := m.GetMatchMembers(w, matchID, stats)
+	for rows.Next() {
+		var s m.PlayerStats
+		err := rows.Scan(
+			&s.ID,
+			&s.Nickname,
+			&s.ULRating,
+			&s.Matches,
+			&s.Kills,
+			&s.Deaths,
+			&s.Assists,
+			&s.Headshots,
+			&s.Damage,
+			&s.Exchanged,
+			&s.FirstDeath,
+			&s.FirstKill,
+			&s.MultiKills,
+			&s.Clutches,
+			&s.Rounds,
+		)
 
-			if !m.GetMatchKills(w, matchID, stats, currentPlayers) {
-				http.Error(w, "kills error", http.StatusBadRequest)
-				return
-			}
-
-			if !m.GetMatchDamages(w, matchID, stats) {
-				http.Error(w, "damages error", http.StatusBadRequest)
-				return
-			}
-
-			if !m.GetMatchClutches(w, matchID, stats) {
-				http.Error(w, "clutches error", http.StatusBadRequest)
-				return
-			}
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Data parsing error: %v", err), http.StatusInternalServerError)
+			return
 		}
+		fmt.Println(s.Clutches)
+		// Конвертация массивов
+
+		stats = append(stats, s)
 	}
 
 	tmpl, err := template.ParseFS(templateFS, "templates/top.html")
@@ -112,8 +104,9 @@ func Matches(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slice := make([]m.PlayerStats, 0, len(stats.Players))
-	for _, p := range stats.Players {
+	slice := make([]m.PlayerStats, 0, len(stats))
+
+	for _, p := range stats {
 		p.KPR = float64(p.Kills) / float64(p.Rounds)
 		p.DPR = float64(p.Deaths) / float64(p.Rounds)
 		p.KASTScore = p.KASTScore / float64(p.Rounds) * 100
@@ -127,15 +120,19 @@ func Matches(w http.ResponseWriter, r *http.Request) {
 			3*float64(p.Clutches[2]) +
 			4*float64(p.Clutches[3]) +
 			5*float64(p.Clutches[4])) / float64(p.Rounds)
+		for _, i := range p.Clutches {
+			p.ClutchScore += i
+		}
+
 		p.Headshots = 100 * p.Headshots / p.Rounds
-		p.AverageDamage /= float64(p.Rounds)
+		p.Damage /= p.Rounds
 
 		p.Rating = 0.0073*p.KASTScore +
 			0.359*p.KPR +
 			-0.532*p.DPR +
 			0.237*p.Impact +
-			0.00327*p.AverageDamage + 0.1587
-		slice = append(slice, *p)
+			0.00327*float64(p.Damage) + 0.1587
+		slice = append(slice, p)
 
 	}
 

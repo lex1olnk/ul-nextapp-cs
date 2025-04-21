@@ -1,0 +1,2 @@
+ALTER TABLE match_players 
+ADD COLUMN KASTScore FLOAT DEFAULT 0.0;
