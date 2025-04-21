@@ -138,7 +138,7 @@ func CreateMatch(pool *pgxpool.Pool, matchID int) error {
 		}
 	}()
 
-	fmt.Println("STEP 1")
+	fmt.Println("STEP 1", matchID)
 	// Проверка существования матча
 	var exists bool
 	err = tx.QueryRow(ctx,
@@ -149,7 +149,7 @@ func CreateMatch(pool *pgxpool.Pool, matchID int) error {
 		return fmt.Errorf("match check failed: %w", err)
 	}
 	if exists {
-		return errors.New("match already exists")
+		return nil
 	}
 	fmt.Println("STEP 2")
 	// Получение данных матча
@@ -172,6 +172,7 @@ func CreateMatch(pool *pgxpool.Pool, matchID int) error {
 			return fmt.Errorf("player check failed: %w", err)
 		}
 
+		playerIDs = append(playerIDs, userID)
 		if exist {
 			continue
 		}
@@ -185,7 +186,7 @@ func CreateMatch(pool *pgxpool.Pool, matchID int) error {
 		if err != nil {
 			return fmt.Errorf("failed to upsert player: %w", err)
 		}
-		playerIDs = append(playerIDs, userID)
+
 	}
 	fmt.Println("STEP 4")
 	// Вставка данных матча

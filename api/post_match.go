@@ -84,6 +84,7 @@ func PostMatches(w http.ResponseWriter, r *http.Request) {
 				// ... handle error
 				panic(err)
 			}
+
 			err = m.CreateMatch(db.Pool, matchID)
 			if err != nil {
 				panic(err)
@@ -91,10 +92,7 @@ func PostMatches(w http.ResponseWriter, r *http.Request) {
 
 		}
 	}
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	fmt.Println("All data added")
 	// Формируем GraphQL-запрос
 
 	// Отправляем HTML-таблицу в ответе
