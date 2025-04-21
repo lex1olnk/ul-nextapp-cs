@@ -138,7 +138,7 @@
                     <td class="srow hide-on-small">{{.FirstKill}}</td>
                     <td class="srow hide-on-extra-small">{{.FirstDeath}}</td>
                     <td class="srow hide-on-medium">{{.Exchanged}}</td>
-                    <td class="srow hide-on-large">{{.KASTScore}}</td>
+                    <td class="srow hide-on-large">{{printf "%.0f" .KASTScore}}</td>
                     <td class="srow hide-on-large">{{.ClutchScore}}</td>
                     <td class="srow hide-on-small">{{printf "%.2f" .Impact}}</td>
                     <td class="srow hide-on-extra-small">{{.Rounds}}</td>

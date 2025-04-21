@@ -220,8 +220,8 @@ func CreateMatch(pool *pgxpool.Pool, matchID int) error {
 		_, err = tx.Exec(ctx,
 			`INSERT INTO match_players 
 			(match_id, player_id, kills, deaths, assists, headshots, exchanged, 
-			firstdeaths, firstkills, damage, multi_kills, clutches)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+			kastscore, firstdeaths, firstkills, damage, multi_kills, clutches)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
 			matchID,
 			userID,
 			player.Kills,
@@ -229,6 +229,7 @@ func CreateMatch(pool *pgxpool.Pool, matchID int) error {
 			player.Assists,
 			player.Headshots,
 			player.Exchanged,
+			player.KASTScore,
 			player.FirstDeath,
 			player.FirstKill,
 			player.Damage,

@@ -13,9 +13,10 @@ import (
 var Pool *pgxpool.Pool
 
 func Init() error {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	if os.Getenv("VERCEL") == "" { // Только для локального окружения
+		if err := godotenv.Load(); err != nil {
+			log.Fatal("Error loading .env file: ", err)
+		}
 	}
 
 	connStr := os.Getenv("POSTGRES_URL")

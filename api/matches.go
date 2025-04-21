@@ -36,6 +36,7 @@ func GetMatches(w http.ResponseWriter, r *http.Request) {
 		COALESCE(SUM(mp.deaths), 0) AS deaths,
 		COALESCE(SUM(mp.assists), 0) AS assists,
 		COALESCE(SUM(mp.headshots), 0) AS headshots,
+		COALESCE(SUM(mp.kastscore), 0) AS kastscore,
 		COALESCE(SUM(mp.damage), 0) AS damage,
 		COALESCE(SUM(mp.exchanged), 0) AS exchanged,
 		COALESCE(SUM(mp.firstdeaths), 0) AS firstdeaths,
@@ -79,6 +80,7 @@ func GetMatches(w http.ResponseWriter, r *http.Request) {
 			&s.Deaths,
 			&s.Assists,
 			&s.Headshots,
+			&s.KASTScore,
 			&s.Damage,
 			&s.Exchanged,
 			&s.FirstDeath,
@@ -92,7 +94,6 @@ func GetMatches(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("Data parsing error: %v", err), http.StatusInternalServerError)
 			return
 		}
-		fmt.Println(s.Clutches)
 		// Конвертация массивов
 
 		stats = append(stats, s)
