@@ -1,9 +1,9 @@
-package api
+package main
 
 import (
 	"net/http"
 
-	"fastcup/api/_pkg/db"
+	"fastcup/_pkg/db"
 )
 
 // GraphQLRequest структура для GraphQL-запроса

@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"os"
 
-	m "fastcup/api/_pkg"
-	"fastcup/api/_pkg/db"
+	m "fastcup/_pkg"
+	"fastcup/_pkg/db"
 )
 
 // GraphQLRequest структура для GraphQL-запроса
