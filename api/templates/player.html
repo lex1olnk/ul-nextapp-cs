@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль игрока - CS:GO Stats</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <!-- Основной контейнер -->
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Шапка профиля -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div class="flex items-center gap-6">
+                <img src="https://via.placeholder.com/100" 
+                     class="w-24 h-24 rounded-full border-4 border-blue-500">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">s1mple</h1>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="px-3 py-1 bg-blue-500 text-white rounded-full text-sm">
+                            Рейтинг: 1.42
+                        </span>
+                        <span class="px-3 py-1 bg-green-500 text-white rounded-full text-sm">
+                            Elite
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Основная статистика -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <!-- Карточка статистики -->
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="text-gray-500 text-sm mb-2">K/D Ratio</h3>
+                <p class="text-3xl font-bold text-blue-600">1.52</p>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="text-gray-500 text-sm mb-2">Headshots</h3>
+                <p class="text-3xl font-bold text-green-600">64%</p>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="text-gray-500 text-sm mb-2">Побед</h3>
+                <p class="text-3xl font-bold text-purple-600">832</p>
+            </div>
+        </div>
+
+        <!-- Детальная статистика -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Детальная статистика</h2>
+            
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span>Общий урон</span>
+                    <span class="font-bold">128,450</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span>Средний ADR</span>
+                    <span class="font-bold text-blue-600">98.5</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span>Клатчи</span>
+                    <span class="font-bold text-green-600">127</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Последние матчи -->
+        <div class="mt-6 bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Последние матчи</h2>
+            
+            <div class="space-y-3">
+                <div class="flex justify-between items-center p-3 hover:bg-gray-50 rounded">
+                    <div>
+                        <span class="text-sm text-gray-500">12.03.2024</span>
+                        <span class="ml-2 font-bold">16:14</span>
+                    </div>
+                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">
+                        Победа
+                    </span>
+                </div>
+                
+                <div class="flex justify-between items-center p-3 hover:bg-gray-50 rounded">
+                    <div>
+                        <span class="text-sm text-gray-500">11.03.2024</span>
+                        <span class="ml-2 font-bold">12:16</span>
+                    </div>
+                    <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-sm">
+                        Поражение
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
