@@ -10,7 +10,7 @@ import (
 //
 
 // MatchHandler обрабатывает запросы к маршруту /match/{id}
-func GetPlayer(w http.ResponseWriter, r *http.Request) {
+func Handler(w http.ResponseWriter, r *http.Request) {
 	if err := db.Init(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

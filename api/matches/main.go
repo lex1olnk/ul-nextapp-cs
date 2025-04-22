@@ -45,7 +45,7 @@ func GetMatches(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(jsonData))
 }
 
-func Handler() {
+func Handler(w http.ResponseWriter, r *http.Request) {
 	if os.Getenv("VERCEL") == "" {
 		port = os.Getenv("PORT")
 	}
