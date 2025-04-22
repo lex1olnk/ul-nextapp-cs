@@ -14,7 +14,7 @@ func init() {
 	flag.Parse()
 }
 
-func Handler() {
+func Handler(w http.ResponseWriter, r *http.Request) {
 	// New mux
 	mux := http.NewServeMux()
 	// Route
