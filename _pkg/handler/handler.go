@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	m "fastcup/_pkg"
@@ -60,9 +59,8 @@ func GetMatches(c *gin.Context) {
 		Players: processedPlayers,
 	}
 
-	jsonData, err := json.Marshal(data)
 	if err != nil {
 		c.JSON(http.StatusExpectationFailed, gin.H{"Message": "failed to get players"})
 	}
-	c.JSON(http.StatusOK, jsonData)
+	c.JSON(http.StatusOK, data)
 }
