@@ -5,9 +5,9 @@
             "use": "@vercel/next"
         },
         {
-            "src": "api/_pkg/cmd/**/*.go",           
+            "src": "api/**/*.go",
             "use": "@vercel/go"
-        }
+          }
     ],
     "routes": [
         {
