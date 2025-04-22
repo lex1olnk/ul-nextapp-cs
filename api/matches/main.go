@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	m "fastcup/api/_pkg"
 	"fastcup/api/_pkg/db"
 )
 
 // GraphQLRequest структура для GraphQL-запроса
-//
+var port string
 
 func GetMatches(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -45,8 +46,12 @@ func GetMatches(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-
-	port := "3000"
+	if os.Getenv("VERCEL") == "" {
+		port = os.Getenv("PORT")
+	}
+	if port == "" {
+		port = "3000"
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", GetMatches) // Обрабатывает /api/matches
