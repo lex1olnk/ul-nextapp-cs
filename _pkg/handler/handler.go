@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	m "fastcup/_pkg"
 	"fastcup/_pkg/db"
@@ -30,11 +31,68 @@ func Ping(c *gin.Context) {
 //
 
 // MatchHandler обрабатывает запросы к маршруту /match/{id}
-func Player(c *gin.Context) {
+func GetPlayer(c *gin.Context) {
 	if err := db.Init(); err != nil {
-		c.JSON(http.StatusExpectationFailed, gin.H{"Message": "failed to take players"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to connect to database",
+		})
+		return
 	}
 	defer db.Close()
+
+	// Получаем ID игрока из параметров запроса
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Player ID is required",
+		})
+		return
+	}
+
+	// Конвертируем ID в число (если в БД используется int)
+	playerID, err := strconv.Atoi(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid player ID format",
+		})
+		return
+	}
+
+	// Получаем последние 15 матчей игрока
+	ctx := context.Background()
+	matches, err := m.GetPlayerMatches(ctx, db.Pool, playerID, 15)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to fetch player matches",
+		})
+		return
+	}
+
+	// Если нет матчей
+	if len(matches) == 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "No matches found for this player",
+			"data":    nil,
+		})
+		return
+	}
+
+	// Рассчитываем средние значения
+	avgStats := m.CalculateAverageStats(matches)
+
+	// Формируем ответ
+	response := gin.H{
+		"player_id":      playerID,
+		"total_matches":  len(matches),
+		"average_stats":  avgStats,
+		"recent_matches": matches,
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"data":   response,
+	})
+
 }
 
 func GetMatches(c *gin.Context) {

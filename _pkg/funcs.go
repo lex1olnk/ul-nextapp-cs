@@ -10,6 +10,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -38,6 +39,76 @@ func SendGraphQLRequest(query string, variables map[string]int, responseBody int
 	}
 
 	return true
+}
+
+func CalculateAverageStats(matches []PlayerStats) gin.H {
+	var totalKills, totalDeaths, totalAssists, totalHeadshots int
+	var totalRating, totalDamage, totalKAST float64
+	count := 0
+
+	for _, match := range matches {
+		totalKills += match.Kills
+		totalDeaths += match.Deaths
+		totalAssists += match.Assists
+		totalHeadshots += match.Headshots
+		totalRating += match.Rating
+		totalDamage += match.Damage
+		totalKAST += match.KASTScore
+		count += match.Rounds
+	}
+
+	return gin.H{
+		"kills":      float64(totalKills) / float64(count),
+		"deaths":     float64(totalDeaths) / float64(count),
+		"assists":    float64(totalAssists) / float64(count),
+		"headshots":  float64(totalHeadshots) / float64(count),
+		"rating":     totalRating / float64(count),
+		"damage":     totalDamage / float64(count),
+		"kast_score": totalKAST / float64(count),
+		"rounds":     count,
+	}
+}
+
+func GetPlayerMatches(ctx context.Context, pool *pgxpool.Pool, playerID int, limit int) ([]PlayerStats, error) {
+	query := `
+        SELECT match_id, kills, deaths, assists, headshots, exchanged, firstdeaths, firstkills, damage, kast_score, multi_kills, clutches, rounds
+        FROM player_matches
+        WHERE player_id = $1
+        ORDER BY date DESC
+        LIMIT $2
+    `
+
+	rows, err := pool.Query(ctx, query, playerID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var matches []PlayerStats
+	for rows.Next() {
+		var stats PlayerStats
+		err := rows.Scan(
+			&stats.MatchID,
+			&stats.Kills,
+			&stats.Deaths,
+			&stats.Assists,
+			&stats.Headshots,
+			&stats.Exchanged,
+			&stats.FirstDeath,
+			&stats.FirstKill,
+			&stats.Damage,
+			&stats.KASTScore,
+			&stats.MultiKills,
+			&stats.Clutches,
+			&stats.Rounds,
+		)
+		if err != nil {
+			return nil, err
+		}
+		matches = append(matches, stats)
+	}
+
+	return matches, nil
 }
 
 func GetMatchMembers(matchID int, stats *Stats) Match {

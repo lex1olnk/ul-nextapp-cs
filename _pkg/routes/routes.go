@@ -14,6 +14,9 @@ func Register(app *gin.Engine) {
 	route := app.Group("/api")
 	{
 		route.GET("/ping", handler.Ping)
+
+		route.GET("/player/:id", handler.GetPlayer)
+
 		route.GET("/matches", handler.GetMatches)
 	}
 }
