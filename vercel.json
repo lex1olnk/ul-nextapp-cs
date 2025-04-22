@@ -3,7 +3,7 @@
       {
         "src": "frontend/package.json",
         "use": "@vercel/next",
-        "config": { 
+        "config": {
           "outputDirectory": "frontend/.next"
         }
       },
@@ -18,8 +18,12 @@
         "dest": "/api/$1"
       },
       {
+        "src": "/_next/static/(.*)",
+        "dest": "frontend/.next/static/$1"
+      },
+      {
         "src": "/(.*)",
-        "dest": "/frontend/.next/$1"
+        "dest": "frontend/.next/server/pages/$1"
       }
     ]
   }
