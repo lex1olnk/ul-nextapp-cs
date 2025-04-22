@@ -22,5 +22,3 @@ go.work
 .vercel
 
 .env
-
-frontend/node_modules
