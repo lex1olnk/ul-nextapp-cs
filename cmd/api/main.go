@@ -1,7 +1,6 @@
 package main
 
 import (
-	api "fastcup/api"
 	"flag"
 	"log"
 	"net/http"
@@ -15,13 +14,8 @@ func init() {
 }
 
 func main() {
-
 	// New mux
 	mux := http.NewServeMux()
-	// Route
-	mux.Handle("/hello", http.HandlerFunc(api.Hello))
-
-	mux.HandleFunc("GET /matches", http.HandlerFunc(api.Hello))
 
 	log.Println("Listening...")
 	log.Fatal(http.ListenAndServe(":"+port, mux))

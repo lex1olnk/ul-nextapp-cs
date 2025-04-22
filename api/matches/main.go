@@ -1,4 +1,4 @@
-package api
+package main
 
 import (
 	"context"
@@ -41,6 +41,16 @@ func GetMatches(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatalf("Ошибка при преобразовании в JSON: %v", err)
 	}
+	w.Write([]byte(jsonData))
+}
 
-	w.Write(jsonData)
+func main() {
+
+	port := "3000"
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", GetMatches) // Обрабатывает /api/matches
+
+	log.Printf("Starting server on :%s", port)
+	log.Fatal(http.ListenAndServe(":"+port, mux))
 }
