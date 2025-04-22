@@ -5,11 +5,15 @@
             "use": "@vercel/next"
         },
         {
-            "src": "cmd/api/**/*.go",           
+            "src": "api/_pkg/cmd/**/*.go",           
             "use": "@vercel/go"
         }
     ],
     "routes": [
+        {
+            "src": "/api/matches",
+            "dest": "api/matches"
+        },
         {
             "src": "/_next/static/(.*)",
             "dest": "frontend/.next/static/$1"

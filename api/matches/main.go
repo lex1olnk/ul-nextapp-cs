@@ -2,9 +2,9 @@ package api
 
 import (
 	"context"
-	"embed"
+	"encoding/json"
 	"fmt"
-	"html/template"
+	"log"
 	"net/http"
 
 	m "fastcup/api/_pkg"
@@ -13,11 +13,10 @@ import (
 
 // GraphQLRequest структура для GraphQL-запроса
 //
-//go:embed templates/top.html
-var templateFS embed.FS
 
-// MatchHandler обрабатывает запросы к маршруту /match/{id}
 func GetMatches(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	if err := db.Init(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -32,20 +31,16 @@ func GetMatches(w http.ResponseWriter, r *http.Request) {
 	}
 	processedPlayers := m.ProcessPlayerStats(players)
 
-	tmpl, err := template.ParseFS(templateFS, "templates/top.html")
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Template error: %v", err), http.StatusInternalServerError)
-		return
-	}
-
 	data := struct {
 		Players []m.PlayerStats
 	}{
 		Players: processedPlayers,
 	}
 
-	w.Header().Set("Content-Type", "text/html")
-	if err := tmpl.Execute(w, data); err != nil {
-		http.Error(w, fmt.Sprintf("Template execution error: %v", err), http.StatusInternalServerError)
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		log.Fatalf("Ошибка при преобразовании в JSON: %v", err)
 	}
+
+	w.Write(jsonData)
 }
