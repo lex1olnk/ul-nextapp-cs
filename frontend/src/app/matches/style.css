@@ -1,0 +1,73 @@
+.players-stats-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .stats-table-wrapper {
+    overflow-x: auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+  }
+  
+  .stats-table th {
+    background: #f8f9fa;
+    padding: 12px 15px;
+    font-weight: 600;
+    color: #495057;
+    text-align: center;
+    border-bottom: 2px solid #e9ecef;
+  }
+  
+  .stats-table td {
+    padding: 12px 15px;
+    text-align: center;
+    border-bottom: 1px solid #e9ecef;
+    color: #212529;
+  }
+  
+  .nickname {
+    font-weight: 500;
+    color: #2b8ff3;
+    text-align: left;
+  }
+  
+  .rating {
+    font-weight: 600;
+    color: #20c997;
+  }
+  
+  .stats-table tr:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .loading,
+  .error {
+    text-align: center;
+    padding: 40px;
+    font-size: 18px;
+  }
+  
+  .error {
+    color: #dc3545;
+  }
+  
+  @media (max-width: 768px) {
+    .players-stats-container {
+      padding: 10px;
+    }
+    
+    .stats-table th,
+    .stats-table td {
+      padding: 8px 10px;
+      font-size: 0.9em
+    }
+}
