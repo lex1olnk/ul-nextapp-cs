@@ -71,11 +71,11 @@ func CalculateAverageStats(matches []PlayerStats) gin.H {
 
 func GetPlayerMatches(ctx context.Context, pool *pgxpool.Pool, playerID int, limit int) ([]PlayerStats, error) {
 	query := `
-        SELECT match_id, kills, deaths, assists, headshots, exchanged, firstdeaths, firstkills, damage, kast_score, multi_kills, clutches, rounds
-        FROM player_matches
-        WHERE player_id = $1
-        ORDER BY date DESC
-        LIMIT $2
+		SELECT match_id, kills, deaths, assists, headshots, exchanged, firstdeaths, firstkills, damage, kastscore, multi_kills, clutches
+		FROM match_players
+		WHERE player_id = $1
+		ORDER BY created_at DESC
+		LIMIT $2
     `
 
 	rows, err := pool.Query(ctx, query, playerID, limit)
@@ -100,7 +100,6 @@ func GetPlayerMatches(ctx context.Context, pool *pgxpool.Pool, playerID int, lim
 			&stats.KASTScore,
 			&stats.MultiKills,
 			&stats.Clutches,
-			&stats.Rounds,
 		)
 		if err != nil {
 			return nil, err
