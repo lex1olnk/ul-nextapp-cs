@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"context"
@@ -45,7 +45,7 @@ func GetMatches(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(jsonData))
 }
 
-func main() {
+func Handler() {
 	if os.Getenv("VERCEL") == "" {
 		port = os.Getenv("PORT")
 	}
