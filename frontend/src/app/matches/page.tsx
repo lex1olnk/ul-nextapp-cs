@@ -40,7 +40,6 @@ const PlayersStatsPage: React.FC = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get<{"Players": PlayerStats[]}>('api/matches');
-        console.log(response.data)
         setPlayers(response.data.Players);
       } catch (err) {
         setError('Error loading player statistics');

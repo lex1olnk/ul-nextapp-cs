@@ -94,7 +94,6 @@ type PlayerStats struct {
 	ClutchScore int
 	Rating      float64
 	MatchID     int
-	Date        time.Time
 }
 
 func (p *PlayerStats) CalculateDerivedStats() {

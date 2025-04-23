@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -79,7 +80,7 @@ func GetPlayer(c *gin.Context) {
 
 	// Рассчитываем средние значения
 	avgStats := m.CalculateAverageStats(matches)
-
+	fmt.Println(avgStats, matches)
 	// Формируем ответ
 	response := gin.H{
 		"player_id":      playerID,

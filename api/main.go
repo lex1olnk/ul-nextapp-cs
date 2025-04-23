@@ -1,4 +1,33 @@
-package api
+package main
+
+import (
+	"fastcup/_pkg/handler"
+
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
+
+func HomepageHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"message": "Welcome to the Tech Company listing API with Golang"})
+}
+
+func main() {
+	router := gin.Default()
+	router.GET("/player/:id", handler.GetPlayer)
+
+	router.GET("/matches", handler.GetMatches)
+	router.Run()
+}
+
+func ErrRouter(c *gin.Context) {
+	c.JSON(http.StatusBadRequest, gin.H{
+		"errors": "this page could not be found",
+	})
+}
+
+/*
+package handler
 
 import (
 	"net/http"
@@ -26,4 +55,4 @@ func init() {
 // Entrypoint
 func Handler(w http.ResponseWriter, r *http.Request) {
 	app.ServeHTTP(w, r)
-}
+}*/

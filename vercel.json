@@ -17,6 +17,18 @@
         {
             "src": "/(.*)",
             "dest": "frontend/$1"
+        },
+        {
+            "src": "/player/([^/]+)",
+            "dest": "/frontend/player/[id]"
         }
+    ],
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "rewrites": [
+      {
+        "source": "/player/:id",
+        "destination": "/frontend/player/[id]"
+      }
     ]
   }
