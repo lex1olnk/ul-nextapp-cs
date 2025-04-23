@@ -24,11 +24,5 @@
         }
     ],
     "cleanUrls": true,
-    "trailingSlash": false,
-    "rewrites": [
-      {
-        "source": "/player/:id",
-        "destination": "/frontend/player/[id]"
-      }
-    ]
+    "trailingSlash": false
   }
