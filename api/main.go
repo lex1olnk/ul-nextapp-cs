@@ -1,3 +1,5 @@
+//local host settings
+/*
 package main
 
 import (
@@ -25,8 +27,7 @@ func ErrRouter(c *gin.Context) {
 		"errors": "this page could not be found",
 	})
 }
-
-/*
+*/
 package handler
 
 import (
@@ -55,4 +56,4 @@ func init() {
 // Entrypoint
 func Handler(w http.ResponseWriter, r *http.Request) {
 	app.ServeHTTP(w, r)
-}*/
+}
