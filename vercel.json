@@ -22,7 +22,5 @@
             "src": "/player/([^/]+)",
             "dest": "/frontend/player/[id]"
         }
-    ],
-    "cleanUrls": true,
-    "trailingSlash": false
+    ]
   }
