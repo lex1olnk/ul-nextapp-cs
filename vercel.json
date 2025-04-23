@@ -17,10 +17,6 @@
         {
             "src": "/(.*)",
             "dest": "frontend/$1"
-        },
-        {
-            "src": "/player/([^/]+)",
-            "dest": "/frontend/player/[id]"
         }
     ]
   }
