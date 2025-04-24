@@ -27,6 +27,17 @@ export interface MatchHistoryEntry {
   won: boolean;
 }
 
+export interface Match {
+  Kills: number;
+  Deaths: number;
+  Assists: number;
+  Headshots: number;
+  KASTScore: number;
+  Damage: number;
+  Rounds: number;
+  MatchID: number;
+}
+
 // Типы для пропсов компонентов
 export type TimeRange = '24h' | '7d' | '30d' | 'all';
 
@@ -40,4 +51,19 @@ export interface StatCardProps {
 export interface ChartContainerProps {
   title: string;
   children: React.ReactNode;
+}
+
+export interface PlayerData {
+  average_stats: {
+    assists: number;
+    damage: number;
+    deaths: number;
+    headshots: number;
+    kast_score: number;
+    kills: number;
+    rating: number;
+    rounds: number;
+  };
+  player_id: number;
+  recent_matches: Match[];
 }
