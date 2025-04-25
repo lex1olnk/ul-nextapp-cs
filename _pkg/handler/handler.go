@@ -83,13 +83,12 @@ func GetPlayer(c *gin.Context) {
 	}
 
 	// Рассчитываем средние значения
-	avgStats := m.CalculateAverageStats(matches)
+	avgStats := m.GetAverageStats(ctx, db.Pool, playerID)
 	fmt.Println(avgStats, matches)
 	// Формируем ответ
 	response := gin.H{
-		"player_id":      playerID,
 		"total_matches":  len(matches),
-		"average_stats":  avgStats,
+		"player_stats":   avgStats,
 		"recent_matches": matches,
 	}
 

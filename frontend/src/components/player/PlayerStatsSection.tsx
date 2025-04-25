@@ -2,7 +2,14 @@ import React from "react";
 import { Card, CardContent } from "./Card";
 import Image from "next/image";
 
-export const PlayerStatsSection = () => {
+export const PlayerStatsSection = ({ 
+  playerStats 
+}: { 
+  playerStats: {
+    kill: number
+  }
+}) => {
+  console.log(playerStats)
   // Data for main stats cards
   const mainStats = [
     {

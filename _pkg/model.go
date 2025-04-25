@@ -324,3 +324,23 @@ type ProfileIcon struct {
 	ID  int    `json:"id"`
 	URL string `json:"url"`
 }
+
+type PlayerComparison struct {
+	PlayerID          int     `json:"player_id"`
+	Nickname          string  `json:"nickname"`
+	ULRating          float64 `json:"ul_rating"`
+	Kills             int     `json:"kills"`
+	Deaths            int     `json:"deaths"`
+	Assists           int     `json:"assists"`
+	FirstKills        int     `json:"fk"`
+	FirstDeaths       int     `json:"fd"`
+	KAST              float64 `json:"kast"`
+	WinratePercentile float64 `json:"winrate_percentile"`
+	KDPercentile      float64 `json:"kd_percentile"`
+	HSPercentile      float64 `json:"hs_percentile"`
+	AvgPercentile     float64 `json:"avg_percentile"`
+	TargetWinrate     float64 `json:"target_winrate"`
+	TargetKD          float64 `json:"target_kd"`
+	TargetHSRatio     float64 `json:"target_hs_ratio"`
+	TargetAvg         float64 `json:"target_avg"`
+}

@@ -34,7 +34,6 @@ func ErrRouter(c *gin.Context) {
 	})
 }
 */
-
 package handler
 
 import (

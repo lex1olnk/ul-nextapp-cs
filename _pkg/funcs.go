@@ -42,94 +42,6 @@ func SendGraphQLRequest(query string, variables map[string]int, responseBody int
 	return true
 }
 
-func CalculateAverageStats(matches []PlayerStats) gin.H {
-	var totalKills, totalDeaths, totalAssists, totalHeadshots int
-	var totalRating, totalDamage, totalKAST float64
-	count := 0
-
-	for _, match := range matches {
-		totalKills += match.Kills
-		totalDeaths += match.Deaths
-		totalAssists += match.Assists
-		totalHeadshots += match.Headshots
-		totalRating += match.Rating
-		totalDamage += match.Damage
-		totalKAST += match.KASTScore
-		count += match.Rounds
-	}
-
-	return gin.H{
-		"kills":      float64(totalKills) / float64(count),
-		"deaths":     float64(totalDeaths) / float64(count),
-		"assists":    float64(totalAssists) / float64(count),
-		"headshots":  float64(totalHeadshots) / float64(count),
-		"rating":     totalRating / float64(count),
-		"damage":     totalDamage / float64(count),
-		"kast_score": totalKAST / float64(count),
-		"rounds":     count,
-	}
-}
-
-func GetPlayerMatches(ctx context.Context, pool *pgxpool.Pool, playerID int, limit int) ([]PlayerStats, error) {
-	query := `
-		SELECT 
-			mp.match_id,
-			mp.kills,
-			mp.deaths,
-			mp.assists,
-			mp.headshots,
-			mp.exchanged,
-			mp.firstdeaths,
-			mp.firstkills,
-			mp.damage,
-			mp.kastscore,
-			mp.multi_kills,
-			mp.clutches,
-			m.rounds
-		FROM 
-			match_players AS mp
-		JOIN 
-			matches AS m ON mp.match_id = m.id
-		WHERE 
-			mp.player_id = $1
-		ORDER BY 
-			mp.created_at DESC
-		LIMIT $2;
-    `
-
-	rows, err := pool.Query(ctx, query, playerID, limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var matches []PlayerStats
-	for rows.Next() {
-		var stats PlayerStats
-		err := rows.Scan(
-			&stats.MatchID,
-			&stats.Kills,
-			&stats.Deaths,
-			&stats.Assists,
-			&stats.Headshots,
-			&stats.Exchanged,
-			&stats.FirstDeath,
-			&stats.FirstKill,
-			&stats.Damage,
-			&stats.KASTScore,
-			&stats.MultiKills,
-			&stats.Clutches,
-			&stats.Rounds,
-		)
-		if err != nil {
-			return nil, err
-		}
-		matches = append(matches, stats)
-	}
-
-	return matches, nil
-}
-
 func GetMatchMembers(matchID int, stats *Stats) Match {
 	query := fullMatchQuery
 
@@ -339,7 +251,7 @@ func CreateMatch(pool *pgxpool.Pool, matchID int) error {
 			`INSERT INTO match_players 
 			(match_id, player_id, player_team_id, kills, deaths, assists, headshots, exchanged, 
 			kastscore, firstdeaths, firstkills, damage, impact, rating, multi_kills, clutches)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
 			matchID,
 			userID,
 			player.TeamID,
@@ -388,7 +300,7 @@ func CalculateTrade(index int, killer Kill, kills []Kill, stats *Stats) int {
 }
 
 func GetAggregatedPlayerStats(ctx context.Context, pool *pgxpool.Pool) ([]PlayerStats, error) {
-	query := GetPlayersStats
+	query := GetPlayerStats
 
 	rows, err := pool.Query(ctx, query)
 	if err != nil {
@@ -561,5 +473,114 @@ func (stats *Stats) ProcessDamage(Damages []Damage) {
 			stats.Players[damage.InflictorId] = &PlayerStats{}
 		}
 		stats.Players[damage.InflictorId].Damage += float64(damage.DamageNormalized)
+	}
+}
+
+func GetPlayerMatches(ctx context.Context, pool *pgxpool.Pool, playerID int, limit int) ([]PlayerStats, error) {
+	query := `
+		SELECT 
+			mp.match_id,
+			mp.kills,
+			mp.deaths,
+			mp.assists,
+			mp.headshots,
+			mp.exchanged,
+			mp.firstdeaths,
+			mp.firstkills,
+			mp.damage,
+			mp.kastscore,
+			mp.multi_kills,
+			mp.clutches,
+			m.rounds
+		FROM 
+			match_players AS mp
+		JOIN 
+			matches AS m ON mp.match_id = m.id
+		WHERE 
+			mp.player_id = $1
+		ORDER BY 
+			mp.created_at DESC
+		LIMIT $2;
+    `
+
+	rows, err := pool.Query(ctx, query, playerID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var matches []PlayerStats
+	for rows.Next() {
+		var stats PlayerStats
+		err := rows.Scan(
+			&stats.MatchID,
+			&stats.Kills,
+			&stats.Deaths,
+			&stats.Assists,
+			&stats.Headshots,
+			&stats.Exchanged,
+			&stats.FirstDeath,
+			&stats.FirstKill,
+			&stats.Damage,
+			&stats.KASTScore,
+			&stats.MultiKills,
+			&stats.Clutches,
+			&stats.Rounds,
+		)
+		if err != nil {
+			return nil, err
+		}
+		matches = append(matches, stats)
+	}
+
+	return matches, nil
+}
+
+func GetAverageStats(ctx context.Context, pool *pgxpool.Pool, playerID int) gin.H {
+	query := GetAverageStatsQuery
+
+	var result PlayerComparison
+	err := pool.QueryRow(ctx, query, playerID).Scan(
+		&result.PlayerID,
+		&result.Nickname,
+		&result.ULRating,
+		&result.Kills,
+		&result.Deaths,
+		&result.Assists,
+		&result.FirstKills,
+		&result.FirstDeaths,
+		&result.KAST,
+		&result.WinratePercentile,
+		&result.KDPercentile,
+		&result.HSPercentile,
+		&result.AvgPercentile,
+		&result.TargetWinrate,
+		&result.TargetKD,
+		&result.TargetHSRatio,
+		&result.TargetAvg,
+	)
+
+	if err != nil {
+		return gin.H{"error": err}
+	}
+
+	return gin.H{
+		"playerID":      result.PlayerID,
+		"nickname":      result.Nickname,
+		"uLRating":      result.ULRating,
+		"kills":         result.Kills,
+		"deaths":        result.Deaths,
+		"assists":       result.Assists,
+		"firstKills":    result.FirstKills,
+		"firstDeaths":   result.FirstDeaths,
+		"kast":          result.KAST,
+		"winrateAdv":    result.WinratePercentile,
+		"kdAdv":         result.KDPercentile,
+		"hsAdv":         result.HSPercentile,
+		"avgAdv":        result.AvgPercentile,
+		"TargetWinrate": result.TargetWinrate,
+		"TargetKD":      result.TargetKD,
+		"TargetHSRatio": result.TargetHSRatio,
+		"TargetAvg":     result.TargetAvg,
 	}
 }

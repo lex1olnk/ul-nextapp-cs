@@ -31,6 +31,7 @@ interface PlayerStats {
   ClutchScore: number;
   Rating: number;
   MatchID: number;
+  IsWinner: boolean;
   Date: string;
 }
 const colors = [
@@ -50,7 +51,7 @@ const colors = [
 
 
 const PlayersStatsPage: React.FC = async () => {
-  const response = await axios.get<{"Players": PlayerStats[]}>('api/matches');
+  const response = await axios.get<{"Players": PlayerStats[]}>('https://vercel-fastcup.vercel.app/api/matches');
   const players = response.data.Players
   
   const getRatingColor = (rating: number) => {
