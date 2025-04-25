@@ -93,6 +93,7 @@ type PlayerStats struct {
 	ClutchScore int
 	Rating      float64
 	MatchID     int
+	Map         string
 	IsWinner    bool
 }
 
@@ -103,11 +104,8 @@ func (p *PlayerStats) CalculateDerivedStats() {
 
 	p.KPR = float64(p.Kills) / float64(p.Rounds)
 	p.DPR = float64(p.Deaths) / float64(p.Rounds)
-	p.KASTScore = (p.KASTScore / float64(p.Rounds)) * 100
 	p.Impact = p.CalculateImpact()
 	p.ClutchScore = p.CalculateClutchScore()
-	p.Headshots = (p.Headshots * 100) / p.Rounds
-	p.Damage /= float64(p.Rounds)
 	p.Rating = p.CalculateRating()
 }
 
@@ -134,10 +132,10 @@ func (p *PlayerStats) CalculateClutchScore() int {
 }
 
 func (p *PlayerStats) CalculateRating() float64 {
-	return kastWeight*p.KASTScore +
+	return kastWeight*p.KASTScore*100/float64(p.Rounds) +
 		kdprWeight*(float64(p.Kills)/float64(p.Deaths)) +
 		impactWeight*p.Impact +
-		damageWeight*p.Damage
+		damageWeight*p.Damage/float64(p.Rounds)
 }
 
 type Stats struct {

@@ -1,36 +1,34 @@
 import React from "react";
 import { Card, CardContent } from "./Card";
 import Image from "next/image";
+import { PlayerComparison } from "@/types/types";
 
 export const PlayerStatsSection = ({ 
   playerStats 
 }: { 
-  playerStats: {
-    kill: number
-  }
+  playerStats: PlayerComparison
 }) => {
-  console.log(playerStats)
   // Data for main stats cards
   const mainStats = [
     {
       title: "Damage/Round",
-      value: "145.2",
-      percentile: "Top 0.1%",
+      key: "TargetAvg",
+      percentile: "avgAdv",
     },
     {
       title: "K/D Ratio",
-      value: "2.3",
-      percentile: "Top 0.1%",
+      key: "TargetKD",
+      percentile: "kdAdv",
     },
     {
       title: "Headshot %",
-      value: "77%",
-      percentile: "Top 0.1%",
+      key: "TargetHSRatio",
+      percentile: "hsAdv",
     },
     {
       title: "Winrate",
-      value: "100%",
-      percentile: "Top 0.1%",
+      key: "TargetWinrate",
+      percentile: "winrateAdv",
     },
   ];
 
@@ -38,27 +36,27 @@ export const PlayerStatsSection = ({
   const secondaryStats = [
     {
       title: "Kills",
-      value: "3",
+      key: "kills",
     },
     {
       title: "Deaths",
-      value: "3",
+      key: "deaths",
     },
     {
       title: "Assists",
-      value: "3",
+      key: "assists",
     },
     {
       title: "KAST",
-      value: "73%",
+      key: "kast",
     },
     {
-      title: "FK/FD",
-      value: "13/2",
+      title: "FK",
+      key: "firstKills",
     },
     {
       title: "UL Rating",
-      value: "84.2",
+      key: "uLRating",
     },
   ];
 
@@ -116,10 +114,10 @@ export const PlayerStatsSection = ({
                       {stat.title}
                     </div>
                     <div className="font-medium text-white text-base">
-                      {stat.value}
+                      {playerStats[stat.key]}
                     </div>
                     <div className="font-normal text-[#c7c7c7] text-[11px]">
-                      {stat.percentile}
+                      Top {playerStats[stat.percentile]}%
                     </div>
                   </div>
                 </div>
@@ -141,7 +139,7 @@ export const PlayerStatsSection = ({
                     {stat.title}
                   </div>
                   <div className="font-normal text-white text-sm">
-                    {stat.value}
+                    {playerStats[stat.key]}
                   </div>
                 </div>
               </CardContent>

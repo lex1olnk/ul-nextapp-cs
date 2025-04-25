@@ -14,10 +14,10 @@ WITH player_stats AS (
 		SUM(firstdeaths) as fd,
 		ROUND(SUM(kastscore)::DECIMAL / SUM(m.rounds)::DECIMAL * 100, 2) as kast,
 		COUNT(DISTINCT CASE WHEN m.team_winner_id = mp.player_team_id THEN m.id END)::DECIMAL /
-		COUNT(DISTINCT m.id)::DECIMAL
+		COUNT(DISTINCT m.id)::DECIMAL * 100
         	AS winrate,
         SUM(kills)::DECIMAL / NULLIF(SUM(deaths)::DECIMAL, 2) AS kd_ratio,
-        COALESCE(SUM(headshots), 0) / SUM(mp.kills)::DECIMAL AS total_hs_ratio,
+        COALESCE(SUM(headshots), 0) / SUM(mp.kills)::DECIMAL * 100 AS total_hs_ratio,
         COALESCE(SUM(mp.damage), 0) / SUM(m.rounds)::DECIMAL AS total_avg
     FROM match_players mp
     JOIN players p ON mp.player_id = p.id

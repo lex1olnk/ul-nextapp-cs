@@ -3,7 +3,7 @@ import { RatingChart } from "./RatingChart";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export default function PlayerCard ({ data } : { data: PlayerData}) {
-    const { recent_matches, average_stats} = data
+    const { recent_matches, player_stats } = data
     const chartData = recent_matches
     .slice(0, 10)
     .map((match, index) => ({
@@ -14,44 +14,44 @@ export default function PlayerCard ({ data } : { data: PlayerData}) {
     return (<div className="bg-lightdark text-gray-100 min-h-screen max-w-7xl p-8 mx-auto">
         {/* Заголовок */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Игрок #{data.player_id}</h1>
+          <h1 className="text-3xl font-bold">Игрок #{player_stats.playerID}</h1>
         </div>
         
         {/* Основные показатели */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatCard 
             title="Рейтинг" 
-            value={average_stats.rating || 'N/A'}
+            value={1 || 'N/A'}
             trend="neutral"
           />
           <StatCard
             title="K/D"
-            value={`${average_stats.kills.toFixed(1)}/${average_stats.deaths.toFixed(1)}`}
-            trend={average_stats.kills / average_stats.deaths > 1 ? 'positive' : 'negative'}
+            value={`${player_stats.kills.toFixed(1)}/${player_stats.deaths.toFixed(1)}`}
+            trend={player_stats.kills / player_stats.deaths > 1 ? 'positive' : 'negative'}
           />
           <StatCard
             title="HS%"
-            value={`${(average_stats.headshots * 100).toFixed(1)}%`}
-            progress={average_stats.headshots}
+            value={`${(player_stats.TargetHSRatio * 100).toFixed(1)}%`}
+            progress={player_stats.TargetHSRatio}
           />
           <StatCard
             title="KAST"
-            value={`${(average_stats.kast_score * 100).toFixed(1)}%`}
-            progress={average_stats.kast_score}
+            value={`${(player_stats.kast * 100).toFixed(1)}%`}
+            progress={player_stats.kast}
           />
         </div>
         
-        {/* Детальная статистика */}
+        Детальная статистика 
         <div className="bg-gray-800 rounded-lg p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4">Средние показатели</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <StatItem title="Урон за раунд" value={average_stats.damage.toFixed(1)} />
-            <StatItem title="Убийств за раунд" value={average_stats.kills.toFixed(2)} />
-            <StatItem title="Смертей за раунд" value={average_stats.deaths.toFixed(2)} />
-            <StatItem title="Ассистов за раунд" value={average_stats.assists.toFixed(2)} />
-            <StatItem title="Сыграно раундов" value={average_stats.rounds} />
+            <StatItem title="Урон за раунд" value={player_stats.avgAdv.toFixed(1)} />
+            <StatItem title="Убийств за раунд" value={player_stats.kills.toFixed(2)} />
+            <StatItem title="Смертей за раунд" value={player_stats.deaths.toFixed(2)} />
+            <StatItem title="Ассистов за раунд" value={player_stats.assists.toFixed(2)} />
           </div>
         </div>
+        
         
         {/* Последние матчи */}
         <div className="bg-gray-800 rounded-lg p-6 mb-8">

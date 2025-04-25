@@ -19,7 +19,6 @@ async function getPlayerData(id: string): Promise<PlayerData> {
 export default async function PlayerPage({ params }: { params: Promise<{ id: string }>}) {
   const { id } = await params
   const data = await getPlayerData(id);
-  console.log(data)
   if (!data) {
     return (
       <div className=" bg-[--light-dark] text-gray-100 min-h-screen p-8 flex items-center justify-center">
@@ -32,10 +31,10 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
     <div className='flex flex-col max-w-[1080px] mx-auto pt-4'>
       <div className='flex lg:flex-row md:flex-col sm:flex-col justify-between'>
         <div className="flex flex-col max-w-[717px]">
-          <PlayerInfoSection nickname={"user"} userId={data.player_id}/>
+          <PlayerInfoSection nickname={data.player_stats.nickname} userId={data.player_stats.playerID}/>
           <div className="relative">
               <div className="absolute w-3 h-[45px] -top-[20px] left-[24px] bg-white rounded-sm" />
-              <PlayerStatsSection />
+              <PlayerStatsSection playerStats={data.player_stats}/>
             </div>
         </div>
         <WindroseChart />

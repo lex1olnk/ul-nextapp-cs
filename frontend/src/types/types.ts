@@ -53,17 +53,28 @@ export interface ChartContainerProps {
   children: React.ReactNode;
 }
 
+export interface PlayerComparison {
+  playerID: number;
+  nickname: string;
+  uLRating: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  firstKills: number;
+  firstDeaths: number;
+  kast: number;
+  TargetWinrate: number;
+  TargetKD: number;
+  TargetHSRatio: number;
+  TargetAvg: number;
+  winrateAdv: number;
+  kdAdv: number;
+  hsAdv: number;
+  avgAdv: number;
+}
+
+
 export interface PlayerData {
-  average_stats: {
-    assists: number;
-    damage: number;
-    deaths: number;
-    headshots: number;
-    kast_score: number;
-    kills: number;
-    rating: number;
-    rounds: number;
-  };
-  player_id: number;
+  player_stats: PlayerComparison;
   recent_matches: Match[];
 }

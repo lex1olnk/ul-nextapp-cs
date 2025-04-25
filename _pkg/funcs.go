@@ -213,17 +213,19 @@ func CreateMatch(pool *pgxpool.Pool, matchID int) error {
 	if match.Teams[1].IsWinner {
 		winnerID = match.Teams[1].ID
 	}
+
 	fmt.Println("STEP 4")
 	// Вставка данных матча
 	_, err = tx.Exec(ctx,
 		`INSERT INTO matches 
-		(id, rounds, started_at, finished_at, team_winner_id)
-		VALUES ($1, $2, $3, $4, $5)`,
+		(id, rounds, started_at, finished_at, team_winner_id, map)
+		VALUES ($1, $2, $3, $4, $5, $6)`,
 		matchID,
 		len(match.Rounds),
 		match.StartedAt,
 		match.FinishedAt,
 		winnerID,
+		match.Maps[0].Map.Name,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to insert match: %w", err)
@@ -245,8 +247,7 @@ func CreateMatch(pool *pgxpool.Pool, matchID int) error {
 
 	// Вставка статистики игроков
 	for userID, player := range stats.Players {
-		player.Impact = player.CalculateImpact()
-		player.Rating = player.CalculateRating()
+		player.CalculateDerivedStats()
 		_, err = tx.Exec(ctx,
 			`INSERT INTO match_players 
 			(match_id, player_id, player_team_id, kills, deaths, assists, headshots, exchanged, 
@@ -480,6 +481,7 @@ func GetPlayerMatches(ctx context.Context, pool *pgxpool.Pool, playerID int, lim
 	query := `
 		SELECT 
 			mp.match_id,
+			m.map,
 			mp.kills,
 			mp.deaths,
 			mp.assists,
@@ -512,8 +514,10 @@ func GetPlayerMatches(ctx context.Context, pool *pgxpool.Pool, playerID int, lim
 	var matches []PlayerStats
 	for rows.Next() {
 		var stats PlayerStats
+
 		err := rows.Scan(
 			&stats.MatchID,
+			&stats.Map,
 			&stats.Kills,
 			&stats.Deaths,
 			&stats.Assists,
@@ -527,6 +531,7 @@ func GetPlayerMatches(ctx context.Context, pool *pgxpool.Pool, playerID int, lim
 			&stats.Clutches,
 			&stats.Rounds,
 		)
+		stats.CalculateDerivedStats()
 		if err != nil {
 			return nil, err
 		}

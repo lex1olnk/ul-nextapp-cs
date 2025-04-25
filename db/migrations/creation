@@ -25,6 +25,7 @@ CREATE TABLE matches (
     rounds INTEGER NOT NULL,
     started_at TIMESTAMP,
     finished_at TIMESTAMP,
+    map VARCHAR(50) NOT NULL,
     team_winner_id INTEGER NOT NULL REFERENCES teams(team_id), -- Исправленная ссылка
     ul_tournament_id UUID REFERENCES ul_tournaments(id) ON DELETE SET NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
