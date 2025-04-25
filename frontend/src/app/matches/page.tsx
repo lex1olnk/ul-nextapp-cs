@@ -24,6 +24,7 @@ interface PlayerStats {
   MultiKills: number[];
   Clutches: number[];
   Rounds: number;
+  TeamID: number;
   KPR: number;
   DPR: number;
   Impact: number;
@@ -49,7 +50,7 @@ const colors = [
 
 
 const PlayersStatsPage: React.FC = async () => {
-  const response = await axios.get<{"Players": PlayerStats[]}>('https://vercel-fastcup.vercel.app/api/matches');
+  const response = await axios.get<{"Players": PlayerStats[]}>('api/matches');
   const players = response.data.Players
   
   const getRatingColor = (rating: number) => {
