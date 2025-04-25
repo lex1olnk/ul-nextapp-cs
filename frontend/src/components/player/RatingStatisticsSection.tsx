@@ -48,14 +48,14 @@ export const RatingStatisticsSection = () => {
   ];
 
   return (
-    <table className="stats-table border-spacing-y-2 border-separate w-full bg-light-dark">
+    <table className="stats-table border-spacing-y-2 border-separate w-full bg-light-dark text-left pl-8 py-3.5 pr-4">
       <thead>
         <tr>
-          <th>Kills</th>
-          <th>Deaths</th>
-          <th>HS%</th>
-          <th>KAST</th>
-          <th>Matches</th>
+          <th>Date</th>
+          <th>Map</th>
+          <th>K / D / A</th>
+          <th>Rating</th>
+          <th>Rating%</th>
         </tr>
       </thead>
       <tbody className="">
@@ -63,8 +63,8 @@ export const RatingStatisticsSection = () => {
           <tr key={index} className='my-4'>
             <td>{match.date}</td>
             <td>{match.map}</td>
-            <td>{match.kda}%</td>
-            <td>{match.rating}%</td>
+            <td>{match.kda}</td>
+            <td>{match.rating}</td>
             <td>{match.ratingPercentage}</td>
           </tr>
         )))}

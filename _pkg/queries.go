@@ -1,7 +1,7 @@
 package pkg
 
 var GetPlayersStats = `SELECT 
-	p.player_id,
+	p.id,
 	p.nickname,
 	p.UL_rating,
 	COUNT(mp.match_id) AS matches,
@@ -14,6 +14,7 @@ var GetPlayersStats = `SELECT
 	COALESCE(SUM(mp.exchanged), 0) AS exchanged,
 	COALESCE(SUM(mp.firstdeaths), 0) AS firstdeaths,
 	COALESCE(SUM(mp.firstkills), 0) AS firstkills,
+	COALESCE(SUM(mp.rating), 0) AS rating,
 	ARRAY[
 	COALESCE(SUM(mp.multi_kills[1]), 0),
 	COALESCE(SUM(mp.multi_kills[2]), 0),
@@ -30,9 +31,9 @@ var GetPlayersStats = `SELECT
 	] AS total_clutches,
 	COALESCE(SUM(m.rounds), 0) AS total_rounds
 	FROM players p
-	LEFT JOIN match_players mp ON p.player_id = mp.player_id
-	LEFT JOIN matches m ON mp.match_id = m.match_id
-	GROUP BY p.player_id, p.nickname, p.UL_rating
+	LEFT JOIN match_players mp ON p.id = mp.player_id
+	LEFT JOIN matches m ON mp.match_id = m.id
+	GROUP BY p.id, p.nickname, p.UL_rating
 	ORDER BY p.nickname`
 
 var matchDamageQuery = `

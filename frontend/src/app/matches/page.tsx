@@ -89,7 +89,7 @@ const PlayersStatsPage: React.FC = async () => {
           <tbody>
             {players.map(((player, index) => (
               <tr key={player.ID} className='my-4'>
-                <td>{index < 3 && <Image className="flex absolute translate-x-2.5 -translate-y-2" src={colors[index].img} alt="top" />}{index == 0 && <Image className='flex absolute w-24 mix-blend-screen -translate-x-6 -translate-y-2' src={logo} alt="loading..." />}<span className='text-center'>{index + 1}</span></td>
+                <td>{index < 3 && <Image className="flex absolute translate-x-2.5 -translate-y-2" src={colors[index].img} alt="top" />}{index == 0 && <Image className='flex absolute w-24 mix-blend-screen -translate-x-6 -translate-y-4' src={logo} alt="loading..." />}<span className='text-center'>{index + 1}</span></td>
                 <td>
                   <Link href={`/player/${player.ID}`} className='flex flex-row absolute -translate-y-3 '>
                     <span className='flex'>{player.Nickname}</span>

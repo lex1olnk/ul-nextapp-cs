@@ -2,14 +2,12 @@ package pkg
 
 import (
 	"time"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const (
 	kastWeight   = 0.0045
 	kdprWeight   = 0.2
-	impactWeight = 0.747
+	impactWeight = 0.77
 	damageWeight = 0.00328
 )
 
@@ -85,15 +83,17 @@ type PlayerStats struct {
 	Exchanged   int
 	FirstDeath  int
 	FirstKill   int
-	MultiKills  pgtype.FlatArray[int]
-	Clutches    pgtype.FlatArray[int]
+	MultiKills  [5]int
+	Clutches    [5]int
 	Rounds      int
+	TeamID      int
 	KPR         float64
 	DPR         float64
 	Impact      float64
 	ClutchScore int
 	Rating      float64
 	MatchID     int
+	IsWinner    bool
 }
 
 func (p *PlayerStats) CalculateDerivedStats() {
@@ -113,11 +113,11 @@ func (p *PlayerStats) CalculateDerivedStats() {
 
 func (p *PlayerStats) CalculateImpact() float64 {
 	return (1*float64(p.FirstKill) +
-		-0.5*float64(p.FirstDeath) +
-		0.8*float64(p.MultiKills[1]) +
-		1.08*float64(p.MultiKills[2]) +
-		1.24*float64(p.MultiKills[3]) +
-		1.4*float64(p.MultiKills[4]) +
+		-0.6*float64(p.FirstDeath) +
+		0.8*float64(p.MultiKills[1]-p.Clutches[1]) +
+		1.08*float64(p.MultiKills[2]-p.Clutches[2]) +
+		1.24*float64(p.MultiKills[3]-p.Clutches[3]) +
+		1.4*float64(p.MultiKills[4]-p.Clutches[4]) +
 		float64(p.Clutches[0]) +
 		2*float64(p.Clutches[1]) +
 		3*float64(p.Clutches[2]) +
@@ -251,10 +251,10 @@ type MatchTeam struct {
 	Name           string             `json:"name"`
 	Size           int                `json:"size"`
 	Score          int                `json:"score"`
-	ChatID         *int               `json:"chat_id"` // Исправлено на *int
-	IsWinner       bool               `json:"is_winner"`
-	CaptainID      *int               `json:"captain_id"` // Исправлено на *int
-	IsDisqualified bool               `json:"is_disqualified"`
+	ChatID         *int               `json:"chatId"` // Исправлено на *int
+	IsWinner       bool               `json:"isWinner"`
+	CaptainID      *int               `json:"captainId"` // Исправлено на *int
+	IsDisqualified bool               `json:"isDisqualified"`
 	MapStats       []MatchTeamMapStat `json:"map_stats"`
 	Typename       string             `json:"__typename"`
 }
@@ -267,7 +267,7 @@ type Member struct {
 	Connected   bool               `json:"connected"`
 	IsLeaver    bool               `json:"is_leaver"`
 	RatingDiff  *float64           `json:"rating_diff"` // Исправлено на указатель
-	MatchTeamID int                `json:"match_team_id"`
+	MatchTeamID int                `json:"matchTeamId"`
 	Private     MatchMemberPrivate `json:"private"`
 	Typename    string             `json:"__typename"`
 }
@@ -285,10 +285,10 @@ type User struct {
 	Avatar                        string        `json:"avatar"`
 	Online                        bool          `json:"online"`
 	Verified                      bool          `json:"verified"`
-	IsMobile                      bool          `json:"is_mobile"`
+	IsMobile                      bool          `json:"isMobile"`
 	NickName                      string        `json:"nickName"`
 	AnimatedAvatar                *string       `json:"animated_avatar"` // Исправлено на указатель
-	IsMedia                       bool          `json:"is_media"`
+	IsMedia                       bool          `json:"isMedia"`
 	DisplayMediaStatus            bool          `json:"display_media_status"`
 	PrivacyOnlineStatusVisibility string        `json:"privacy_online_status_visibility"`
 	Subscription                  *Subscription `json:"subscription"`
@@ -303,7 +303,7 @@ type UserStat struct {
 	Place      *int    `json:"place"` // Исправлено на указатель
 	Rating     float64 `json:"rating"`
 	WinRate    float64 `json:"win_rate"`
-	GameModeID int     `json:"game_mode_id"`
+	GameModeID int     `json:"gameModeId"`
 	Typename   string  `json:"__typename"`
 }
 

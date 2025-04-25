@@ -98,7 +98,7 @@ export const WindroseChart = () => {
   return (
     <div style={{ 
       width: '330px', 
-      height: '330px',
+      height: '357px',
       padding: '4px',
     }} className=' bg-light-dark'>
       <Radar 

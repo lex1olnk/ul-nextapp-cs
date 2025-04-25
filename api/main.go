@@ -16,9 +16,15 @@ func HomepageHandler(c *gin.Context) {
 
 func main() {
 	router := gin.Default()
+
+	router.GET("/ping", handler.Ping)
+
 	router.GET("/player/:id", handler.GetPlayer)
 
 	router.GET("/matches", handler.GetMatches)
+
+	router.POST("/matches", handler.PostMatches)
+
 	router.Run()
 }
 
@@ -28,6 +34,7 @@ func ErrRouter(c *gin.Context) {
 	})
 }
 */
+
 package handler
 
 import (

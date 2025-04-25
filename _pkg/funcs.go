@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -88,7 +89,7 @@ func GetPlayerMatches(ctx context.Context, pool *pgxpool.Pool, playerID int, lim
 		FROM 
 			match_players AS mp
 		JOIN 
-			matches AS m ON mp.match_id = m.match_id
+			matches AS m ON mp.match_id = m.id
 		WHERE 
 			mp.player_id = $1
 		ORDER BY 
@@ -170,8 +171,9 @@ func GetMatchKills(matchID int, stats *Stats, currentPlayers []int) bool {
 	if !SendGraphQLRequest(query, variables, &responseBody) {
 		return false
 	}
-
+	fmt.Println("1")
 	stats.ProcessKills(responseBody.Data.Kills, currentPlayers)
+	fmt.Println("2")
 	return true
 }
 
@@ -200,6 +202,7 @@ func (stats *Stats) AddMatchData(match Match) {
 			stats.Players[user.ID] = &PlayerStats{}
 			stats.Players[user.ID].ID = user.ID
 			stats.Players[user.ID].Nickname = user.NickName
+			stats.Players[user.ID].TeamID = player.MatchTeamID
 		}
 		stats.Players[user.ID].Rounds += len(match.Rounds)
 	}
@@ -232,14 +235,14 @@ func CreateMatch(pool *pgxpool.Pool, matchID int) error {
 	// Проверка существования матча
 	var exists bool
 	err = tx.QueryRow(ctx,
-		"SELECT EXISTS(SELECT 1 FROM matches WHERE match_id = $1)",
+		"SELECT EXISTS(SELECT 1 FROM matches WHERE id = $1)",
 		matchID).Scan(&exists)
 
 	if err != nil {
 		return fmt.Errorf("match check failed: %w", err)
 	}
 	if exists {
-		return nil
+		return fmt.Errorf("match not found: %w", err)
 	}
 	fmt.Println("STEP 2")
 	// Получение данных матча
@@ -248,6 +251,23 @@ func CreateMatch(pool *pgxpool.Pool, matchID int) error {
 	if err != nil {
 		return fmt.Errorf("failed to get match members: %w", err)
 	}
+	fmt.Println("step2.2")
+	// Добавление команды
+	for _, team := range match.Teams {
+		//fmt.Println("team"+strconv.Itoa(team.ID), team.ID)
+		_, err := tx.Exec(ctx,
+			`INSERT INTO teams (team_id, team_name)
+			VALUES ($1, $2)`,
+			team.ID,
+			"team"+strconv.Itoa(team.ID),
+		)
+
+		if err != nil {
+			fmt.Println("failed to insert team", err)
+			return fmt.Errorf("player check failed: %w", err)
+		}
+	}
+
 	fmt.Println("STEP 3")
 	// Обработка игроков
 	var playerIDs []int
@@ -255,19 +275,18 @@ func CreateMatch(pool *pgxpool.Pool, matchID int) error {
 		var exist bool
 
 		err = tx.QueryRow(ctx,
-			"SELECT EXISTS(SELECT 1 FROM players WHERE player_id = $1)",
+			"SELECT EXISTS(SELECT 1 FROM players WHERE id = $1)",
 			userID).Scan(&exist)
 
 		if err != nil {
 			return fmt.Errorf("player check failed: %w", err)
 		}
-
 		playerIDs = append(playerIDs, userID)
 		if exist {
 			continue
 		}
 		_, err := tx.Exec(ctx,
-			`INSERT INTO players (player_id, ul_rating, nickname)
+			`INSERT INTO players (id, ul_rating, nickname)
 			VALUES ($1, $2, $3)`,
 			userID,
 			0.0,
@@ -278,43 +297,52 @@ func CreateMatch(pool *pgxpool.Pool, matchID int) error {
 		}
 
 	}
+	winnerID := match.Teams[0].ID
+	if match.Teams[1].IsWinner {
+		winnerID = match.Teams[1].ID
+	}
 	fmt.Println("STEP 4")
 	// Вставка данных матча
 	_, err = tx.Exec(ctx,
 		`INSERT INTO matches 
-		(match_id, rounds, started_at, finished_at)
-		VALUES ($1, $2, $3, $4)`,
+		(id, rounds, started_at, finished_at, team_winner_id)
+		VALUES ($1, $2, $3, $4, $5)`,
 		matchID,
 		len(match.Rounds),
 		match.StartedAt,
 		match.FinishedAt,
+		winnerID,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to insert match: %w", err)
 	}
-
+	fmt.Println("STEP 4 1")
 	if !GetMatchKills(matchID, stats, playerIDs) {
 		return errors.New("failed to take kills")
 	}
-
+	fmt.Println("STEP 4 2")
 	if !GetMatchDamages(matchID, stats) {
 		return errors.New("failed to take damages")
 	}
-
+	fmt.Println("STEP 4")
 	if !GetMatchClutches(matchID, stats) {
 		return errors.New("failed to take clutches")
 	}
+
 	fmt.Println("inserting")
 
 	// Вставка статистики игроков
 	for userID, player := range stats.Players {
+		player.Impact = player.CalculateImpact()
+		player.Rating = player.CalculateRating()
 		_, err = tx.Exec(ctx,
 			`INSERT INTO match_players 
-			(match_id, player_id, kills, deaths, assists, headshots, exchanged, 
-			kastscore, firstdeaths, firstkills, damage, multi_kills, clutches)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+			(match_id, player_id, player_team_id, kills, deaths, assists, headshots, exchanged, 
+			kastscore, firstdeaths, firstkills, damage, impact, rating, multi_kills, clutches)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
 			matchID,
 			userID,
+			player.TeamID,
 			player.Kills,
 			player.Deaths,
 			player.Assists,
@@ -324,6 +352,8 @@ func CreateMatch(pool *pgxpool.Pool, matchID int) error {
 			player.FirstDeath,
 			player.FirstKill,
 			player.Damage,
+			player.Impact,
+			player.Rating,
 			pgtype.FlatArray[int](player.MultiKills[:]),
 			pgtype.FlatArray[int](player.Clutches[:]),
 		)
@@ -383,6 +413,7 @@ func GetAggregatedPlayerStats(ctx context.Context, pool *pgxpool.Pool) ([]Player
 			&s.Exchanged,
 			&s.FirstDeath,
 			&s.FirstKill,
+			&s.Rating,
 			&s.MultiKills,
 			&s.Clutches,
 			&s.Rounds,
@@ -464,7 +495,6 @@ func (stats *Stats) ProcessKills(kills []Kill, currentPlayers []int) {
 			roundKAST[currentPlayers[i]].isDead = true
 		}
 	}
-
 	roundId := 0
 	for i, kill := range kills {
 		if roundId != kill.RoundId {
