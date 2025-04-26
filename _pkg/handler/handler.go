@@ -220,3 +220,7 @@ func PostMatches(c *gin.Context) {
 
 	c.JSON(http.StatusOK, "OK")
 }
+
+func UpdateUlRating(c *gin.Context) {
+
+}

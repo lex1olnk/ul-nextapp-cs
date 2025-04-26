@@ -28,16 +28,15 @@ export interface MatchHistoryEntry {
 }
 
 export interface Match {
-  Kills: number;
-  Map: string;
-  Deaths: number;
-  Assists: number;
-  Headshots: number;
-  KASTScore: number;
-  Damage: number;
-  Rounds: number;
-  Rating: number;
-  MatchID: number;
+  kills: number;
+  map: string;
+  deaths: number;
+  assists: number;
+  kast: number;
+  damage: number;
+  rounds: number;
+  rating: number;
+  matchId: number;
   finishedAt: string;
 }
 

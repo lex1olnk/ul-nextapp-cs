@@ -516,9 +516,8 @@ func GetPlayerMatches(ctx context.Context, pool *pgxpool.Pool, playerID int, lim
 			&stats.Assists,
 			&stats.Rounds,
 			&stats.Rating,
-			&stats.finishedAt,
+			&stats.FinishedAt,
 		)
-
 		if err != nil {
 			return nil, err
 		}

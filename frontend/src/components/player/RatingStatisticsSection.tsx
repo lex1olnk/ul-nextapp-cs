@@ -3,13 +3,7 @@ import { Match } from "@/types/types";
 import React from "react";
 
 export const RatingStatisticsSection = ({ matches }: { matches: Match[]}) => {
-  const dates: Date[] = []
-  
-  matches.map((match) => {
-    const finished = new Date(match.finishedAt)
-    dates.push(finished)
-  })
-
+  console.log(matches)
   return (
     <table className="border-spacing-y-3 border-separate w-full bg-light-dark text-left pl-8 py-2.5 pr-4">
       <thead>
@@ -22,11 +16,11 @@ export const RatingStatisticsSection = ({ matches }: { matches: Match[]}) => {
       </thead>
       <tbody className="">
         {matches.map(((match, index) => (
-          <tr key={index} className=' hover:cursor-pointer border-b-2' onClick={() => window.location.href = `https://cs2.fastcup.net/matches/${match.MatchID}`}>
+          <tr key={index} className=' hover:cursor-pointer border-b-2' onClick={() => window.location.href = `https://cs2.fastcup.net/matches/${match.matchId}`}>
             <td>{match.finishedAt}</td>
-            <td>{match.Map}</td>
-            <td>{match.Kills + ' ' + match.Deaths + ' ' + match.Assists} </td>
-            <td>{match.Rating.toFixed(2)}</td>
+            <td>{match.map}</td>
+            <td>{match.kills + ' ' + match.deaths + ' ' + match.assists} </td>
+            <td>{match.rating.toFixed(2)}</td>
           </tr>
         )))}
       </tbody>

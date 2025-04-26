@@ -20,6 +20,8 @@ func Register(app *gin.Engine) {
 		route.GET("/matches", handler.GetMatches)
 
 		route.POST("/matches", handler.PostMatches)
+
+		route.POST("/ulrating", handler.UpdateUlRating)
 	}
 }
 

@@ -346,14 +346,14 @@ type PlayerComparison struct {
 }
 
 type APIStats struct {
-	MatchID    int
-	Map        string
-	Kills      int
-	Deaths     int
-	Assists    int
-	Rounds     int
-	Rating     float64
-	finishedAt time.Time
+	MatchID    int       `json:"matchId"`
+	Map        string    `json:"map"`
+	Kills      int       `json:"kills"`
+	Deaths     int       `json:"deaths"`
+	Assists    int       `json:"assists"`
+	Rounds     int       `json:"rounds"`
+	Rating     float64   `json:"rating"`
+	FinishedAt time.Time `json:"finishedAt"`
 	// Другие приватные поля
 }
 
