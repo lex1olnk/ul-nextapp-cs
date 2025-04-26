@@ -1,11 +1,19 @@
-export const PlayerInfoSection = ({ nickname, userId }: { nickname: string, userId: number }) => {
+import Image from "next/image"
+
+export const PlayerInfoSection = ({ nickname, userId, src }: { nickname: string, userId: number, src: string }) => {
     return (
         <>
         
         <div className="flex flex-col my-8">
           <div className="relative flex items-start">
             {/* Player Avatar */}
-            <div className="w-[90px] h-[90px] bg-[#2b2b2b] rounded-[45px] mr-4"></div>
+            <Image 
+              src={`https://cdn.fastcup.net/avatars/users/${src}`} 
+              alt="player avatar" 
+              className="bg-[#2b2b2b] rounded-[45px] mr-4 border-2 border-white"
+              width={90}
+              height={90}
+            />
         
             <div className="flex flex-col my-auto">
               {/* Player Name */}

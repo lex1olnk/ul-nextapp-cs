@@ -11,6 +11,7 @@ import {
   PointElement,
   LineElement
 } from 'chart.js';
+import { MapStat } from '@/types/types';
 
 // Регистрируем необходимые компоненты
 ChartJS.register(
@@ -23,28 +24,48 @@ ChartJS.register(
   LineElement
 );
 
-export const WindroseChart = () => {
-  // Пример данных для 7 категорий CS2
-  const maps = [
+function prepareRadarData(mapsStats: MapStat[]) {
+  // Создаем карту сыгранных карт для быстрого доступа
+  const playedMaps = new Map(mapsStats.map(map => [map.map, map]));
+  const mapsNames = [
     'Dust II',
     'Mirage',
     'Inferno',
-    'Overpass',
+    'Anubis',
     'Nuke',
     'Vertigo',
     'Ancient'
   ];
+  // Формируем данные для всех 7 карт
+  return mapsNames.map(mapName => {
+    const mapData = playedMaps.get(mapName);
+    return {
+      map: mapName,
+      avg_rating: mapData?.avgRating || 0,
+      matches: mapData?.matches || 0,
+      winrate: mapData?.winrate || 0,
+      wins: mapData?.wins || 0
+    };
+  });
+}
 
+export const WindroseChart = ({ maps }: { maps: MapStat[] }) => {
+  // Пример данных для 7 категорий CS2
+  const normalizedData = prepareRadarData(maps);
+  const labels = normalizedData.map(map => `${map.map}`)
+  const playedMaps = new Map(normalizedData.map(map => [map.map, map]));
+  console.log(playedMaps)
   const data = {
-    labels: maps,
+    labels: labels,
     datasets: [{
       label: 'Успешность на карте (%)',
-      data: [85, 72, 68, 60, 55, 78, 63], // Пример процентов успеха
+      data: normalizedData.map(map => map.winrate), // Пример процентов успеха
       backgroundColor: 'rgba(255, 99, 132, 0.2)',
       borderColor: 'rgba(255, 99, 132, 1)',
-      borderWidth: 2,
+      borderWidth: 1.5,
       pointBackgroundColor: 'rgba(255, 99, 132, 1)',
       pointBorderColor: '#fff',
+      matches: normalizedData.map(map => map.matches)
     }]
   };
 
@@ -88,7 +109,7 @@ export const WindroseChart = () => {
       },
       tooltip: {
         callbacks: {
-          label: (context) => `${context.dataset.label}: ${context.raw}%`
+          label: (context) => `Сыграно ${playedMaps.get(context.label)?.matches} матчей WR: ${context.raw}%`
         }
       }
     }

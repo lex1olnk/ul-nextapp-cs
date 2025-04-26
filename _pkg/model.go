@@ -73,6 +73,7 @@ type PlayerStats struct {
 	ID          int
 	Nickname    string
 	ULRating    float64
+	IMG         string
 	Matches     int
 	Kills       int
 	Deaths      int
@@ -176,18 +177,18 @@ type Match struct {
 	ID                   int         `json:"id"`
 	Type                 string      `json:"type"`
 	Status               string      `json:"status"`
-	BestOf               int         `json:"best_of"`
-	GameID               int         `json:"game_id"`
-	HasWinner            bool        `json:"has_winner"`
-	StartedAt            time.Time   `json:"started_at"`
-	FinishedAt           *time.Time  `json:"finished_at"`
-	MaxRoundsCount       int         `json:"max_rounds_count"`
-	ServerInstanceID     *int        `json:"server_instance_id"`
+	BestOf               int         `json:"bestOf"`
+	GameID               int         `json:"gameId"`
+	HasWinner            bool        `json:"hasWinner"`
+	StartedAt            time.Time   `json:"startedAt"`
+	FinishedAt           *time.Time  `json:"finishedAt"`
+	MaxRoundsCount       int         `json:"maxRoundsCount"`
+	ServerInstanceID     *int        `json:"serverInstanceDd"`
 	CancellationReason   *string     `json:"cancellation_reason"`
-	ReplayExpirationDate *string     `json:"replay_expiration_date"`
+	ReplayExpirationDate *string     `json:"replayExpirationDate"`
 	Rounds               []Round     `json:"rounds"`
 	Maps                 []MatchMap  `json:"maps"`
-	GameMode             GameMode    `json:"game_mode"`
+	GameMode             GameMode    `json:"gameMode"`
 	Teams                []MatchTeam `json:"teams"`
 	Members              []Member    `json:"members"`
 	Typename             string      `json:"__typename"`
@@ -204,9 +205,9 @@ type GameMode struct {
 type Round struct {
 	ID             int    `json:"id"`
 	WinReason      string `json:"win_reason"`
-	StartedAt      string `json:"started_at"`
-	FinishedAt     string `json:"finished_at"`
-	MatchMapID     int    `json:"match_map_id"`
+	StartedAt      string `json:"startedAt"`
+	FinishedAt     string `json:"finishedAt"`
+	MatchMapID     int    `json:"matchMapId"`
 	SpawnedPlayers []int  `json:"spawned_players"` // Исправлено на slice
 	WinMatchTeamID *int   `json:"win_match_team_id"`
 	Typename       string `json:"__typename"`
@@ -216,8 +217,8 @@ type MatchMap struct {
 	ID         int              `json:"id"`
 	Number     int              `json:"number"`
 	MapID      int              `json:"map_id"`
-	StartedAt  string           `json:"started_at"`
-	FinishedAt *string          `json:"finished_at"`
+	StartedAt  string           `json:"startedAt"`
+	FinishedAt *string          `json:"finishedAt"`
 	GameStatus string           `json:"game_status"`
 	Replays    []MatchMapReplay `json:"replays"`
 	Map        Map              `json:"map"`
@@ -327,6 +328,7 @@ type PlayerComparison struct {
 	PlayerID          int     `json:"player_id"`
 	Nickname          string  `json:"nickname"`
 	ULRating          float64 `json:"ul_rating"`
+	IMG               string  `json:"img"`
 	Kills             int     `json:"kills"`
 	Deaths            int     `json:"deaths"`
 	Assists           int     `json:"assists"`
@@ -341,4 +343,24 @@ type PlayerComparison struct {
 	TargetKD          float64 `json:"target_kd"`
 	TargetHSRatio     float64 `json:"target_hs_ratio"`
 	TargetAvg         float64 `json:"target_avg"`
+}
+
+type APIStats struct {
+	MatchID    int
+	Map        string
+	Kills      int
+	Deaths     int
+	Assists    int
+	Rounds     int
+	Rating     float64
+	finishedAt time.Time
+	// Другие приватные поля
+}
+
+type MapsStatistic struct {
+	Map       string
+	Matches   int
+	Wins      int
+	AvgRating float64
+	Winrate   float64
 }

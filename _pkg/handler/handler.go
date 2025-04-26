@@ -83,12 +83,28 @@ func GetPlayer(c *gin.Context) {
 	}
 
 	// Рассчитываем средние значения
-	avgStats := m.GetAverageStats(ctx, db.Pool, playerID)
+	avgStats, err := m.GetAverageStats(ctx, db.Pool, playerID)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to fetch player avg stats",
+		})
+		return
+	}
+	avgMapsStats, err := m.GetAverageMapsStats(ctx, db.Pool, playerID)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to fetch player avg maps stats",
+		})
+		return
+	}
 	fmt.Println(avgStats, matches)
 	// Формируем ответ
 	response := gin.H{
 		"total_matches":  len(matches),
 		"player_stats":   avgStats,
+		"maps_stats":     avgMapsStats,
 		"recent_matches": matches,
 	}
 
@@ -100,7 +116,6 @@ func GetPlayer(c *gin.Context) {
 }
 
 func GetMatches(c *gin.Context) {
-
 	if err := db.Init(); err != nil {
 		c.JSON(http.StatusExpectationFailed, gin.H{"Message": "failed connect to db"})
 		return
@@ -110,20 +125,16 @@ func GetMatches(c *gin.Context) {
 	players, err := m.GetAggregatedPlayerStats(ctx, db.Pool)
 
 	if err != nil {
-		c.JSON(http.StatusExpectationFailed, gin.H{"Message": "failed to get players"})
+		c.JSON(http.StatusExpectationFailed, gin.H{"Message": err})
 		return
 	}
-	processedPlayers := m.ProcessPlayerStats(players)
 
 	data := struct {
-		Players []m.PlayerStats
+		Players []gin.H
 	}{
-		Players: processedPlayers,
+		Players: players,
 	}
 
-	if err != nil {
-		c.JSON(http.StatusExpectationFailed, gin.H{"Message": "failed to get players"})
-	}
 	c.JSON(http.StatusOK, data)
 }
 
@@ -180,26 +191,29 @@ func PostMatches(c *gin.Context) {
 	re := regexp.MustCompile(`matches/(\d+)`)
 	// 7. Проверяем и выводим данные
 	if len(resp.Values) == 0 {
-		fmt.Println("Данные не найдены.")
-	} else {
-		fmt.Println("Полученные данные:")
-		fmt.Println(spreadsheetId)
-		for _, row := range resp.Values {
-			url := re.FindStringSubmatch(row[0].(string))
-			matchID, err := strconv.Atoi(url[1])
-
-			if err != nil {
-				// ... handle error
-				panic(err)
-			}
-
-			err = m.CreateMatch(db.Pool, matchID)
-			if err != nil {
-				panic(err)
-			}
-
-		}
+		c.JSON(http.StatusExpectationFailed, gin.H{"Message": "failed fetch excel data"})
 	}
+
+	fmt.Println("Полученные данные:")
+	fmt.Println(spreadsheetId)
+	for _, row := range resp.Values {
+		url := re.FindStringSubmatch(row[0].(string))
+		matchID, err := strconv.Atoi(url[1])
+		fmt.Println(matchID)
+		if err != nil {
+			// ... handle error
+			c.JSON(http.StatusExpectationFailed, gin.H{"Message": "matchIdincorrect"})
+			panic(err)
+		}
+
+		err = m.CreateMatch(db.Pool, matchID)
+		if err != nil {
+			c.JSON(http.StatusExpectationFailed, gin.H{"Message": err})
+			panic(err)
+		}
+
+	}
+
 	// Формируем GraphQL-запрос
 
 	// Отправляем HTML-таблицу в ответе

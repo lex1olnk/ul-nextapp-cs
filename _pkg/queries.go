@@ -1,11 +1,33 @@
 package pkg
 
+var GetAverageMapStatsQuery = `
+SELECT
+    m.map AS map,
+    COUNT(*) AS matches,
+    SUM(CASE WHEN m.team_winner_id = mp.player_team_id THEN 1 ELSE 0 END) AS wins,
+	CAST(SUM(mp.rating) / COUNT(*) as DECIMAL(10, 2)) as avg_rating ,
+    ROUND(SUM(CASE WHEN m.team_winner_id = mp.player_team_id THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 0) as winrate 
+FROM 
+    matches m
+JOIN 
+    match_players mp ON m.id = mp.match_id
+JOIN 
+    players p ON mp.player_id = p.id
+WHERE 
+    p.id = $1  -- Замени на нужный player_id
+GROUP BY 
+    m.map
+ORDER BY 
+    matches DESC;
+`
+
 var GetAverageStatsQuery = `
 WITH player_stats AS (
     SELECT 
         mp.player_id,
         p.nickname,
-		p.ul_rating,
+				p.img,
+				p.ul_rating,
         -- Основные метрики для сравнения
 		SUM(kills) as kills,
 		SUM(deaths) as deaths,
@@ -22,7 +44,7 @@ WITH player_stats AS (
     FROM match_players mp
     JOIN players p ON mp.player_id = p.id
     LEFT JOIN matches m ON mp.match_id = m.id
-    GROUP BY mp.player_id, p.nickname, p.ul_rating
+    GROUP BY mp.player_id, p.nickname, p.ul_rating, p.img
 ),
 target_player AS (
     SELECT * FROM player_stats WHERE player_id = $1  -- ID целевого игрока
@@ -32,6 +54,7 @@ comparison AS (
         tp.player_id,
         tp.nickname,
 		tp.ul_rating,
+		tp.img,
 		tp.kills,
 		tp.deaths,
 		tp.assists,
@@ -39,17 +62,17 @@ comparison AS (
 		tp.fd,
 		tp.kast,
         -- Процент игроков с худшим винрейтом
-        1 - ROUND(COUNT(CASE WHEN ps.winrate < tp.winrate THEN 1 END)::DECIMAL / COUNT(tp.player_id)::DECIMAL, 2) AS winrate_percentile,
+    	(1 - ROUND(COUNT(CASE WHEN ps.winrate < tp.winrate THEN 1 END)::DECIMAL / COUNT(tp.player_id)::DECIMAL, 4)) * 100 AS winrate_percentile,
         -- Процент игроков с худшим KD
-        1 - ROUND(COUNT(CASE WHEN ps.kd_ratio < tp.kd_ratio THEN 1 END)::DECIMAL / COUNT(tp.player_id)::DECIMAL, 2) AS kd_percentile,
+    	(1 - ROUND(COUNT(CASE WHEN ps.kd_ratio < tp.kd_ratio THEN 1 END)::DECIMAL / COUNT(tp.player_id)::DECIMAL, 4)) * 100 AS kd_percentile,
         -- Процент игроков с меньшим количеством хедшотов
-        1 - ROUND(COUNT(CASE WHEN ps.total_hs_ratio < tp.total_hs_ratio THEN 1 END)::DECIMAL / COUNT(tp.player_id)::DECIMAL, 2) AS hs_percentile,
-		1 - ROUND(COUNT(CASE WHEN ps.total_avg < tp.total_avg THEN 1 END)::DECIMAL / COUNT(tp.player_id)::DECIMAL, 2) AS avg_percentile
+   	 	(1 - ROUND(COUNT(CASE WHEN ps.total_hs_ratio < tp.total_hs_ratio THEN 1 END)::DECIMAL / COUNT(tp.player_id)::DECIMAL, 4)) * 100 AS hs_percentile,
+		(1 - ROUND(COUNT(CASE WHEN ps.total_avg < tp.total_avg THEN 1 END)::DECIMAL / COUNT(tp.player_id)::DECIMAL, 4)) * 100 AS avg_percentile
 
     FROM target_player tp
     CROSS JOIN player_stats ps
     WHERE ps.player_id != tp.player_id
-    GROUP BY tp.player_id, tp.nickname,tp.ul_rating, tp.kills, tp.deaths, tp.assists, tp.kast, tp.fk, tp.fd
+    GROUP BY tp.player_id, tp.nickname,tp.ul_rating, tp.img, tp.kills, tp.deaths, tp.assists, tp.kast, tp.fk, tp.fd
 )
 
 SELECT 
@@ -66,6 +89,7 @@ var GetPlayerStats = `SELECT
 	p.id,
 	p.nickname,
 	p.UL_rating,
+	p.img,
 	COUNT(mp.match_id) AS matches,
 	COALESCE(SUM(mp.kills), 0) AS kills,
 	COALESCE(SUM(mp.deaths), 0) AS deaths,
@@ -73,24 +97,7 @@ var GetPlayerStats = `SELECT
 	COALESCE(SUM(mp.headshots), 0) AS headshots,
 	COALESCE(SUM(mp.kastscore), 0) AS kastscore,
 	COALESCE(SUM(mp.damage), 0) AS damage,
-	COALESCE(SUM(mp.exchanged), 0) AS exchanged,
-	COALESCE(SUM(mp.firstdeaths), 0) AS firstdeaths,
-	COALESCE(SUM(mp.firstkills), 0) AS firstkills,
 	COALESCE(SUM(mp.rating), 0) AS rating,
-	ARRAY[
-	COALESCE(SUM(mp.multi_kills[1]), 0),
-	COALESCE(SUM(mp.multi_kills[2]), 0),
-	COALESCE(SUM(mp.multi_kills[3]), 0),
-	COALESCE(SUM(mp.multi_kills[4]), 0),
-	COALESCE(SUM(mp.multi_kills[5]), 0)
-	] AS total_multi_kills,
-	ARRAY[
-	COALESCE(SUM(mp.clutches[1]), 0),
-	COALESCE(SUM(mp.clutches[2]), 0),
-	COALESCE(SUM(mp.clutches[3]), 0),
-	COALESCE(SUM(mp.clutches[4]), 0),
-	COALESCE(SUM(mp.clutches[5]), 0)
-	] AS total_clutches,
 	COALESCE(SUM(m.rounds), 0) AS total_rounds
 	FROM players p
 	LEFT JOIN match_players mp ON p.id = mp.player_id

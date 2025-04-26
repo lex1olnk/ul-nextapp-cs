@@ -107,7 +107,9 @@ export const PlayerStatsSection = ({
               <CardContent className="p-0 h-full">
                 <div className="relative h-full">
                   <div className="relative w-1 h-[59px] top-[11px] left-[9px] bg-neutral-900">
-                    <div className="relative h-[53px] top-1.5 bg-[#ffbaba]" />
+                    <div className="relative top-1.5 bg-[#ffbaba]" style={{
+                      height: (1 - playerStats[stat.percentile]) * 59
+                    }}/>
                   </div>
                   <div className="absolute w-auto h-[51px] top-[13px] left-[25px]">
                     <div className="font-normal text-[#c7c7c7] text-sm">
