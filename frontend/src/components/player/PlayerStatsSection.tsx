@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent } from "./Card";
 import Image from "next/image";
 import { PlayerComparison } from "@/types/types";
+import { getRatingColor } from "@/lib/utils";
 
 export const PlayerStatsSection = ({ 
   playerStats 
@@ -106,9 +107,12 @@ export const PlayerStatsSection = ({
             >
               <CardContent className="p-0 h-full">
                 <div className="relative h-full">
-                  <div className="relative w-1 h-[59px] top-[11px] left-[9px] bg-neutral-900">
-                    <div className="relative top-1.5 bg-[#ffbaba]" style={{
-                      height: (1 - playerStats[stat.percentile]) * 59
+                  <div className="relative w-1 h-[59px] top-[11px] left-[9px]" style={{
+                    backgroundColor: getRatingColor(59 * (1 - playerStats[stat.percentile] / 100), 10, 59)
+                  }}
+                  >
+                    <div className="relative -top-0.5 bg-neutral-900" style={{
+                      height: 59 * (playerStats[stat.percentile] / 100),
                     }}/>
                   </div>
                   <div className="absolute w-auto h-[51px] top-[13px] left-[25px]">

@@ -6,6 +6,7 @@ import polygon1 from '@/components/player/polygon1.png'
 import polygon2 from '@/components/player/polygon2.png'
 import Image from 'next/image';
 import Link from 'next/link';
+import { getRatingColor } from '@/lib/utils';
 
 interface PlayerStats {
   playerID: number;
@@ -53,25 +54,15 @@ const colors = [
 const PlayersStatsPage: React.FC = async () => {
   const response = await axios.get<{"Players": PlayerStats[]}>('https://vercel-fastcup.vercel.app/api/matches');
   const players = response.data.Players
+  
   players.map(player => {
+    const penalty = 1 - 1 /(2 + player.matches) > 0.9 ? 1 : 1 - 1 /(2 + player.matches)
+
+    player.rating = player.rating / player.matches * penalty
     player.headshots = player.headshots / player.kills * 100
     player.kast = player.kast / player.rounds * 100
   })
-  players.sort((a, b) => b.rating / b.matches -  a.rating / a.matches)
-  const getRatingColor = (rating: number) => {
-    // Нормализуем рейтинг в диапазон 0-1 (предполагаем, что рейтинг 0-2)
-    const normalized = Math.min(Math.max(rating / 1.6, 0), 1);
-    
-    // Если рейтинг меньше 1 (0-1 диапазон)
-    if (normalized <= 0.5) {
-      const intensity = Math.floor(255 * (normalized * 2));
-      return `rgb(255, ${intensity}, ${intensity})`;
-    }
-    
-    // Если рейтинг больше 1 (1-2 диапазон)
-    const intensity = Math.floor(255 * ((1 - normalized) * 2));
-    return `rgb(${intensity}, 255, ${intensity})`;
-  };
+  players.sort((a, b) => b.rating -  a.rating)
 
   return (
     <div className="players-stats-container">
@@ -91,13 +82,17 @@ const PlayersStatsPage: React.FC = async () => {
               <th>KAST</th>
               <th>Matches</th>
               <th>Rating</th>
+              <th>Penalty</th>
             </tr>
           </thead>
           <tbody>
             {players.map(((player, index) => {
-              player.rating /= player.matches
-              return <tr key={player.playerID} className='my-4'>
-                <td>{index < 3 && <Image className="flex absolute translate-x-1 -translate-y-2" src={colors[index].img} alt="top" />}{index == 0 && <Image className='flex absolute w-24 mix-blend-screen -translate-x-6 -translate-y-4' src={logo} alt="loading..." />}<span className='text-center'>{index + 1}</span></td>
+              const penalty = 1 - 1 /(2 + player.matches)
+              return <tr 
+                key={player.playerID} 
+                className='my-4 hover:translate-x-1 hover:scale-x-[1.01] transition-all'
+              >
+                <td>{index < 3 && <Image className="flex absolute -translate-y-2" src={colors[index].img} alt="top" />}{index == 0 && <Image className='flex absolute w-24 mix-blend-screen -translate-x-6 -translate-y-4' src={logo} alt="loading..." />}<span className='text-center'>{index + 1}</span></td>
                 <td>
                   <Link href={`/player/${player.playerID}`} className='flex flex-row absolute -translate-y-3 '>
                     <span className='flex'>{player.nickname}</span>
@@ -111,11 +106,14 @@ const PlayersStatsPage: React.FC = async () => {
                 <td>{player.matches}</td>
                 <td className="rating"     
                   style={{ 
-                    color: getRatingColor(player.rating),
+                    color: getRatingColor(player.rating, 0.4, 1.2),
                     textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)'
                   }}
                 >
                     {player.rating.toFixed(2)}
+                </td>
+                <td>
+                  {penalty <= 0.9 ? (penalty.toFixed(2))+"%" : ""}
                 </td>
               </tr>
             }))}
