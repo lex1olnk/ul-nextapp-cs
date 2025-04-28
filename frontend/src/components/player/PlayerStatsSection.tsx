@@ -62,7 +62,7 @@ export const PlayerStatsSection = ({
   ];
 
   return (
-    <section className="relative w-[737px] h-[203px] bg-light-dark">
+    <section className="relative w-[737px] h-[203px] bg-light-dark/90">
         <Image
           className="absolute top-[8px] left-[8px]"
           width={12}

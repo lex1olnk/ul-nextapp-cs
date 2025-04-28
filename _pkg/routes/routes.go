@@ -17,6 +17,8 @@ func Register(app *gin.Engine) {
 
 		route.GET("/player/:id", handler.GetPlayer)
 
+		route.GET("/players", handler.GetPlayers)
+
 		route.GET("/matches", handler.GetMatches)
 
 		route.POST("/matches", handler.PostMatches)

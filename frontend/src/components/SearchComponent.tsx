@@ -25,7 +25,7 @@ export const SearchComponent = ({ allPlayers }: { allPlayers: Player[] }) => {
     );
 
     setFilteredPlayers(filtered);
-  }, [searchTerm]);
+  }, [searchTerm, allPlayers]);
 
   const handleSelectPlayer = (player: Player) => {
     setSearchTerm(player.nickname);

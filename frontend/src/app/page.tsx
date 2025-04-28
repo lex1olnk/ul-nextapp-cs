@@ -8,10 +8,10 @@ interface Player {
 }
 
 export default async function Home() {
-  const response = await axios.get<{players: Player[]}>('https://vercel-fastcup.vercel.app/api/players');
-  const data = response.data.players
+  const response = await axios.get<{data: {players: Player[]}}>('https://vercel-fastcup.vercel.app/api/players');
+  const data = response.data.data.players
   return (
-    <div className="grid grid-rows-[10px_1fr_20px] items-center justify-items-center p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+    <div className="h-screen grid grid-rows-[10px_1fr_160px] items-center justify-items-center gap-16">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <Image
           className="mx-auto"
@@ -21,7 +21,7 @@ export default async function Home() {
           height={180}
           priority
         />
-        <SearchComponent allPlayers={data}/>
+        {data && <SearchComponent allPlayers={data}/>}
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
       </footer>

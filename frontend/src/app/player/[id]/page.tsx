@@ -28,7 +28,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
   } 
 
   return (
-    <div className='flex flex-col max-w-[1080px] mx-auto pt-4'>
+    <div className='h-screen flex flex-col max-w-[1080px] mx-auto pt-4'>
       <div className='flex lg:flex-row md:flex-col sm:flex-col justify-between'>
         <div className="flex flex-col max-w-[717px]">
           <PlayerInfoSection 

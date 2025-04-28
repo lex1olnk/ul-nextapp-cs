@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #171717;
+  --background: #0c0c0c;
   --light-dark: #242424;
   --foreground: #171717;
   --my-gray: #2B2B2B;
@@ -15,7 +15,24 @@
 }
 
 body {
-  background: var(--background);
   color: #fff;
   font-family: var(--font-nunito);
+  background-color: var(--background);
+  position: relative;
+}
+
+body::after {
+  content: '';
+  background-repeat: no-repeat;
+  background-color: var(--background);
+  background-image: url("/bg.jpg");
+  background-size: auto;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.6; /* 70% прозрачность */
+  mix-blend-mode: lighten; /* режим наложения */
+  z-index: -1; /* отправляем фон на задний план */
 }

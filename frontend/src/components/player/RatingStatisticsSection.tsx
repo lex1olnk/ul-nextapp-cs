@@ -7,7 +7,7 @@ export const RatingStatisticsSection = ({ matches }: { matches: Match[]}) => {
   
   matches.sort((a, b) => new Date(b.finishedAt).getDate() - new Date(a.finishedAt).getDate())
   return (
-    <table className="border-spacing-y-3 border-separate w-full bg-light-dark text-left pl-8 py-2.5 pr-4">
+    <table className="border-spacing-y-3 border-separate w-full bg-light-dark/90 text-left pl-8 py-2.5 pr-4">
       <thead>
         <tr className=" *:font-extralight text-gray-300">
           <th className="font-extralight w-3/24">Date</th>

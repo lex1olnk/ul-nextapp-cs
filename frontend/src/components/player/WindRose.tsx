@@ -60,12 +60,11 @@ export const WindroseChart = ({ maps }: { maps: MapStat[] }) => {
     datasets: [{
       label: 'Успешность на карте (%)',
       data: normalizedData.map(map => map.winrate), // Пример процентов успеха
-      backgroundColor: 'rgba(255, 99, 132, 0.2)',
+      backgroundColor: 'rgba(255, 255, 255, 1)',
       borderColor: 'rgba(255, 99, 132, 1)',
-      borderWidth: 1.5,
+      fill: true,
       pointBackgroundColor: 'rgba(255, 99, 132, 1)',
       pointBorderColor: '#fff',
-      matches: normalizedData.map(map => map.matches)
     }]
   };
 
@@ -78,15 +77,14 @@ export const WindroseChart = ({ maps }: { maps: MapStat[] }) => {
           color: 'rgba(255, 255, 255, 0.1)'
         },
         grid: {
-          color: 'rgba(255, 255, 255, 0.1)'
+          color: 'rgba(255, 255, 255, 0.2)'
         },
         ticks: {
           display: false,
           backdropColor: 'transparent'
         },
-        suggestedMin: 0,
+        suggestedMin: 10,
         suggestedMax: 100,
-        beginAtZero: true
       }
     },
     plugins: {
@@ -121,7 +119,7 @@ export const WindroseChart = ({ maps }: { maps: MapStat[] }) => {
       width: '330px', 
       height: '357px',
       padding: '4px',
-    }} className=' bg-light-dark'>
+    }} className='bg-light-dark/90 relative'>
       <Radar 
         data={data} 
         options={options}

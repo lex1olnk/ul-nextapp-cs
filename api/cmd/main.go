@@ -19,9 +19,13 @@ func main() {
 
 	router.GET("/player/:id", handler.GetPlayer)
 
+	router.GET("/players", handler.GetPlayers)
+
 	router.GET("/matches", handler.GetMatches)
 
 	router.POST("/matches", handler.PostMatches)
+
+	router.POST("/ulrating", handler.UpdateUlRating)
 
 	router.Run()
 }
