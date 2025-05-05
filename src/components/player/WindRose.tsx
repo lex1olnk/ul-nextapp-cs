@@ -54,7 +54,7 @@ export const WindroseChart = ({ maps }: { maps: MapStat[] }) => {
   const normalizedData = prepareRadarData(maps);
   const labels = normalizedData.map(map => `${map.map}`)
   const playedMaps = new Map(normalizedData.map(map => [map.map, map]));
-  console.log(playedMaps)
+
   const data = {
     labels: labels,
     datasets: [{

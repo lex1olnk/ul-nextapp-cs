@@ -1,8 +1,0 @@
-DROP TABLE IF EXISTS 
-    teams,
-    players,
-    matches,
-    match_players,
-    ul_tournaments,
-    tournament_matches 
-CASCADE;

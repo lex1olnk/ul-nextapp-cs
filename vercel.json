@@ -1,21 +1,16 @@
 {
     "version": 2,
     "builds": [
-      { "src": "api/main.go", "use": "@vercel/go" },
-      { "src": "frontend/package.json", "use": "@vercel/next" }
+      { "src": "package.json", "use": "@vercel/next" }
     ],
     "rewrites": [
       {
-        "source": "/api/(.*)",
-        "destination": "api/main.go"
-      },
-      {
         "source": "/(.*)",
-        "destination": "/frontend/$1"
+        "destination": "/$1"
       },
       {
         "source": "/player/:id",
-        "destination": "/frontend/player/[id]"
+        "destination": "/player/[id]"
       }
     ],
     "cleanUrls": true,

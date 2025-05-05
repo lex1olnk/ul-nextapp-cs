@@ -1,5 +1,5 @@
 import { SearchComponent } from "@/components/SearchComponent";
-import axios from "axios";
+import api from "@/lib/api";
 import Image from "next/image";
 
 interface Player {
@@ -7,9 +7,20 @@ interface Player {
   nickname: string;
 }
 
+export const revalidate = 3600;
+
+async function getPlayers() {
+  try {
+    const response = await api.get<{data: {players: Player[]}}>('/api/players');
+    return response.data.data.players;
+  } catch (error) {
+    console.error('API Error:', error);
+    return []; // Возвращаем пустые данные вместо исключения
+  }
+}
+
 export default async function Home() {
-  const response = await axios.get<{data: {players: Player[]}}>('https://vercel-fastcup.vercel.app/api/players');
-  const data = response.data.data.players
+  const data = await getPlayers()
   return (
     <div className="h-screen grid grid-rows-[10px_1fr_160px] items-center justify-items-center gap-16">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">

@@ -2,16 +2,16 @@ import { PlayerInfoSection } from '@/components/player/PlayerInfo';
 import { PlayerStatsSection } from '@/components/player/PlayerStatsSection';
 import { RatingStatisticsSection } from '@/components/player/RatingStatisticsSection';
 import WindroseChart from '@/components/player/WindRose';
-import { PlayerData } from '@/types/types';
-import axios from 'axios';
+import api from '@/lib/api';
 import Image from 'next/image';
 
-async function getPlayerData(id: string): Promise<PlayerData> {
+async function getPlayerData(id: string) {
   try {
-    const response = await axios.get(`https://vercel-fastcup.vercel.app/api/player/${id}`);
+    const response = await api.get(`/api/player/${id}`);
     return response.data.data;
-  } catch {
-    throw new Error('Failed to fetch player data');
+  } catch (error) {
+    console.error('API Error:', error);
+    return []; // Возвращаем пустые данные вместо исключения
   }
 }
 
@@ -37,7 +37,6 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
             src={data.player_stats.img}
           />
           <div className="relative">
-              <div className="absolute w-3 h-[45px] -top-[20px] left-[24px] bg-white rounded-sm" />
               <PlayerStatsSection playerStats={data.player_stats}/>
             </div>
         </div>

@@ -1,4 +1,3 @@
-import axios from 'axios';
 import './style.css';
 import logo from '@/components/player/top.gif'
 import polygon from '@/components/player/polygon.png'
@@ -7,6 +6,7 @@ import polygon2 from '@/components/player/polygon2.png'
 import Image from 'next/image';
 import Link from 'next/link';
 import { getRatingColor } from '@/lib/utils';
+import api from '@/lib/api';
 
 interface PlayerStats {
   playerID: number;
@@ -50,21 +50,31 @@ const colors = [
   }
 ]
 
+export const revalidate = 3600;
 
-const PlayersStatsPage: React.FC = async () => {
-  const response = await axios.get<{"Players": PlayerStats[]}>('https://vercel-fastcup.vercel.app/api/matches');
-  const players = response.data.Players
-  
-  players.map(player => {
-    const penalty = 1 - 1 /(2 + player.matches) > 0.9 ? 1 : 1 - 1 /(2 + player.matches)
+async function getMatches() {
+  try {
+    const response = await api.get<{Players: PlayerStats[]}>('/api/matches');
+    return response.data.Players;
+  } catch (error) {
+    console.error('API Error:', error);
+    return []; // Возвращаем пустые данные вместо исключения
+  }
+}
 
-    player.rating = player.rating / player.matches * penalty
-    player.headshots = player.headshots / player.kills * 100
-    player.kast = player.kast / player.rounds * 100
-  })
-  players.sort((a, b) => b.rating -  a.rating)
+export default async function PlayersStatsPage () {
+  const players = await getMatches();
+
+  if (players.length > 0) {
+    players.map(player => {
+      player.headshots = player.headshots / player.kills * 100
+      player.kast = player.kast / player.rounds * 100
+    })
+    players.sort((a, b) => b.rating -  a.rating)
+  }
 
   return (
+    players &&
     <div className="players-stats-container">
       <h1 className='my-8 text-center text-5xl'>ULMIX STATS</h1>
       <h1 className='my-2'>Players Statistics (Last 15 Matches)</h1>
@@ -82,12 +92,12 @@ const PlayersStatsPage: React.FC = async () => {
               <th>KAST</th>
               <th>Matches</th>
               <th>Rating</th>
-              <th>Penalty</th>
+
             </tr>
           </thead>
           <tbody>
             {players.map(((player, index) => {
-              const penalty = 1 - 1 /(2 + player.matches)
+
               return <tr 
                 key={player.playerID} 
                 className='my-4 hover:translate-x-1 hover:scale-x-[1.01] transition-all'
@@ -112,9 +122,7 @@ const PlayersStatsPage: React.FC = async () => {
                 >
                     {player.rating.toFixed(2)}
                 </td>
-                <td>
-                  {penalty <= 0.9 ? (penalty.toFixed(2))+"%" : ""}
-                </td>
+
               </tr>
             }))}
           </tbody>
@@ -123,5 +131,3 @@ const PlayersStatsPage: React.FC = async () => {
     </div>
   );
 };
-
-export default PlayersStatsPage;
