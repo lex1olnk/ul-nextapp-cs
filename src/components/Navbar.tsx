@@ -27,7 +27,7 @@ export function Navbar() {
               href="/matches" 
               className="px-4 py-2 rounded-md text-sm font-medium text-white hover:bg-slate-700 transition-colors"
             >
-              Топ 15
+              Топ
             </Link>
           </div>
         </div>

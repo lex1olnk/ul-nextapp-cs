@@ -1,17 +1,12 @@
-import './style.css';
-import logo from '@/components/player/top.gif'
-import polygon from '@/components/player/polygon.png'
-import polygon1 from '@/components/player/polygon1.png'
-import polygon2 from '@/components/player/polygon2.png'
-import Image from 'next/image';
-import Link from 'next/link';
-import { getRatingColor } from '@/lib/utils';
+import PlayersTable from '@/components/matches/PlayersTable';
 import api from '@/lib/api';
+
 
 interface PlayerStats {
   playerID: number;
   nickname: string;
   uLRating: number;
+  img: string;
   matches: number;
   kills: number;
   deaths: number;
@@ -35,20 +30,6 @@ interface PlayerStats {
   isWinner: boolean;
   date: string;
 }
-const colors = [
-  {
-    color: "#FFEF3D",
-    img: polygon
-  },
-  {
-    color: "#DEDEDE",
-    img: polygon1
-  },
-  {
-    color: "#FFB44C",
-    img: polygon2
-  }
-]
 
 export const revalidate = 3600;
 
@@ -74,60 +55,14 @@ export default async function PlayersStatsPage () {
   }
 
   return (
-    players &&
-    <div className="players-stats-container">
-      <h1 className='my-8 text-center text-5xl'>ULMIX STATS</h1>
-      <h1 className='my-2'>Players Statistics (Last 15 Matches)</h1>
-      
-      <div className="stats-table-wrapper">
-        <table className="stats-table border-spacing-y-2 border-separate">
-          <thead>
-            <tr>
-              <th >№</th>
-              <th className='text-left w-1/4'>Nickname</th>
-              <th>Kills</th>
-              <th>Deaths</th>
-              <th>Assists</th>
-              <th>HS%</th>
-              <th>KAST</th>
-              <th>Matches</th>
-              <th>Rating</th>
-
-            </tr>
-          </thead>
-          <tbody>
-            {players.map(((player, index) => {
-
-              return <tr 
-                key={player.playerID} 
-                className='my-4 hover:translate-x-1 hover:scale-x-[1.01] transition-all'
-              >
-                <td>{index < 3 && <Image className="flex absolute -translate-y-2" src={colors[index].img} alt="top" />}{index == 0 && <Image className='flex absolute w-24 mix-blend-screen -translate-x-6 -translate-y-4' src={logo} alt="loading..." />}<span className='text-center'>{index + 1}</span></td>
-                <td>
-                  <Link href={`/player/${player.playerID}`} className='flex flex-row absolute -translate-y-3 '>
-                    <span className='flex'>{player.nickname}</span>
-                  </Link>
-                </td>
-                <td>{player.kills}</td>
-                <td>{player.deaths}</td>
-                <td>{player.assists}</td>
-                <td>{(player.headshots || 0).toFixed(0)}%</td>
-                <td>{player.kast.toFixed(0)}%</td>
-                <td>{player.matches}</td>
-                <td className="rating"     
-                  style={{ 
-                    color: getRatingColor(player.rating, 0.4, 1.2),
-                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)'
-                  }}
-                >
-                    {player.rating.toFixed(2)}
-                </td>
-
-              </tr>
-            }))}
-          </tbody>
-        </table>
+    <div>
+      <div className="players-stats-container">
+        <h1 className='my-8 text-center text-5xl'>ULMIX STATS</h1>
+    
+        
+        {players && <PlayersTable players={players}/>}
       </div>
     </div>
+
   );
 };

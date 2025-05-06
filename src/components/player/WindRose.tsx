@@ -39,6 +39,7 @@ function prepareRadarData(mapsStats: MapStat[]) {
   // Формируем данные для всех 7 карт
   return mapsNames.map(mapName => {
     const mapData = playedMaps.get(mapName);
+    
     return {
       map: mapName,
       avg_rating: mapData?.avgRating || 0,
@@ -83,7 +84,7 @@ export const WindroseChart = ({ maps }: { maps: MapStat[] }) => {
           display: false,
           backdropColor: 'transparent'
         },
-        suggestedMin: 10,
+        suggestedMin: 0,
         suggestedMax: 100,
       }
     },

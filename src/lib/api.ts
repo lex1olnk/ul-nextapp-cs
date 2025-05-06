@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-/*
+
 const isProduction = process.env.NODE_ENV === 'production'
 
 // Конфигурация для клиентской и серверной части
@@ -10,13 +10,12 @@ const getBaseUrl = () => {
     ? 'https://ul-backend.vercel.app/' // Относительный путь в продакшене
     : 'http://localhost:80/' // Локальный сервер при разработке
 }
-*/
+
 
 // Конфигурация для клиентской и серверной части
-const getBaseUrl = () => {
-  // На клиенте (браузер)
-  return 'https://ul-backend.vercel.app/' // Относительный путь в продакшене
-}
+//const getBaseUrl = () => 'https://ul-backend.vercel.app/' // Относительный путь в продакшене
+
+
 
 const api = axios.create({
   baseURL: getBaseUrl(),
