@@ -5,12 +5,11 @@ import { Navbar } from "@/components/Navbar";
 
 const nunito = Nunito({
   variable: "--font-nunito",
-  weight: ['400', '700'],
-  style: ['normal', 'italic'],
-  subsets: ['latin'],
-  display: 'swap',
-})
-
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -24,9 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${nunito.className} antialiased`}
-      >
+      <body className={`${nunito.className} antialiased`}>
         <Navbar />
         <main className="pt-16">{children}</main>
       </body>

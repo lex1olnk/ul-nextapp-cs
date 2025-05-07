@@ -1,18 +1,16 @@
 {
-    "version": 2,
-    "builds": [
-      { "src": "package.json", "use": "@vercel/next" }
-    ],
-    "rewrites": [
-      {
-        "source": "/(.*)",
-        "destination": "/$1"
-      },
-      {
-        "source": "/player/:id",
-        "destination": "/player/[id]"
-      }
-    ],
-    "cleanUrls": true,
-    "trailingSlash": false
-  }
+  "version": 2,
+  "builds": [{ "src": "package.json", "use": "@vercel/next" }],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
+    },
+    {
+      "source": "/player/:id",
+      "destination": "/player/[id]"
+    }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
+}

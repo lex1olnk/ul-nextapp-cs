@@ -1,0 +1,68 @@
+'use server'
+
+import api from "@/lib/api";
+
+interface Tournament {
+  id: string;
+  name: string;
+}
+
+export async function getTournaments() {
+  try {
+    const response = await api.get<{ data: { tournaments: Tournament[] } }>(
+      "/api/ultournaments",
+    );
+    return response.data.data;
+  } catch (error) {
+    console.error("API Error:", error);
+    return []; // Возвращаем пустые данные вместо исключения
+  }
+}
+
+export async function createTournament(name: string) {
+  try {
+    const response = await api.post(
+      "/api/ultournaments",
+      {
+        name: name,
+      },
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+
+    return response.data.data.tournamentId;
+  } catch (error) {
+    console.error("API Error:", error);
+    return ""; // Возвращаем пустые данные вместо исключения
+  }
+}
+
+export async function postAndAttachMatches({
+  tournamentId,
+  matchUrls,
+}: {
+  tournamentId: string | null;
+  matchUrls: string[];
+}) {
+  const requestBody: { match_urls: string[]; tournament_id?: string } = {
+    match_urls: matchUrls,
+  };
+
+  if (tournamentId) {
+    requestBody.tournament_id = tournamentId;
+  }
+
+  try {
+    const response = await api.post("/api/ulmatches", requestBody, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data.status
+  } catch (error) {
+    console.error("API Error:", error);
+  }
+}

@@ -11,7 +11,6 @@ const nextConfig: NextConfig = {
         search: "",
       },
     ],
-    
   },
   /* config options here */
 };

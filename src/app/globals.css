@@ -4,7 +4,7 @@
   --background: #0c0c0c;
   --light-dark: #242424;
   --foreground: #171717;
-  --my-gray: #2B2B2B;
+  --my-gray: #2b2b2b;
 }
 
 @theme {
@@ -22,7 +22,7 @@ body {
 }
 
 body::after {
-  content: '';
+  content: "";
   background-repeat: no-repeat;
   background-color: var(--background);
   background-image: url("/bg.jpg");

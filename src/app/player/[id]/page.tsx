@@ -1,50 +1,54 @@
-import { PlayerInfoSection } from '@/components/player/PlayerInfo';
-import { PlayerStatsSection } from '@/components/player/PlayerStatsSection';
-import { RatingStatisticsSection } from '@/components/player/RatingStatisticsSection';
-import WindroseChart from '@/components/player/WindRose';
-import api from '@/lib/api';
-import Image from 'next/image';
+import { PlayerInfoSection } from "@/components/player/PlayerInfo";
+import { PlayerStatsSection } from "@/components/player/PlayerStatsSection";
+import { RatingStatisticsSection } from "@/components/player/RatingStatisticsSection";
+import WindroseChart from "@/components/player/WindRose";
+import api from "@/lib/api";
+import Image from "next/image";
 
 async function getPlayerData(id: string) {
   try {
     const response = await api.get(`/api/player/${id}`);
     return response.data.data;
   } catch (error) {
-    console.error('API Error:', error);
+    console.error("API Error:", error);
     return []; // Возвращаем пустые данные вместо исключения
   }
 }
 
-export default async function PlayerPage({ params }: { params: Promise<{ id: string }>}) {
-  const { id } = await params
+export default async function PlayerPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
   const data = await getPlayerData(id);
-  
+
   if (!data) {
     return (
       <div className=" bg-[--light-dark] text-gray-100 min-h-screen p-8 flex items-center justify-center">
         <p>Данные игрока не найдены</p>
       </div>
     );
-  } 
+  }
 
   return (
-    <div className='h-screen flex flex-col max-w-[1080px] mx-auto pt-4'>
-      <div className='flex lg:flex-row md:flex-col sm:flex-col justify-between'>
+    <div className="h-screen flex flex-col max-w-[1080px] mx-auto pt-4">
+      <div className="flex lg:flex-row md:flex-col sm:flex-col justify-between">
         <div className="flex flex-col max-w-[717px]">
-          <PlayerInfoSection 
-            nickname={data.player_stats.nickname} 
+          <PlayerInfoSection
+            nickname={data.player_stats.nickname}
             userId={data.player_stats.playerID}
             src={data.player_stats.img}
           />
           <div className="relative">
-              <PlayerStatsSection playerStats={data.player_stats}/>
-            </div>
+            <PlayerStatsSection playerStats={data.player_stats} />
+          </div>
         </div>
-        <WindroseChart maps={data.maps_stats}/>
+        <WindroseChart maps={data.maps_stats} />
       </div>
 
       <div className="relative mt-6">
-        <RatingStatisticsSection matches={data.recent_matches}/>
+        <RatingStatisticsSection matches={data.recent_matches} />
         <Image
           className="absolute top-4 left-5"
           width={1044}
@@ -58,5 +62,5 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -18,7 +18,6 @@
   margin: auto 16px auto 8px;
 }
 
-
 .sort-controls {
   display: flex;
   gap: 0.5rem;
@@ -63,7 +62,6 @@ select {
   width: 70px;
 }
 
-
 .reset-button:hover {
   opacity: 0.9;
 }
@@ -76,15 +74,14 @@ select {
 
 .stats-table-wrapper {
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   width: 100%;
 }
 
 /* Grid контейнер для всей таблицы */
 .stats-grid {
   display: grid;
-  grid-template-columns: 50px  auto repeat(9, 70px);
-  
+  grid-template-columns: 50px auto repeat(9, 70px);
 }
 
 /* Заголовки */
@@ -154,22 +151,25 @@ select {
 
 @media (max-width: 768px) {
   .players-stats-container {
-      padding: 10px;
+    padding: 10px;
   }
-  
+
   .stats-grid {
-      min-width: auto;
-      grid-template-columns: minmax(120px, 1fr) repeat(auto-fit, minmax(60px, 1fr));
+    min-width: auto;
+    grid-template-columns: minmax(120px, 1fr) repeat(
+        auto-fit,
+        minmax(60px, 1fr)
+      );
   }
-  
+
   .grid-header,
   .grid-item {
-      padding: 8px 10px;
-      font-size: 0.9em;
+    padding: 8px 10px;
+    font-size: 0.9em;
   }
-  
+
   .grid-item:first-child {
-      min-width: 120px;
-      padding-left: 15px;
+    min-width: 120px;
+    padding-left: 15px;
   }
 }

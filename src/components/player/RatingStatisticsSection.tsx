@@ -1,11 +1,14 @@
-'use client'
+"use client";
 import { Match } from "@/types/types";
 import React from "react";
 
-export const RatingStatisticsSection = ({ matches }: { matches: Match[]}) => {
-  console.log(matches)
-  
-  matches.sort((a, b) => new Date(b.finishedAt).getDate() - new Date(a.finishedAt).getDate())
+export const RatingStatisticsSection = ({ matches }: { matches: Match[] }) => {
+  console.log(matches);
+
+  matches.sort(
+    (a, b) =>
+      new Date(b.finishedAt).getDate() - new Date(a.finishedAt).getDate(),
+  );
   return (
     <table className="border-spacing-y-3 border-separate w-full bg-light-dark/90 text-left pl-8 py-2.5 pr-4">
       <thead>
@@ -17,18 +20,25 @@ export const RatingStatisticsSection = ({ matches }: { matches: Match[]}) => {
         </tr>
       </thead>
       <tbody className="">
-        {matches.map(((match, index) => {
-          const date = new Date(match.finishedAt)
-          const dateShow = `${date.toLocaleDateString("en-US", { day: 'numeric' })} ${date.toLocaleDateString("en-US", { month: 'short' })} `
-          return <tr key={index} className=' hover:cursor-pointer border-b-2 hover:bg-my-gray hover:translate-x-1 hover:scale-x-[1.01] transition-all' onClick={() => window.location.href = `https://cs2.fastcup.net/matches/${match.matchId}`}>
+        {matches.map((match, index) => {
+          const date = new Date(match.finishedAt);
+          const dateShow = `${date.toLocaleDateString("en-US", { day: "numeric" })} ${date.toLocaleDateString("en-US", { month: "short" })} `;
+          return (
+            <tr
+              key={index}
+              className=" hover:cursor-pointer border-b-2 hover:bg-my-gray hover:translate-x-1 hover:scale-x-[1.01] transition-all"
+              onClick={() =>
+                (window.location.href = `https://cs2.fastcup.net/matches/${match.matchId}`)
+              }
+            >
               <td>{dateShow}</td>
               <td>{match.map}</td>
-              <td>{match.kills + ' ' + match.deaths + ' ' + match.assists} </td>
+              <td>{match.kills + " " + match.deaths + " " + match.assists} </td>
               <td>{match.rating.toFixed(2)}</td>
             </tr>
-        }))}
+          );
+        })}
       </tbody>
     </table>
-
   );
 };

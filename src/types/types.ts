@@ -23,7 +23,7 @@ export interface MatchHistoryEntry {
   deaths: number;
   assists: number;
   adr: number;
-  
+
   won: boolean;
 }
 
@@ -41,7 +41,7 @@ export interface Match {
 }
 
 // Типы для пропсов компонентов
-export type TimeRange = '24h' | '7d' | '30d' | 'all';
+export type TimeRange = "24h" | "7d" | "30d" | "all";
 
 export interface StatCardProps {
   title: string;
@@ -77,11 +77,11 @@ export interface PlayerComparison {
 }
 
 export interface MapStat {
-  avgRating: number,
-  map: string,
-  matches: number,
-  winrate: number,
-  wins: number
+  avgRating: number;
+  map: string;
+  matches: number;
+  winrate: number;
+  wins: number;
 }
 
 export interface PlayerData {

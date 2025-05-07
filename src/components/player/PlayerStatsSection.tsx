@@ -4,10 +4,10 @@ import Image from "next/image";
 import { PlayerComparison } from "@/types/types";
 import { getRatingColor } from "@/lib/utils";
 
-export const PlayerStatsSection = ({ 
-  playerStats 
-}: { 
-  playerStats: PlayerComparison
+export const PlayerStatsSection = ({
+  playerStats,
+}: {
+  playerStats: PlayerComparison;
 }) => {
   // Data for main stats cards
   const mainStats = [
@@ -63,34 +63,34 @@ export const PlayerStatsSection = ({
 
   return (
     <section className="relative w-[737px] h-[203px] bg-light-dark/90">
-        <Image
-          className="absolute top-[8px] left-[8px]"
-          width={12}
-          height={12}
-          alt="Line"
-          src="https://c.animaapp.com/m9uwos437IZJ3W/img/line-8.svg"
-        />
-        <Image
-          width={12}
-          height={12}
-          className="absolute bottom-[8px] left-[8px]"
-          alt="Line"
-          src="https://c.animaapp.com/m9uwos437IZJ3W/img/line-10.svg"
-        />
-        <Image
-          width={12}
-          height={12}
-          className="absolute bottom-[8px] right-[8px]"
-          alt="Line"
-          src="https://c.animaapp.com/m9uwos437IZJ3W/img/line-9.svg"
-        />
-        <Image
-          width={12}
-          height={12}
-          className="absolute top-[8px] right-[8px]"
-          alt="Line"
-          src="https://c.animaapp.com/m9uwos437IZJ3W/img/line-8-1.svg"
-        />
+      <Image
+        className="absolute top-[8px] left-[8px]"
+        width={12}
+        height={12}
+        alt="Line"
+        src="https://c.animaapp.com/m9uwos437IZJ3W/img/line-8.svg"
+      />
+      <Image
+        width={12}
+        height={12}
+        className="absolute bottom-[8px] left-[8px]"
+        alt="Line"
+        src="https://c.animaapp.com/m9uwos437IZJ3W/img/line-10.svg"
+      />
+      <Image
+        width={12}
+        height={12}
+        className="absolute bottom-[8px] right-[8px]"
+        alt="Line"
+        src="https://c.animaapp.com/m9uwos437IZJ3W/img/line-9.svg"
+      />
+      <Image
+        width={12}
+        height={12}
+        className="absolute top-[8px] right-[8px]"
+        alt="Line"
+        src="https://c.animaapp.com/m9uwos437IZJ3W/img/line-8-1.svg"
+      />
       <div className="relative w-full top-1/2 -translate-y-1/2 py-8 px-5">
         <Image
           width={172}
@@ -107,13 +107,22 @@ export const PlayerStatsSection = ({
             >
               <CardContent className="p-0 h-full">
                 <div className="relative h-full">
-                  <div className="relative w-1 h-[59px] top-[11px] left-[9px]" style={{
-                    backgroundColor: getRatingColor(59 * (1 - playerStats[stat.percentile] / 100), 10, 59)
-                  }}
+                  <div
+                    className="relative w-1 h-[59px] top-[11px] left-[9px]"
+                    style={{
+                      backgroundColor: getRatingColor(
+                        59 * (1 - playerStats[stat.percentile] / 100),
+                        10,
+                        59,
+                      ),
+                    }}
                   >
-                    <div className="relative -top-0.5 bg-neutral-900" style={{
-                      height: 59 * (playerStats[stat.percentile] / 100),
-                    }}/>
+                    <div
+                      className="relative -top-0.5 bg-neutral-900"
+                      style={{
+                        height: 59 * (playerStats[stat.percentile] / 100),
+                      }}
+                    />
                   </div>
                   <div className="absolute w-auto h-[51px] top-[13px] left-[25px]">
                     <div className="font-normal text-[#c7c7c7] text-sm">
