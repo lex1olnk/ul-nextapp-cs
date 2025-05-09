@@ -1,5 +1,3 @@
-"use server";
-
 import MatchImporter from "@/components/tournaments/MatchImporter";
 import { getTournaments } from "./api";
 
