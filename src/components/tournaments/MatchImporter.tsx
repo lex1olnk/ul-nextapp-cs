@@ -78,7 +78,6 @@ export default function MatchImporter({ tournaments }) {
               </button>
             )}
           </div>
-
         </div>
         <p className="text-xs">id: {selectedTournament}</p>
       </div>

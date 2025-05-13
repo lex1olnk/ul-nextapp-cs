@@ -12,7 +12,7 @@ const getBaseUrl = () => {
 };
 */
 // Конфигурация для клиентской и серверной части
-const getBaseUrl = () => 'https://ul-backend.vercel.app/' // Относительный путь в продакшене
+const getBaseUrl = () => "https://ul-backend.vercel.app/"; // Относительный путь в продакшене
 
 const api = axios.create({
   baseURL: getBaseUrl(),

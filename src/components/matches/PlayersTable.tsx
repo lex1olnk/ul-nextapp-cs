@@ -1,16 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useMemo, useState } from "react";
 
 //import { getRatingColor } from "@/lib/utils"
 
 import logo from "@/components/player/top.gif";
 
-import "./style.css";
-import { DataTableControls } from "./DataTableControls";
 import { getRatingColor } from "@/lib/utils";
+import { DataTableControls } from "./DataTableControls";
+import "./style.css";
 
 const ratingTier = (uLRating: number) => {
   if (uLRating == 0) {
@@ -53,6 +53,7 @@ interface PlayerStats {
   clutches: number[];
   rounds: number;
   teamID: number;
+  ul_id: string | null;
   kpr: number;
   dpr: number;
   impact: number;
@@ -101,9 +102,14 @@ const columnMapping: Record<
   Rating: (player) => player.rating,
 };
 
-export default function PlayersTable(props: { players: PlayerStats[] }) {
-  const { players } = props;
+interface Tournament {
+  id: string;
+  name: string;
+}
 
+export default function PlayersTable(props: { players: PlayerStats[], ulTournaments: Tournament[] }) {
+  const { players, ulTournaments } = props;
+  const [ulTournament, setUlTournament] = useState<string>("")
   const [filters, setFilters] = useState<FilterState>({
     sortColumn: null,
     sortDirection: null,
@@ -113,12 +119,17 @@ export default function PlayersTable(props: { players: PlayerStats[] }) {
   });
 
   const filteredData = useMemo(() => {
-    let result = players.filter(
+    const ulFilter = players.filter(
       (player) =>
         player.uLRating >= range.ratingRange[0] &&
         player.uLRating <= range.ratingRange[1],
     );
 
+    let result = ulFilter.filter(
+      (player) => player.ul_id == ulTournament
+    )
+
+    
     if (filters.sortColumn) {
       result = [...result].sort((a, b) => {
         const columnKey = columnMapping[filters.sortColumn!];
@@ -138,7 +149,7 @@ export default function PlayersTable(props: { players: PlayerStats[] }) {
     }
 
     return result;
-  }, [players, filters, range]);
+  }, [players, filters, ulTournament, range]);
 
   // Функция для отображения значения ячейки
   const renderCellValue = (player: PlayerStats, column: SortableColumn) => {
@@ -182,13 +193,35 @@ export default function PlayersTable(props: { players: PlayerStats[] }) {
   return (
     <div>
       <div className="flex flex-row justify-between">
-        <h1 className="my-2">Players Statistics</h1>
-        <DataTableControls
-          onFilterChange={setRange}
-          minRating={0}
-          maxRating={100}
-        />
+        <div>
+          <h1 className="my-2">Players Statistics</h1>
+          <p className="text-xs">Нажатие на имя столба проводит сортировку по его значениям.</p>
+        </div>
+        
+        <div className="flex flex-row mb-2 align-bottom">
+          <DataTableControls
+            className="" 
+            onFilterChange={setRange}
+            minRating={0}
+            maxRating={100}
+          />
+          <form className="max-w-sm mx-auto">
+            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Select an option</label>
+            <select 
+              id="countries" 
+              className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-light-dark dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              onChange={e => setUlTournament(e.target.value)}
+            >
+              <option defaultValue="">MIX</option>
+              {ulTournaments.map(tournament => 
+                  <option value={tournament.id} key={tournament.name}>{tournament.name}</option>
+              )}
+            </select>
+          </form>
+        </div>
       </div>
+
+
 
       <div className="stats-table-wrapper">
         <div className="stats-grid">
@@ -216,7 +249,7 @@ export default function PlayersTable(props: { players: PlayerStats[] }) {
             return (
               <Link
                 href={`/player/${player.playerID}`}
-                key={player.playerID}
+                key={player.playerID + (player.ul_id ? player.ul_id : "")}
                 className="grid-row hover:translate-x-1 hover:scale-x-[1.01] transition-all"
               >
                 <div className="grid-item">

@@ -9,12 +9,14 @@ interface DataTableControlsProps {
   onFilterChange: (filters: FilterState) => void;
   minRating?: number;
   maxRating?: number;
+  className: string;
 }
 
 export const DataTableControls = ({
   onFilterChange,
   minRating = 0,
   maxRating = 100,
+  className
 }: DataTableControlsProps) => {
   const [filters, setFilters] = useState<FilterState>({
     ratingRange: [minRating, maxRating],
@@ -36,26 +38,24 @@ export const DataTableControls = ({
   };
 
   return (
-    <div className="data-controls">
-      <div className="controls-section">
-        <h4>ULRating Filter</h4>
-        <div className="range-controls">
-          <input
-            type="number"
-            min={minRating}
-            max={maxRating}
-            value={filters.ratingRange[0]}
-            onChange={(e) => handleRatingChange("min", Number(e.target.value))}
-          />
-          <span>-</span>
-          <input
-            type="number"
-            min={minRating}
-            max={maxRating}
-            value={filters.ratingRange[1]}
-            onChange={(e) => handleRatingChange("max", Number(e.target.value))}
-          />
-        </div>
+    <div className={"controls-section" + className}>
+      <h4>ULRating Filter</h4>
+      <div className="range-controls">
+        <input
+          type="number"
+          min={minRating}
+          max={maxRating}
+          value={filters.ratingRange[0]}
+          onChange={(e) => handleRatingChange("min", Number(e.target.value))}
+        />
+        <span>-</span>
+        <input
+          type="number"
+          min={minRating}
+          max={maxRating}
+          value={filters.ratingRange[1]}
+          onChange={(e) => handleRatingChange("max", Number(e.target.value))}
+        />
       </div>
     </div>
   );

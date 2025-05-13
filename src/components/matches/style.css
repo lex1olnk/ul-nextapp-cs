@@ -1,21 +1,11 @@
-.data-controls {
-  background: var(--light-dark);
-  padding: 8px;
-  border-radius: 8px;
-  margin-bottom: 2rem;
-  width: fit-content;
-  display: flex;
-  flex-direction: row;
-  gap: 1.5rem;
-}
 
 .controls-section {
-  display: flex;
-  flex-direction: row;
+  padding: 4px;
+  margin-right: 16px;
 }
 
 .controls-section h4 {
-  margin: auto 16px auto 8px;
+  padding-bottom: 4px;
 }
 
 .sort-controls {

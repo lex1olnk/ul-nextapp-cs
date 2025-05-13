@@ -36,6 +36,7 @@ export interface Match {
   damage: number;
   rounds: number;
   rating: number;
+  isWinner: boolean;
   matchId: number;
   finishedAt: string;
 }

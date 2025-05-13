@@ -1,5 +1,6 @@
 import PlayersTable from "@/components/matches/PlayersTable";
 import api from "@/lib/api";
+import { getTournaments } from "../upload/api";
 
 interface PlayerStats {
   playerID: number;
@@ -19,6 +20,7 @@ interface PlayerStats {
   multiKills: number[];
   clutches: number[];
   rounds: number;
+  ul_id: string | null;
   teamID: number;
   kpr: number;
   dpr: number;
@@ -44,6 +46,7 @@ async function getMatches() {
 
 export default async function PlayersStatsPage() {
   const players = await getMatches();
+  const tournaments = await getTournaments();
 
   if (players.length > 0) {
     players.map((player) => {
@@ -58,7 +61,7 @@ export default async function PlayersStatsPage() {
       <div className="players-stats-container">
         <h1 className="my-8 text-center text-5xl">ULMIX STATS</h1>
 
-        {players && <PlayersTable players={players} />}
+        {players && tournaments && <PlayersTable players={players} ulTournaments={tournaments}/>}
       </div>
     </div>
   );

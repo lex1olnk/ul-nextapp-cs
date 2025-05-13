@@ -1,10 +1,7 @@
 "use client";
 import { Match } from "@/types/types";
-import React from "react";
 
 export const RatingStatisticsSection = ({ matches }: { matches: Match[] }) => {
-  console.log(matches);
-
   matches.sort(
     (a, b) =>
       new Date(b.finishedAt).getDate() - new Date(a.finishedAt).getDate(),
@@ -32,7 +29,7 @@ export const RatingStatisticsSection = ({ matches }: { matches: Match[] }) => {
               }
             >
               <td>{dateShow}</td>
-              <td>{match.map}</td>
+              <td><div className={"px-3 flex w-fit rounded-md " + (match.isWinner ? "bg-green-800/30 text-green-200" : "bg-red-800/30 text-red")}>{match.map}</div></td>
               <td>{match.kills + " " + match.deaths + " " + match.assists} </td>
               <td>{match.rating.toFixed(2)}</td>
             </tr>

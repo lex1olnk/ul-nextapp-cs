@@ -1,8 +1,7 @@
-import React from "react";
-import { Card, CardContent } from "./Card";
-import Image from "next/image";
-import { PlayerComparison } from "@/types/types";
 import { getRatingColor } from "@/lib/utils";
+import { PlayerComparison } from "@/types/types";
+import Image from "next/image";
+import { Card, CardContent } from "./Card";
 
 export const PlayerStatsSection = ({
   playerStats,
@@ -27,9 +26,9 @@ export const PlayerStatsSection = ({
       percentile: "hsAdv",
     },
     {
-      title: "Winrate",
-      key: "TargetWinrate",
-      percentile: "winrateAdv",
+      title: "Rating",
+      key: "rating",
+      percentile: "ratingAdv",
     },
   ];
 
@@ -52,12 +51,12 @@ export const PlayerStatsSection = ({
       key: "kast",
     },
     {
-      title: "FK",
-      key: "firstKills",
+      title: "Impact",
+      key: "impact",
     },
     {
-      title: "UL Rating",
-      key: "uLRating",
+      title: "Winrate",
+      key: "winrate",
     },
   ];
 
@@ -91,6 +90,7 @@ export const PlayerStatsSection = ({
         alt="Line"
         src="https://c.animaapp.com/m9uwos437IZJ3W/img/line-8-1.svg"
       />
+      
       <div className="relative w-full top-1/2 -translate-y-1/2 py-8 px-5">
         <Image
           width={172}

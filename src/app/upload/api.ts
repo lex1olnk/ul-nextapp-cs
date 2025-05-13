@@ -1,4 +1,4 @@
-'use server'
+"use server";
 
 import api from "@/lib/api";
 
@@ -9,7 +9,7 @@ interface Tournament {
 
 export async function getTournaments() {
   try {
-    const response = await api.get<{ data: { tournaments: Tournament[] } }>(
+    const response = await api.get<{data: Tournament[] }>(
       "/api/ultournaments",
     );
     return response.data.data;
@@ -61,7 +61,7 @@ export async function postAndAttachMatches({
         "Content-Type": "application/json",
       },
     });
-    return response.data.status
+    return response.data.status;
   } catch (error) {
     console.error("API Error:", error);
   }

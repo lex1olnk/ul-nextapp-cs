@@ -1,17 +1,17 @@
 "use client";
 
-import { Radar } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  RadialLinearScale,
-  ArcElement,
-  Tooltip,
-  Legend,
-  Title,
-  PointElement,
-  LineElement,
-} from "chart.js";
 import { MapStat } from "@/types/types";
+import {
+  ArcElement,
+  Chart as ChartJS,
+  Legend,
+  LineElement,
+  PointElement,
+  RadialLinearScale,
+  Title,
+  Tooltip,
+} from "chart.js";
+import { Radar } from "react-chartjs-2";
 
 // Регистрируем необходимые компоненты
 ChartJS.register(
@@ -33,7 +33,7 @@ function prepareRadarData(mapsStats: MapStat[]) {
     "Inferno",
     "Anubis",
     "Nuke",
-    "Vertigo",
+    "Train",
     "Ancient",
   ];
   // Формируем данные для всех 7 карт
