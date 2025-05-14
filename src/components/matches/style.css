@@ -14,6 +14,37 @@
   align-items: center;
 }
 
+.btn-group {
+  padding: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: end;
+}
+
+.btn {
+  padding: 4px 16px;
+  border-radius: 4px;
+  margin: 0 4px;
+  background-color: var(--light-dark);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  background-color: #374151;
+}
+
+.btn-active {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btn:not(:last-child) {
+  border-right: 1px solid #4b5563;
+}
+
 select {
   background: #3a3a3a;
   color: white;

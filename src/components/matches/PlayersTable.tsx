@@ -118,6 +118,7 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
     ratingRange: [0, 100],
   });
 
+  const [matchesFilter, setMatchesFilter] = useState<'all' | 'enough' | 'low'>('all');
   const filteredData = useMemo(() => {
     const ulFilter = players.filter(
       (player) =>
@@ -130,6 +131,23 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
     )
 
     
+    // Применяем фильтр по количеству матчей
+    switch(matchesFilter) {
+      case 'enough':
+        result = result.filter(player => player.matches >= 10);
+        break;
+      case 'low':
+        result = result.filter(player => player.matches < 10);
+        break;
+      case 'all':
+      default:
+        // Без фильтрации, но сохраняем разделение
+        const enoughMatches = result.filter(player => player.matches >= 10);
+        const lowMatches = result.filter(player => player.matches < 10);
+        result = [...enoughMatches, ...lowMatches];
+        break;
+    }
+
     if (filters.sortColumn) {
       result = [...result].sort((a, b) => {
         const columnKey = columnMapping[filters.sortColumn!];
@@ -147,9 +165,13 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
           : valueB - valueA;
       });
     }
-
+    
+    const enoughMatches = result.filter(player => player.matches >= 10);
+    const lowMatches = result.filter(player => player.matches < 10);
+    result = [...enoughMatches, ...lowMatches];
+  
     return result;
-  }, [players, filters, ulTournament, range]);
+  }, [players, filters, ulTournament, range, matchesFilter]);
 
   // Функция для отображения значения ячейки
   const renderCellValue = (player: PlayerStats, column: SortableColumn) => {
@@ -199,6 +221,30 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
         </div>
         
         <div className="flex flex-row mb-2 align-bottom">
+          <div className="btn-group mr-2">
+            <button
+              type="button"
+              className={`btn btn-sm ${matchesFilter === 'all' ? 'btn-active' : ''}`}
+              onClick={() => setMatchesFilter('all')}
+            >
+              Все
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${matchesFilter === 'enough' ? 'btn-active' : ''}`}
+              onClick={() => setMatchesFilter('enough')}
+            >
+              ЖБ
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${matchesFilter === 'low' ? 'btn-active' : ''}`}
+              onClick={() => setMatchesFilter('low')}
+            >
+              Проходняк
+            </button>
+          </div>
+
           <DataTableControls
             className="" 
             onFilterChange={setRange}
@@ -250,7 +296,9 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
               <Link
                 href={`/player/${player.playerID}`}
                 key={player.playerID + (player.ul_id ? player.ul_id : "")}
-                className="grid-row hover:translate-x-1 hover:scale-x-[1.01] transition-all"
+                className={`grid-row hover:translate-x-1 hover:scale-x-[1.01] transition-all ${
+                  player.matches < 10 ? "[&>*]:opacity-75 bg-gray-800 bg-opacity-50" : ""
+                }`}
               >
                 <div className="grid-item">
                   {index == 0 && (
