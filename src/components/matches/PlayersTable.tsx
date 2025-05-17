@@ -110,6 +110,18 @@ interface Tournament {
 export default function PlayersTable(props: { players: PlayerStats[], ulTournaments: Tournament[] }) {
   const { players, ulTournaments } = props;
   const [ulTournament, setUlTournament] = useState<string>("")
+
+  const extractNumber = (name) => {
+    const numbers = name.match(/\d+/g); // Находим все числа в строке
+    return numbers ? parseInt(numbers[0]) : 0; // Берем первое число
+  };
+
+  const sortedTournaments = ulTournaments.sort((a, b) => {
+    const numA = extractNumber(a.name);
+    const numB = extractNumber(b.name);
+    return numB - numA; // Сортировка по убыванию
+  });
+
   const [filters, setFilters] = useState<FilterState>({
     sortColumn: null,
     sortDirection: null,
@@ -259,7 +271,7 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
               onChange={e => setUlTournament(e.target.value)}
             >
               <option value="" defaultValue="">MIX</option>
-              {ulTournaments.map(tournament => 
+              {sortedTournaments.map(tournament => 
                   <option value={tournament.id} key={tournament.name}>{tournament.name}</option>
               )}
             </select>
@@ -297,7 +309,7 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
                 href={`/player/${player.playerID}`}
                 key={player.playerID + (player.ul_id ? player.ul_id : "")}
                 className={`grid-row hover:translate-x-1 hover:scale-x-[1.01] transition-all ${
-                  player.matches < 10 ? "[&>*]:opacity-75 bg-gray-800 bg-opacity-50" : ""
+                  player.matches < 10 && player.ul_id == "" ? "[&>*]:opacity-75 bg-gray-800 bg-opacity-50" : ""
                 }`}
               >
                 <div className="grid-item">

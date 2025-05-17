@@ -2,10 +2,6 @@
 import { Match } from "@/types/types";
 
 export const RatingStatisticsSection = ({ matches }: { matches: Match[] }) => {
-  matches.sort(
-    (a, b) =>
-      new Date(b.finishedAt).getDate() - new Date(a.finishedAt).getDate(),
-  );
   return (
     <table className="border-spacing-y-3 border-separate w-full bg-light-dark/90 text-left pl-8 py-2.5 pr-4">
       <thead>
