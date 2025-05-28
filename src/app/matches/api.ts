@@ -1,6 +1,6 @@
 "use server"
 
-import api, { getBaseUrl } from "@/lib/api";
+import { api, getBaseUrl } from "@/lib/api";
 
 interface PlayerStats {
   playerID: number;
@@ -29,7 +29,7 @@ interface PlayerStats {
   clutchExp: number;
   rating: number;
   matchID: number;
-  isWinner: boolean;
+  is_winner: boolean;
   date: string;
 }
 

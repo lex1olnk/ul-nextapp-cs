@@ -5,7 +5,7 @@ import { PlayerInfoSection } from "@/components/player/PlayerInfo";
 import { PlayerStatsSection } from "@/components/player/PlayerStatsSection";
 import { RatingStatisticsSection } from "@/components/player/RatingStatisticsSection";
 import WindroseChart from "@/components/player/WindRose";
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 import axios from "axios";
 import Image from "next/image";
 

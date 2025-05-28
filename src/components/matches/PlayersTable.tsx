@@ -78,7 +78,7 @@ interface PlayerStats {
   clutchExp: number;
   rating: number;
   matchID: number;
-  isWinner: boolean;
+  is_winner: boolean;
   date: string;
 }
 
@@ -143,6 +143,7 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
   const { players, ulTournaments } = props;
   const [selectedPicks, setSelectedPicks] = useState<number[]>([]);
   const [showBestByPicks, setShowBestByPicks] = useState(false);
+  const [showWinners, setShowWinners] = useState(false);
   const [ulTournament, setUlTournament] = useState<string>("")
 
   const extractNumber = (name) => {
@@ -186,10 +187,7 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
       case 'low': result = result.filter(p => p.matches < 10); break;
       case 'all': 
       default:
-        // Без фильтрации, но сохраняем разделение
-        const enoughMatches = result.filter(player => player.matches >= 10);
-        const lowMatches = result.filter(player => player.matches < 10);
-        result = [...enoughMatches, ...lowMatches];
+        result = [...result];
         break;
     }
   
@@ -231,9 +229,27 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
   
       result = bestPlayers;
     }
+
+    if (showWinners) {
+      const picksMap: PlayerStats[] = []
+      
+      // Группируем по пикам
+      result.forEach(player => {
+        if (player.is_winner) {
+          picksMap.push(player)
+        } 
+        
+      });
   
-    return result 
-  }, [players, filters, ulTournament, range, matchesFilter, selectedPicks, showBestByPicks]);
+      result = picksMap;
+    }
+  
+    const enoughMatches = result.filter(player => player.matches >= 10);
+    const lowMatches = result.filter(player => player.matches < 10);
+    result = [...enoughMatches, ...lowMatches];
+
+    return result
+  }, [players, filters, ulTournament, range, matchesFilter, selectedPicks, showBestByPicks, showWinners]);
 
   // Функция для отображения значения ячейки
   const renderCellValue = (player: PlayerStats, column: SortableColumn) => {
@@ -286,35 +302,44 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
         
         <div className="flex flex-row mb-2 align-bottom text-sm">
           <div className="btn-group mr-2">
-          <div className="filters-container">
-            {/* Кнопка для лучших по пикам */}
-            <button 
-              onClick={() => setShowBestByPicks(!showBestByPicks)}
-              className={showBestByPicks ? 'active' : ''}
-            >
-              {showBestByPicks ? 'Сбросить выбор' : 'Показать лучших по пикам'}
-            </button>
+          {
+                  ulTournament &&<div className="filters-container">
+                      {/* Кнопка для лучших по пикам */}
+                      <button 
+                        onClick={() => setShowBestByPicks(!showBestByPicks)}
+                        className={showBestByPicks ? 'active' : ''}
+                      >
+                        {showBestByPicks ? 'Сбросить выбор' : 'Показать лучших по пикам'}
+                      </button>
+                      <button 
+                        onClick={() => setShowWinners(!showWinners)}
+                        className={showWinners ? 'active' : ''}
+                      >
+                        {showWinners ? 'Сбросить выбор' : 'Показать победителей'}
+                      </button>
+          
+                      {/* Чекбоксы для выбора пиков */}
+                      <div className="picks-filter">
+                        {[1, 2, 3, 4, 5].map(pick => (
+                          <label key={pick}>
+                            <input
+                              type="checkbox"
+                              checked={selectedPicks.includes(pick)}
+                              onChange={e => {
+                                if (e.target.checked) {
+                                  setSelectedPicks([...selectedPicks, pick]);
+                                } else {
+                                  setSelectedPicks(selectedPicks.filter(p => p !== pick));
+                                }
+                              }}
+                            />
+                            Пик {pick}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+          }
 
-            {/* Чекбоксы для выбора пиков */}
-            <div className="picks-filter">
-              {[1, 2, 3, 4, 5].map(pick => (
-                <label key={pick}>
-                  <input
-                    type="checkbox"
-                    checked={selectedPicks.includes(pick)}
-                    onChange={e => {
-                      if (e.target.checked) {
-                        setSelectedPicks([...selectedPicks, pick]);
-                      } else {
-                        setSelectedPicks(selectedPicks.filter(p => p !== pick));
-                      }
-                    }}
-                  />
-                  Пик {pick}
-                </label>
-              ))}
-            </div>
-          </div>
             <button
               type="button"
               className={`btn btn-sm ${matchesFilter === 'all' ? 'btn-active' : ''}`}
@@ -386,7 +411,7 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
             return (
               <Link
                 href={`/player/${player.playerID}`}
-                key={player.playerID + (player.ul_id ? player.ul_id : "")}
+                key={player.pick_number +player.playerID + (player.ul_id ? player.ul_id : "")}
                 className={`grid-row ${
                   player.matches < 10 && player.ul_id == "" ? "[&>*]:opacity-75 bg-gray-800 bg-opacity-50" : ""
                 }`}

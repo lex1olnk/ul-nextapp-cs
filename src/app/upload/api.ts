@@ -1,6 +1,6 @@
 "use server";
 
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 
 interface Tournament {
   id: string;
@@ -34,6 +34,26 @@ export async function createTournament(name: string) {
     );
 
     return response.data.data.tournamentId;
+  } catch (error) {
+    console.error("API Error:", error);
+    return ""; // Возвращаем пустые данные вместо исключения
+  }
+}
+
+export async function updateTournamentPlayers(id:string, name: string) {
+  try {
+    await api.post(
+      "/api/ulpicks",
+      {
+        id: id,
+        name: name,
+      },
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
   } catch (error) {
     console.error("API Error:", error);
     return ""; // Возвращаем пустые данные вместо исключения

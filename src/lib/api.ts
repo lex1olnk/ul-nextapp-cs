@@ -12,9 +12,9 @@ const getBaseUrl = () => {
 };
 */
 // Конфигурация для клиентской и серверной части
-const getBaseUrl = () => "https://ul-backend.vercel.app/"; // Относительный путь в продакшене
+export const getBaseUrl = () => "http://localhost:80/"; // Относительный путь в продакшене
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: getBaseUrl(),
   headers: {
     "Content-Type": "application/json",
@@ -32,4 +32,4 @@ api.interceptors.response.use(
   },
 );
 
-export default api;
+

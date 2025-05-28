@@ -7,7 +7,6 @@ export async function getPlayerMatches(id: string, ul_id: string, page: number) 
     })
 
     const data = await response.json();
-
     return data;
   } catch (error) {
     console.error("API Error:", error);

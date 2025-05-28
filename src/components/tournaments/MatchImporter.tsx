@@ -1,5 +1,5 @@
 "use client";
-import { createTournament, postAndAttachMatches } from "@/app/upload/api";
+import { createTournament, postAndAttachMatches, updateTournamentPlayers } from "@/app/upload/api";
 import { useState } from "react";
 import { TournamentSearch } from "./TournamentSearch";
 
@@ -45,6 +45,21 @@ export default function MatchImporter({ tournaments }) {
       alert("Error creating tournament");
     }
   };
+
+  const handleUpdateTournamentPlayers = async () => {
+    if (!newTournamentName) {
+      alert("Please enter tournament name");
+      return;
+    }
+
+    try {
+      await updateTournamentPlayers(selectedTournament, newTournamentName);
+    } catch (error) {
+      console.error("Error creating tournament:", error);
+      alert("Error creating tournament");
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <h1 className="text-2xl font-bold mb-6">Import Fastcup Matches</h1>
@@ -66,16 +81,14 @@ export default function MatchImporter({ tournaments }) {
             </button>
 
             {selectedTournament && (
-              <button
-                onClick={() => {
-                  if (confirm("Delete this tournament?")) {
-                    // Вызов API для удаления
-                  }
-                }}
-                className="ml-4 px-4 py-2 rounded bg-slate-300 hover:bg-white text-black"
-              >
-                Delete
-              </button>
+              <>
+                <button
+                  onClick={handleUpdateTournamentPlayers}
+                  className="ml-4 px-4 py-2 rounded bg-slate-300 hover:bg-white text-black"
+                >
+                  Update Players
+                </button>
+              </>
             )}
           </div>
         </div>
