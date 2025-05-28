@@ -102,7 +102,7 @@ select {
 /* Grid контейнер для всей таблицы */
 .stats-grid {
   display: grid;
-  grid-template-columns: 50px auto repeat(9, 70px);
+  grid-template-columns: 90px auto repeat(16, 52.5px);
 }
 
 /* Заголовки */
@@ -110,13 +110,16 @@ select {
   background-color: var(--light-dark);
   padding: 8px 10px;
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 500;
   color: #fff;
   position: sticky;
   top: 0;
   border-bottom: 8px solid var(--color-background);
 }
 
+.grid-header:hover > .grid-header {
+  background-color: #494949;
+}
 /* Особый стиль для заголовка nickname */
 .grid-header:first-child {
   text-align: center;
@@ -133,10 +136,10 @@ select {
 
 /* Ячейки таблицы */
 .grid-item {
-  padding: 8px 12px;
+  padding: 6px 12px;
   margin-bottom: 4px;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 400;
   color: #fff;
   display: flex;
   text-align: left;
@@ -149,7 +152,6 @@ select {
 
 .grid-item:first-child {
   text-align: center;
-  position: sticky;
   left: 0;
   z-index: 1;
 }

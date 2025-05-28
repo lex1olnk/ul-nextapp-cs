@@ -6,38 +6,56 @@ import { useMemo, useState } from "react";
 
 //import { getRatingColor } from "@/lib/utils"
 
-import logo from "@/components/player/top.gif";
 
 import { getRatingColor } from "@/lib/utils";
 import { DataTableControls } from "./DataTableControls";
 import "./style.css";
 
+import Pick1 from "@/img/pick1.svg";
+import Pick2 from "@/img/pick2.svg";
+import Pick3 from "@/img/pick3.svg";
+import Pick4 from "@/img/pick4.svg";
+import Pick5 from "@/img/pick5.svg";
+
+const picks = [Pick1, Pick2, Pick3, Pick4, Pick5]
+
+const colors = [
+  { rank: "?", color: "#AAAAAA" },
+  { rank: "SSS", color: "#881616" },
+  { rank: "SS", color: "#C73A3A" },
+  { rank: "S", color: "#E5992D" },
+  { rank: "A", color: "#E3E35D" },
+  { rank: "B", color: "#6AE87D" },
+  { rank: "C", color: "#4BEDC7" }
+]
+
 const ratingTier = (uLRating: number) => {
   if (uLRating == 0) {
-    return { rank: "?", color: "#AAAAAA" };
+    return colors[0];
   }
   if (uLRating >= 90) {
-    return { rank: "SSS", color: "#881616" };
+    return colors[1];
   }
   if (uLRating >= 85) {
-    return { rank: "SS", color: "#C73A3A" };
+    return colors[2];
   }
   if (uLRating >= 80) {
-    return { rank: "S", color: "#E5992D" };
+    return colors[3];
   }
   if (uLRating >= 70) {
-    return { rank: "A", color: "#E3E35D" };
+    return colors[4];
   }
   if (uLRating >= 60) {
-    return { rank: "B", color: "#6AE87D" };
+    return colors[5];
   }
-  return { rank: "C", color: "#4BEDC7" };
+  return colors[6];
 };
 
 interface PlayerStats {
   playerID: number;
   nickname: string;
   uLRating: number;
+  pick_number: number;
   img: string;
   matches: number;
   kills: number;
@@ -47,8 +65,8 @@ interface PlayerStats {
   kast: number;
   damage: number;
   exchanged: number;
-  firstDeath: number;
-  kirstKill: number;
+  firstDeaths: number;
+  firstKills: number;
   multiKills: number[];
   clutches: number[];
   rounds: number;
@@ -57,7 +75,7 @@ interface PlayerStats {
   kpr: number;
   dpr: number;
   impact: number;
-  clutchScore: number;
+  clutchExp: number;
   rating: number;
   matchID: number;
   isWinner: boolean;
@@ -65,14 +83,21 @@ interface PlayerStats {
 }
 
 type SortableColumn =
-  | "Kills"
-  | "Deaths"
-  | "Assists"
+  | "K"
+  | "D"
+  | "A"
+  | "K/D"
+  | "+/-"
   | "HS%"
   | "ADR"
+  | "FK"
+  | "FD"
+  | "CExp"
   | "KAST"
   | "IMP"
   | "Maps"
+  | "KPR"
+  | "DPR"
   | "Rating";
 
 type SortDirection = "asc" | "desc" | null;
@@ -91,14 +116,21 @@ const columnMapping: Record<
   SortableColumn,
   keyof PlayerStats | ((player: PlayerStats) => number)
 > = {
-  Kills: "kills",
-  Deaths: "deaths",
-  Assists: "assists",
-  "HS%": (player) => player.headshots || 0,
+  K: "kills",
+  D: "deaths",
+  A: "assists",
+  "K/D": (player) => player.kills / player.deaths,
+  "+/-": (player) => player.kills - player.deaths,
   ADR: (player) => player.damage / player.rounds,
+  "HS%": (player) => player.headshots || 0,
+  FK: "firstKills",
+  FD: "firstDeaths",
+  CExp: "clutchExp",
   KAST: (player) => player.kast,
   IMP: (player) => player.impact,
   Maps: "matches",
+  KPR: (player) => player.kills / player.rounds,
+  DPR: (player) => player.deaths / player.rounds,
   Rating: (player) => player.rating,
 };
 
@@ -109,6 +141,8 @@ interface Tournament {
 
 export default function PlayersTable(props: { players: PlayerStats[], ulTournaments: Tournament[] }) {
   const { players, ulTournaments } = props;
+  const [selectedPicks, setSelectedPicks] = useState<number[]>([]);
+  const [showBestByPicks, setShowBestByPicks] = useState(false);
   const [ulTournament, setUlTournament] = useState<string>("")
 
   const extractNumber = (name) => {
@@ -132,26 +166,25 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
 
   const [matchesFilter, setMatchesFilter] = useState<'all' | 'enough' | 'low'>('all');
   const filteredData = useMemo(() => {
-    const ulFilter = players.filter(
-      (player) =>
+    let result = players.filter(
+      player =>
         player.uLRating >= range.ratingRange[0] &&
-        player.uLRating <= range.ratingRange[1],
+        player.uLRating <= range.ratingRange[1] &&
+        player.ul_id == ulTournament
     );
-
-    let result = ulFilter.filter(
-      (player) => player.ul_id == ulTournament
-    )
-
-    
-    // Применяем фильтр по количеству матчей
+  
+    // Фильтрация по выбранным пикам
+    if (selectedPicks.length > 0) {
+      result = result.filter(player => 
+        selectedPicks.includes(player.pick_number)
+      );
+    }
+  
+    // Фильтрация по количеству матчей
     switch(matchesFilter) {
-      case 'enough':
-        result = result.filter(player => player.matches >= 10);
-        break;
-      case 'low':
-        result = result.filter(player => player.matches < 10);
-        break;
-      case 'all':
+      case 'enough': result = result.filter(p => p.matches >= 10); break;
+      case 'low': result = result.filter(p => p.matches < 10); break;
+      case 'all': 
       default:
         // Без фильтрации, но сохраняем разделение
         const enoughMatches = result.filter(player => player.matches >= 10);
@@ -159,7 +192,8 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
         result = [...enoughMatches, ...lowMatches];
         break;
     }
-
+  
+    // Сортировка
     if (filters.sortColumn) {
       result = [...result].sort((a, b) => {
         const columnKey = columnMapping[filters.sortColumn!];
@@ -177,13 +211,29 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
           : valueB - valueA;
       });
     }
-    
-    const enoughMatches = result.filter(player => player.matches >= 10);
-    const lowMatches = result.filter(player => player.matches < 10);
-    result = [...enoughMatches, ...lowMatches];
   
-    return result;
-  }, [players, filters, ulTournament, range, matchesFilter]);
+    // Фильтр "Лучшие по пикам"
+    if (showBestByPicks) {
+      const picksMap = new Map<number, PlayerStats[]>();
+      
+      // Группируем по пикам
+      result.forEach(player => {
+        const pick = player.pick_number || 0;
+        if (!picksMap.has(pick)) picksMap.set(pick, []);
+        picksMap.get(pick)?.push(player);
+      });
+  
+      // Сортируем внутри каждого пика и берем топ-3
+      const bestPlayers: PlayerStats[] = [];
+      picksMap.forEach((players) => {
+        bestPlayers.push(players[0]);
+      });
+  
+      result = bestPlayers;
+    }
+  
+    return result 
+  }, [players, filters, ulTournament, range, matchesFilter, selectedPicks, showBestByPicks]);
 
   // Функция для отображения значения ячейки
   const renderCellValue = (player: PlayerStats, column: SortableColumn) => {
@@ -195,6 +245,8 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
         case "HS%":
           return `${result.toFixed(0)}%`;
         case "ADR":
+          return result.toFixed(0);
+        case "+/-":
           return result.toFixed(0);
         case "KAST":
           return result.toFixed(0);
@@ -232,8 +284,37 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
           <p className="text-xs">Нажатие на имя столба проводит сортировку по его значениям.</p>
         </div>
         
-        <div className="flex flex-row mb-2 align-bottom">
+        <div className="flex flex-row mb-2 align-bottom text-sm">
           <div className="btn-group mr-2">
+          <div className="filters-container">
+            {/* Кнопка для лучших по пикам */}
+            <button 
+              onClick={() => setShowBestByPicks(!showBestByPicks)}
+              className={showBestByPicks ? 'active' : ''}
+            >
+              {showBestByPicks ? 'Сбросить выбор' : 'Показать лучших по пикам'}
+            </button>
+
+            {/* Чекбоксы для выбора пиков */}
+            <div className="picks-filter">
+              {[1, 2, 3, 4, 5].map(pick => (
+                <label key={pick}>
+                  <input
+                    type="checkbox"
+                    checked={selectedPicks.includes(pick)}
+                    onChange={e => {
+                      if (e.target.checked) {
+                        setSelectedPicks([...selectedPicks, pick]);
+                      } else {
+                        setSelectedPicks(selectedPicks.filter(p => p !== pick));
+                      }
+                    }}
+                  />
+                  Пик {pick}
+                </label>
+              ))}
+            </div>
+          </div>
             <button
               type="button"
               className={`btn btn-sm ${matchesFilter === 'all' ? 'btn-active' : ''}`}
@@ -279,8 +360,6 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
         </div>
       </div>
 
-
-
       <div className="stats-table-wrapper">
         <div className="stats-grid">
           {/* Заголовки */}
@@ -308,34 +387,34 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
               <Link
                 href={`/player/${player.playerID}`}
                 key={player.playerID + (player.ul_id ? player.ul_id : "")}
-                className={`grid-row hover:translate-x-1 hover:scale-x-[1.01] transition-all ${
+                className={`grid-row ${
                   player.matches < 10 && player.ul_id == "" ? "[&>*]:opacity-75 bg-gray-800 bg-opacity-50" : ""
                 }`}
               >
-                <div className="grid-item">
-                  {index == 0 && (
-                    <Image
-                      className="flex absolute w-24 mix-blend-screen -translate-x-4 -translate-y-4"
-                      src={logo}
-                      alt="loading..."
-                    />
-                  )}
-                  <span className="m-auto">{index + 1}</span>
+                <div 
+                  className="grid-item"
+                  style={{
+                    backgroundColor: player.pick_number ? 'transparent' : "#242424"
+                  }}
+                >
+                  {player.pick_number 
+                    ? <Image src={picks[player.pick_number - 1]} alt="pick" width={86} height={58} className="absolute w-[86px] h-[58px] -translate-x-3 -translate-y-1"/>
+                    : <span className="m-auto">{index + 1}</span>}
                 </div>
 
                 <div className="grid-item flex flex-row">
                   {player.img ? (
                     <Image
-                      width={40}
-                      height={40}
+                      width={36}
+                      height={36}
                       alt="profile img"
                       src={`https://cdn.fastcup.net/avatars/users/${player.img}`}
                       style={{ borderColor: color }}
-                      className="rounded-full w-10 h-10 my-auto border-2"
+                      className="rounded-full w-9 h-9 my-auto border-2"
                     />
                   ) : (
                     <div
-                      className="rounded-full w-10 h-10 my-auto border-2"
+                      className="rounded-full w-9 h-9 my-auto border-2"
                       style={{ borderColor: color }}
                     ></div>
                   )}
@@ -352,7 +431,7 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
                     className="grid-item"
                     style={{
                       color:
-                        column == "Rating"
+                        column == "Rating" || column == "K/D" || column == "IMP"
                           ? getRatingColor(
                               Number(
                                 renderCellValue(
@@ -360,8 +439,8 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
                                   column as SortableColumn,
                                 ),
                               ),
-                              0.3,
-                              1.5,
+                              0.4,
+                              1.4,
                             )
                           : "#fff",
                     }}

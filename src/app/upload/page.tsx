@@ -1,7 +1,8 @@
 import MatchImporter from "@/components/tournaments/MatchImporter";
 import { getTournaments } from "./api";
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic'; // Важно!
+export const revalidate = 0; // Отключает ISR
 
 export default async function UploadMatchesPage() {
   const tournaments = await getTournaments();

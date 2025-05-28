@@ -9,6 +9,9 @@ import api from "@/lib/api";
 import axios from "axios";
 import Image from "next/image";
 
+export const dynamic = 'force-dynamic'; // Важно!
+export const revalidate = 0; // Отключает ISR
+
 async function getPlayerData(id: string) {
   try {
     const response = await api.get(`/api/player/${id}`);
@@ -68,7 +71,7 @@ export default async function PlayerPage({
   const data = await getPlayerData(id);
   const faceit = await getFaceitData(data.player_stats.faceit);
   const stats = await getFaceitPlayerStats(faceit.player_id)
-  console.log(stats)
+
   //const { firstKills, firstDeaths,  }
 
   if (!data) {
@@ -99,7 +102,7 @@ export default async function PlayerPage({
         player={data?.player_stats}
       />
       <div className="relative">
-        <RatingStatisticsSection matches={data.recent_matches} />
+        <RatingStatisticsSection playerId={id} ulTournaments={data.tournaments} />
         <Image
           className="absolute top-4 left-5"
           width={1044}
