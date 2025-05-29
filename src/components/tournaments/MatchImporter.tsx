@@ -54,6 +54,7 @@ export default function MatchImporter({ tournaments }) {
 
     try {
       await updateTournamentPlayers(selectedTournament, newTournamentName);
+      alert("success")
     } catch (error) {
       console.error("Error creating tournament:", error);
       alert("Error creating tournament");

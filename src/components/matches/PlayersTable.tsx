@@ -303,7 +303,7 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
         <div className="flex flex-row mb-2 align-bottom text-sm">
           <div className="btn-group mr-2">
           {
-                  ulTournament &&<div className="filters-container">
+                  ulTournament ? <div className="filters-container">
                       {/* Кнопка для лучших по пикам */}
                       <button 
                         onClick={() => setShowBestByPicks(!showBestByPicks)}
@@ -337,10 +337,9 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
                           </label>
                         ))}
                       </div>
-                    </div>
-          }
-
-            <button
+                    </div> 
+                    : <>
+                                <button
               type="button"
               className={`btn btn-sm ${matchesFilter === 'all' ? 'btn-active' : ''}`}
               onClick={() => setMatchesFilter('all')}
@@ -361,6 +360,8 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
             >
               Проходняк
             </button>
+            </>
+          }
           </div>
 
           <DataTableControls
