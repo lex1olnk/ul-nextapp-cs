@@ -1,5 +1,5 @@
 "use client";
-import { createTournament, postAndAttachMatches, updateTournamentPlayers } from "@/app/upload/api";
+import { createTournament, exportMatches, postAndAttachMatches, updateTournamentPlayers } from "@/app/upload/api";
 import { useState } from "react";
 import { TournamentSearch } from "./TournamentSearch";
 
@@ -54,7 +54,21 @@ export default function MatchImporter({ tournaments }) {
 
     try {
       await updateTournamentPlayers(selectedTournament, newTournamentName);
-      alert("success")
+    } catch (error) {
+      console.error("Error creating tournament:", error);
+      alert("Error creating tournament");
+    }
+  };
+
+  const handleExportMatches = async () => {
+    if (!newTournamentName) {
+      alert("Please enter tournament name");
+      return;
+    }
+
+    try {
+      await exportMatches({tournamentId: selectedTournament, tournamentName: newTournamentName});
+      
     } catch (error) {
       console.error("Error creating tournament:", error);
       alert("Error creating tournament");
@@ -88,6 +102,12 @@ export default function MatchImporter({ tournaments }) {
                   className="ml-4 px-4 py-2 rounded bg-slate-300 hover:bg-white text-black"
                 >
                   Update Players
+                </button>
+                <button
+                  onClick={handleExportMatches}
+                  className="ml-4 px-4 py-2 rounded bg-slate-300 hover:bg-white text-black"
+                >
+                  Export Matches
                 </button>
               </>
             )}

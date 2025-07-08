@@ -86,3 +86,30 @@ export async function postAndAttachMatches({
     console.error("API Error:", error);
   }
 }
+
+export async function exportMatches({
+  tournamentId,
+  tournamentName
+}: {
+  tournamentId: string | "";
+  tournamentName: string;
+}) {
+  const requestBody: { name: string; id?: string } = {
+    name: tournamentName,
+  };
+
+  if (tournamentId) {
+    requestBody.id = tournamentId;
+  }
+  console.log(requestBody)
+  try {
+    const response = await api.post("/api/matches/export", requestBody, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data.status;
+  } catch (error) {
+    console.error("API Error:", error);
+  }
+}
