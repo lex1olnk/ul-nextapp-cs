@@ -1,9 +1,6 @@
 # CS2 Fastcup Leaderboard 🏆
 
 [![Next.js](https://img.shields.io/badge/Next.js-13+-000000?logo=nextdotjs)](https://nextjs.org/)
-[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev/)
-[![Neon](https://img.shields.io/badge/Neon-Postgres-3ECF8E?logo=postgresql)](https://neon.tech/)
-[![Google Sheets](https://img.shields.io/badge/Google%20Sheets-API-34A853?logo=googlesheets)](https://developers.google.com/sheets)
 
 **Визуализация топ-игроков Counter-Strike 2 (CS2), сыгравших в миксах и турнирах на платформе Fasctup.** Система автоматически обновляет данные игроков через Google Sheets и предоставляет API для доступа к статистике.
 
