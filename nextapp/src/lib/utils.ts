@@ -1,10 +1,3 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
 export const getRatingColor = (rating: number, left: number, right: number) => {
   // Нормализуем рейтинг в диапазон 0-1 между left и right
   const normalized = Math.min(Math.max((rating - left) / (right - left), 0), 1);

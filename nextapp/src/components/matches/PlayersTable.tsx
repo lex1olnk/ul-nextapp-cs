@@ -6,7 +6,6 @@ import { useMemo, useState } from "react";
 
 //import { getRatingColor } from "@/lib/utils"
 
-
 import { getRatingColor } from "@/lib/utils";
 import { DataTableControls } from "./DataTableControls";
 import "./style.css";
@@ -17,7 +16,7 @@ import Pick3 from "@/img/pick3.svg";
 import Pick4 from "@/img/pick4.svg";
 import Pick5 from "@/img/pick5.svg";
 
-const picks = [Pick1, Pick2, Pick3, Pick4, Pick5]
+const picks = [Pick1, Pick2, Pick3, Pick4, Pick5];
 
 const colors = [
   { rank: "?", color: "#AAAAAA" },
@@ -26,8 +25,8 @@ const colors = [
   { rank: "S", color: "#E5992D" },
   { rank: "A", color: "#E3E35D" },
   { rank: "B", color: "#6AE87D" },
-  { rank: "C", color: "#4BEDC7" }
-]
+  { rank: "C", color: "#4BEDC7" },
+];
 
 const ratingTier = (uLRating: number) => {
   if (uLRating == 0) {
@@ -139,14 +138,17 @@ interface Tournament {
   name: string;
 }
 
-export default function PlayersTable(props: { players: PlayerStats[], ulTournaments: Tournament[] }) {
+export default function PlayersTable(props: {
+  players: PlayerStats[];
+  ulTournaments: Tournament[];
+}) {
   const { players, ulTournaments } = props;
   const [selectedPicks, setSelectedPicks] = useState<number[]>([]);
   const [showBestByPicks, setShowBestByPicks] = useState(false);
   const [showWinners, setShowWinners] = useState(false);
-  const [ulTournament, setUlTournament] = useState<string>("")
+  const [ulTournament, setUlTournament] = useState<string>("");
 
-  const extractNumber = (name) => {
+  const extractNumber = (name: string) => {
     const numbers = name.match(/\d+/g); // Находим все числа в строке
     return numbers ? parseInt(numbers[0]) : 0; // Берем первое число
   };
@@ -165,32 +167,38 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
     ratingRange: [0, 100],
   });
 
-  const [matchesFilter, setMatchesFilter] = useState<'all' | 'enough' | 'low'>('all');
+  const [matchesFilter, setMatchesFilter] = useState<"all" | "enough" | "low">(
+    "all"
+  );
   const filteredData = useMemo(() => {
     let result = players.filter(
-      player =>
+      (player) =>
         player.uLRating >= range.ratingRange[0] &&
         player.uLRating <= range.ratingRange[1] &&
         player.ul_id == ulTournament
     );
-  
+
     // Фильтрация по выбранным пикам
     if (selectedPicks.length > 0) {
-      result = result.filter(player => 
+      result = result.filter((player) =>
         selectedPicks.includes(player.pick_number)
       );
     }
-  
+
     // Фильтрация по количеству матчей
-    switch(matchesFilter) {
-      case 'enough': result = result.filter(p => p.matches >= 10); break;
-      case 'low': result = result.filter(p => p.matches < 10); break;
-      case 'all': 
+    switch (matchesFilter) {
+      case "enough":
+        result = result.filter((p) => p.matches >= 10);
+        break;
+      case "low":
+        result = result.filter((p) => p.matches < 10);
+        break;
+      case "all":
       default:
         result = [...result];
         break;
     }
-  
+
     // Сортировка
     if (filters.sortColumn) {
       result = [...result].sort((a, b) => {
@@ -209,47 +217,55 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
           : valueB - valueA;
       });
     }
-  
+
     // Фильтр "Лучшие по пикам"
     if (showBestByPicks) {
       const picksMap = new Map<number, PlayerStats[]>();
-      
+
       // Группируем по пикам
-      result.forEach(player => {
+      result.forEach((player) => {
         const pick = player.pick_number || 0;
         if (!picksMap.has(pick)) picksMap.set(pick, []);
         picksMap.get(pick)?.push(player);
       });
-  
+
       // Сортируем внутри каждого пика и берем топ-3
       const bestPlayers: PlayerStats[] = [];
       picksMap.forEach((players) => {
         bestPlayers.push(players[0]);
       });
-  
+
       result = bestPlayers;
     }
 
     if (showWinners) {
-      const picksMap: PlayerStats[] = []
-      
+      const picksMap: PlayerStats[] = [];
+
       // Группируем по пикам
-      result.forEach(player => {
+      result.forEach((player) => {
         if (player.is_winner) {
-          picksMap.push(player)
-        } 
-        
+          picksMap.push(player);
+        }
       });
-  
+
       result = picksMap;
     }
-  
-    const enoughMatches = result.filter(player => player.matches >= 10);
-    const lowMatches = result.filter(player => player.matches < 10);
+
+    const enoughMatches = result.filter((player) => player.matches >= 10);
+    const lowMatches = result.filter((player) => player.matches < 10);
     result = [...enoughMatches, ...lowMatches];
 
-    return result
-  }, [players, filters, ulTournament, range, matchesFilter, selectedPicks, showBestByPicks, showWinners]);
+    return result;
+  }, [
+    players,
+    filters,
+    ulTournament,
+    range,
+    matchesFilter,
+    selectedPicks,
+    showBestByPicks,
+    showWinners,
+  ]);
 
   // Функция для отображения значения ячейки
   const renderCellValue = (player: PlayerStats, column: SortableColumn) => {
@@ -297,90 +313,103 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
       <div className="flex flex-row justify-between">
         <div>
           <h1 className="my-2">Players Statistics</h1>
-          <p className="text-xs">Нажатие на имя столба проводит сортировку по его значениям.</p>
+          <p className="text-xs">
+            Нажатие на имя столба проводит сортировку по его значениям.
+          </p>
         </div>
-        
+
         <div className="flex flex-row mb-2 align-bottom text-sm">
           <div className="btn-group mr-2">
-          {
-                  ulTournament ? <div className="filters-container">
-                      {/* Кнопка для лучших по пикам */}
-                      <button 
-                        onClick={() => setShowBestByPicks(!showBestByPicks)}
-                        className={showBestByPicks ? 'active' : ''}
-                      >
-                        {showBestByPicks ? 'Сбросить выбор' : 'Показать лучших по пикам'}
-                      </button>
-                      <button 
-                        onClick={() => setShowWinners(!showWinners)}
-                        className={showWinners ? 'active' : ''}
-                      >
-                        {showWinners ? 'Сбросить выбор' : 'Показать победителей'}
-                      </button>
-          
-                      {/* Чекбоксы для выбора пиков */}
-                      <div className="picks-filter">
-                        {[1, 2, 3, 4, 5].map(pick => (
-                          <label key={pick}>
-                            <input
-                              type="checkbox"
-                              checked={selectedPicks.includes(pick)}
-                              onChange={e => {
-                                if (e.target.checked) {
-                                  setSelectedPicks([...selectedPicks, pick]);
-                                } else {
-                                  setSelectedPicks(selectedPicks.filter(p => p !== pick));
-                                }
-                              }}
-                            />
-                            Пик {pick}
-                          </label>
-                        ))}
-                      </div>
-                    </div> 
-                    : <>
-                                <button
-              type="button"
-              className={`btn btn-sm ${matchesFilter === 'all' ? 'btn-active' : ''}`}
-              onClick={() => setMatchesFilter('all')}
-            >
-              Все
-            </button>
-            <button
-              type="button"
-              className={`btn btn-sm ${matchesFilter === 'enough' ? 'btn-active' : ''}`}
-              onClick={() => setMatchesFilter('enough')}
-            >
-              ЖБ
-            </button>
-            <button
-              type="button"
-              className={`btn btn-sm ${matchesFilter === 'low' ? 'btn-active' : ''}`}
-              onClick={() => setMatchesFilter('low')}
-            >
-              Проходняк
-            </button>
-            </>
-          }
+            {ulTournament ? (
+              <div className="filters-container">
+                {/* Кнопка для лучших по пикам */}
+                <button
+                  onClick={() => setShowBestByPicks(!showBestByPicks)}
+                  className={showBestByPicks ? "active" : ""}
+                >
+                  {showBestByPicks
+                    ? "Сбросить выбор"
+                    : "Показать лучших по пикам"}
+                </button>
+                <button
+                  onClick={() => setShowWinners(!showWinners)}
+                  className={showWinners ? "active" : ""}
+                >
+                  {showWinners ? "Сбросить выбор" : "Показать победителей"}
+                </button>
+
+                {/* Чекбоксы для выбора пиков */}
+                <div className="picks-filter">
+                  {[1, 2, 3, 4, 5].map((pick) => (
+                    <label key={pick}>
+                      <input
+                        type="checkbox"
+                        checked={selectedPicks.includes(pick)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedPicks([...selectedPicks, pick]);
+                          } else {
+                            setSelectedPicks(
+                              selectedPicks.filter((p) => p !== pick)
+                            );
+                          }
+                        }}
+                      />
+                      Пик {pick}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${matchesFilter === "all" ? "btn-active" : ""}`}
+                  onClick={() => setMatchesFilter("all")}
+                >
+                  Все
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${matchesFilter === "enough" ? "btn-active" : ""}`}
+                  onClick={() => setMatchesFilter("enough")}
+                >
+                  ЖБ
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${matchesFilter === "low" ? "btn-active" : ""}`}
+                  onClick={() => setMatchesFilter("low")}
+                >
+                  Проходняк
+                </button>
+              </>
+            )}
           </div>
 
           <DataTableControls
-            className="" 
+            className=""
             onFilterChange={setRange}
             minRating={0}
             maxRating={100}
           />
           <form className="max-w-sm mx-auto">
-            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Select an option</label>
-            <select 
-              id="countries" 
+            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+              Select an option
+            </label>
+            <select
+              id="countries"
               className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-light-dark dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-              onChange={e => setUlTournament(e.target.value)}
+              onChange={(e) => setUlTournament(e.target.value)}
             >
-              <option value="" defaultValue="">MIX</option>
-              {sortedTournaments.map(tournament => 
-                  <option value={tournament.id} key={tournament.name}>{tournament.name}</option>
-              )}
+              <option value="" defaultValue="">
+                MIX
+              </option>
+              {sortedTournaments.map((tournament) => (
+                <option value={tournament.id} key={tournament.name}>
+                  {tournament.name}
+                </option>
+              ))}
             </select>
           </form>
         </div>
@@ -412,20 +441,36 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
             return (
               <Link
                 href={`/player/${player.playerID}`}
-                key={player.pick_number +player.playerID + (player.ul_id ? player.ul_id : "")}
+                key={
+                  player.pick_number +
+                  player.playerID +
+                  (player.ul_id ? player.ul_id : "")
+                }
                 className={`grid-row ${
-                  player.matches < 10 && player.ul_id == "" ? "[&>*]:opacity-75 bg-gray-800 bg-opacity-50" : ""
+                  player.matches < 10 && player.ul_id == ""
+                    ? "[&>*]:opacity-75 bg-gray-800 bg-opacity-50"
+                    : ""
                 }`}
               >
-                <div 
+                <div
                   className="grid-item"
                   style={{
-                    backgroundColor: player.pick_number ? 'transparent' : "#242424"
+                    backgroundColor: player.pick_number
+                      ? "transparent"
+                      : "#242424",
                   }}
                 >
-                  {player.pick_number 
-                    ? <Image src={picks[player.pick_number - 1]} alt="pick" width={86} height={58} className="absolute w-[86px] h-[58px] -translate-x-3 -translate-y-1"/>
-                    : <span className="m-auto">{index + 1}</span>}
+                  {player.pick_number ? (
+                    <Image
+                      src={picks[player.pick_number - 1]}
+                      alt="pick"
+                      width={86}
+                      height={58}
+                      className="absolute w-[86px] h-[58px] -translate-x-3 -translate-y-1"
+                    />
+                  ) : (
+                    <span className="m-auto">{index + 1}</span>
+                  )}
                 </div>
 
                 <div className="grid-item flex flex-row">
@@ -462,11 +507,11 @@ export default function PlayersTable(props: { players: PlayerStats[], ulTourname
                               Number(
                                 renderCellValue(
                                   player,
-                                  column as SortableColumn,
-                                ),
+                                  column as SortableColumn
+                                )
                               ),
                               0.4,
-                              1.4,
+                              1.4
                             )
                           : "#fff",
                     }}

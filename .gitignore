@@ -13,6 +13,8 @@
 # testing
 /coverage
 
+/cloudflared
+
 # next.js
 /.next/
 /out/

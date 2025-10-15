@@ -1,42 +1,25 @@
-import { CreateMatchDto } from "./dto/create-match.dto";
-import { UpdateMatchDto } from "./dto/update-match.dto";
-import { PrismaClient } from "@prisma/client";
 import { prisma } from "../prisma";
 
 interface FindAllParams {
   skip?: number;
   take?: number;
-  include?: any;
-  where?: any;
-  orderBy?: any;
 }
 
 export class MatchesService {
   async findAll(params: FindAllParams) {
-    const { skip, take, include, where, orderBy } = params;
+    const { skip, take } = params;
 
     // Базовый запрос
-    const query: any = {};
+    const query: FindAllParams = {};
 
     if (skip !== undefined) query.skip = +skip;
     if (take !== undefined) query.take = +take;
+    /*
     if (include) query.include = include;
     if (where) query.where = where;
-    if (orderBy) query.orderBy = orderBy;
+    if (orderBy) query.orderBy = orderBy;*/
 
     // Если не включен tournament, добавляем по умолчанию для отображения названия
-    if (!query.include || !query.include.tournament) {
-      query.include = {
-        ...query.include,
-        tournament: {
-          select: {
-            id: true,
-            name: true,
-            status: true,
-          },
-        },
-      };
-    }
 
     try {
       const matches = await prisma.match.findMany(query);
@@ -53,19 +36,6 @@ export class MatchesService {
 
   async checkOne(id: string) {
     return await prisma.match.findUnique({
-      where: { id },
-    });
-  }
-
-  async update(id: string, updateMatchDto: UpdateMatchDto) {
-    return prisma.match.update({
-      where: { id },
-      data: updateMatchDto,
-    });
-  }
-
-  async remove(id: string) {
-    return prisma.match.deleteMany({
       where: { id },
     });
   }

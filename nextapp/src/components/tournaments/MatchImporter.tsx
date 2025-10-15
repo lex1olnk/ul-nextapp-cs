@@ -1,9 +1,21 @@
 "use client";
-import { createTournament, exportMatches, postAndAttachMatches, updateTournamentPlayers } from "@/app/upload/api";
+import {
+  createTournament,
+  exportMatches,
+  postAndAttachMatches,
+  updateTournamentPlayers,
+} from "@/app/upload/api";
 import { useState } from "react";
 import { TournamentSearch } from "./TournamentSearch";
 
-export default function MatchImporter({ tournaments }) {
+export default function MatchImporter({
+  tournaments,
+}: {
+  tournaments: {
+    id: string;
+    name: string;
+  }[];
+}) {
   const [selectedTournament, setSelectedTournament] = useState<string>("");
   const [matchUrls, setMatchUrls] = useState<string>("");
   const [isCreatingTournament, setIsCreatingTournament] = useState(false);
@@ -67,8 +79,10 @@ export default function MatchImporter({ tournaments }) {
     }
 
     try {
-      await exportMatches({tournamentId: selectedTournament, tournamentName: newTournamentName});
-      
+      await exportMatches({
+        tournamentId: selectedTournament,
+        tournamentName: newTournamentName,
+      });
     } catch (error) {
       console.error("Error creating tournament:", error);
       alert("Error creating tournament");

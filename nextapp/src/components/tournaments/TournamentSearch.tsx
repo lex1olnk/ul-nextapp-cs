@@ -9,8 +9,8 @@ interface Tournament {
 
 interface TournamentSearchProps {
   allTournaments: Tournament[];
-  setNewTournamentName: (string) => void;
-  setNewTournamentId: (string) => void;
+  setNewTournamentName: (name: string) => void;
+  setNewTournamentId: (id: string) => void;
 }
 
 export const TournamentSearch = ({
@@ -20,7 +20,7 @@ export const TournamentSearch = ({
 }: TournamentSearchProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredTournaments, setFilteredTournaments] = useState<Tournament[]>(
-    [],
+    []
   );
   const [selectedTournamentId, setSelectedTournamentId] = useState<
     string | null
@@ -33,7 +33,7 @@ export const TournamentSearch = ({
     }
 
     const filtered = allTournaments.filter((tournament) =>
-      tournament.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      tournament.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setNewTournamentName(searchTerm);
     setFilteredTournaments(filtered);
