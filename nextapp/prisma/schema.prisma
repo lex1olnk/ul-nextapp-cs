@@ -210,7 +210,7 @@ model Round {
   matchMapId     String         @map("match_map_id") @db.Uuid
   roundNumber    Int            @map("round_number")
   endReason      Int?           @map("end_reason")
-  tick           Float?
+  tick           Float
   // Relations
   match          Match          @relation(fields: [matchId], references: [id])
   matchMap       MatchMap       @relation(fields: [matchMapId], references: [id])
