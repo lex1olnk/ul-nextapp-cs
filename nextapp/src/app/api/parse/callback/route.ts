@@ -1,100 +1,70 @@
 // app/api/parse/callback/route.ts
 
-import { prismaSessionStore } from "@/lib/services/prisma-session-store";
+import { databaseService } from "@/lib/server-parse-services/database-service";
+import { prismaSessionStore } from "@/lib/server-parse-services/prisma-session-store";
 import { NextRequest, NextResponse } from "next/server";
 
-// app/api/parse/callback/route.ts
 export async function POST(request: NextRequest) {
-  console.log("🎯 CALLBACK ENDPOINT HIT!");
-
   try {
-    const url = new URL(request.url);
-    const searchParams = url.searchParams;
-
-    const sessionId = searchParams.get("sessionId");
-    const matchUrl = searchParams.get("matchUrl");
-
-    console.log(`📨 Callback parameters:`, {
-      sessionId,
-      matchUrl,
-      allParams: Array.from(searchParams.entries()),
-    });
-
-    console.log(`🔍 Full URL: ${request.url}`);
-
-    if (!sessionId) {
-      console.error("❌ MISSING sessionId");
-      return NextResponse.json(
-        {
-          error: "Missing sessionId",
-          receivedParams: Array.from(searchParams.entries()),
-        },
-        { status: 400 }
-      );
-    }
-
-    if (!matchUrl) {
-      console.error("❌ MISSING matchUrl");
-      return NextResponse.json(
-        {
-          error: "Missing matchUrl",
-          receivedParams: Array.from(searchParams.entries()),
-        },
-        { status: 400 }
-      );
-    }
-
+    const { sessionId, matchUrl } = await getParams(request);
     const result = await request.json();
-    console.log(`📊 Callback payload:`, JSON.stringify(result, null, 2));
 
-    // ✅ Проверяем что сессия существует
-    const session = await prismaSessionStore.getSession(sessionId);
-    if (!session) {
-      console.error(`❌ Session ${sessionId} not found in database`);
-      return NextResponse.json(
-        {
-          error: "Session not found",
-          sessionId,
-        },
-        { status: 404 }
-      );
-    }
-
-    console.log(`✅ Session found, updating progress...`);
+    console.log(`📨 Callback received for ${matchUrl}`);
 
     if (result.success) {
-      console.log(`✅ Parsing completed for ${matchUrl}`);
+      console.log("💾 Saving parsed data to database tables...");
 
+      // ✅ Сохраняем данные напрямую в таблицы БД
+      const matchId = await databaseService.saveParsedData(
+        sessionId,
+        matchUrl,
+        result.data
+      );
+
+      // ✅ Обновляем прогресс - только статус, без данных
       await prismaSessionStore.updateMatchProgress(sessionId, matchUrl, {
         status: "completed",
         progress: 100,
-        currentStep: "Processing completed",
-        data: result.data || null,
+        currentStep: "Data saved to database",
+        matchId: matchId, // сохраняем ID созданного матча
       });
 
-      console.log(`✅ Progress updated to completed`);
+      console.log(`✅ Data saved to database, match ID: ${matchId}`);
     } else {
-      console.error(`❌ Parsing failed for ${matchUrl}:`, result.error);
-
       await prismaSessionStore.updateMatchProgress(sessionId, matchUrl, {
         status: "error",
         error: result.error,
-        progress: 100,
       });
     }
 
-    return NextResponse.json({
-      status: "ok",
-      message: "Callback processed successfully",
-    });
+    return NextResponse.json({ status: "ok" });
   } catch (error) {
-    console.error("❌ Callback error:", error);
-    return NextResponse.json(
-      {
-        error: "Callback processing failed",
-        details: error,
-      },
-      { status: 500 }
-    );
+    console.error("❌ Error in callback:", error);
+
+    // Даже при ошибке сохраняем статус
+    try {
+      const { sessionId, matchUrl } = await getParams(request);
+      await prismaSessionStore.updateMatchProgress(sessionId, matchUrl, {
+        status: "error",
+        error: `Database save failed: `,
+      });
+    } catch (e) {
+      console.error("Failed to update error status:", e);
+    }
+
+    return NextResponse.json({ error: error }, { status: 500 });
   }
+}
+
+// lib/params-helper.ts
+export async function getParams(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const sessionId = searchParams.get("sessionId");
+  const matchUrl = searchParams.get("matchUrl");
+
+  if (!sessionId || !matchUrl) {
+    throw new Error("Missing sessionId or matchUrl parameters");
+  }
+
+  return { sessionId, matchUrl };
 }

@@ -1,7 +1,7 @@
-import { demoParserService } from "@/lib/services/demo-parser-service";
-import { downloadService } from "@/lib/services/download-service";
-import { MatchesService } from "@/lib/services/matchesService";
-import { prismaSessionStore } from "@/lib/services/prisma-session-store";
+import { demoParserService } from "@/lib/server-parse-services/demo-parser-service";
+import { downloadService } from "@/lib/server-parse-services/download-service";
+import { MatchesService } from "@/lib/server-parse-services/matchesService";
+import { prismaSessionStore } from "@/lib/server-parse-services/prisma-session-store";
 
 import { validateMatchesInput } from "@/lib/validation/match-validation";
 import { Match, MatchesResponse, MatchNew } from "@/types";

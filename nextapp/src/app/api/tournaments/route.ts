@@ -1,6 +1,6 @@
-import { CreateTournamentDto } from "@/lib/services/dto/create-tournament.dto";
-import { MatchesService } from "@/lib/services/matchesService";
-import { TournamentsService } from "@/lib/services/tournaments.service";
+import { CreateTournamentDto } from "@/lib/server-parse-services/dto/create-tournament.dto";
+import { MatchesService } from "@/lib/server-parse-services/matchesService";
+import { TournamentsService } from "@/lib/server-parse-services/tournaments.service";
 import { NextRequest, NextResponse } from "next/server";
 
 const tournamentsService: TournamentsService = new TournamentsService();

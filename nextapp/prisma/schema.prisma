@@ -115,7 +115,7 @@ model MatchMap {
 }
 
 model Map {
-  id      Int    @id
+  id      Int    @id @default(autoincrement())
   name    String
   preview String
   topview String
@@ -334,7 +334,7 @@ model MatchGrenade {
 }
 
 model Weapon {
-  id           Int     @id @map("weapon_id")
+  id           Int     @id @map("weapon_id") @default(autoincrement())
   name         String
   type         String?
   internalName String  @map("internal_name")
