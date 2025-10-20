@@ -1,8 +1,11 @@
-import { DemoToDatabase } from "@/lib/demoDatabase";
+import { demoParserService } from "@/lib/services/demo-parser-service";
+import { downloadService } from "@/lib/services/download-service";
 import { MatchesService } from "@/lib/services/matchesService";
-import { MatchInput } from "@/types";
-import { unlinkSync } from "fs";
-import { NextResponse } from "next/server";
+import { prismaSessionStore } from "@/lib/services/prisma-session-store";
+
+import { validateMatchesInput } from "@/lib/validation/match-validation";
+import { Match, MatchesResponse, MatchNew } from "@/types";
+import { NextResponse, NextRequest } from "next/server";
 
 const matchesService: MatchesService = new MatchesService();
 
@@ -18,64 +21,176 @@ export async function GET() {
   }
 }
 
-// pages/api/process-matches.ts или app/api/process-matches/route.ts
-
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { matches }: { matches: MatchInput[] } = await request.json();
+    const body: MatchesResponse = await request.json();
 
-    const results = await Promise.all(
-      matches.map(async (match) => {
-        const demoFileName = `demos/${Date.now()}_${Math.random().toString(36).substring(7)}.dem`;
-        try {
-          // Создаем уникальное имя файла для демки
+    if (!body.matches) {
+      return NextResponse.json(
+        { error: "Missing matches array" },
+        { status: 400 }
+      );
+    }
 
-          // Логика скачивания в зависимости от платформы
-          const downloadResult: {
-            success: boolean;
-            error?: string;
-          } = await matchesService.downloadDemoBasedOnPlatform(
-            match,
-            demoFileName
-          );
+    validateMatchesInput(body.matches);
 
-          if (!downloadResult.success) {
-            throw new Error(`Failed to download demo: ${downloadResult.error}`);
-          }
+    const matchesProgress = body.matches.map((match) => ({
+      url: match.url,
+      tournamentId: match.tournamentId,
+      platform: match.platform,
+      status: "pending",
+      progress: 0,
+      currentStep: "Waiting to start",
+    }));
 
-          // Обрабатываем демку
-          const demoClass = new DemoToDatabase(demoFileName);
-          const processResult = await demoClass.processDemo();
+    // ✅ Создаем сессию в БД
+    const session = await prismaSessionStore.createSession(matchesProgress);
 
-          // Удаляем временный файл
-          await unlinkSync(demoFileName);
+    console.log("✅ Session created in database:", session.sessionId);
 
-          return {
-            success: true,
-            matchId: match.tournamentId,
-            url: match.url,
-            processedData: processResult,
-          };
-        } catch (error) {
-          // В случае ошибки все равно пытаемся удалить файл
-          try {
-            await unlinkSync(demoFileName);
-          } catch (deleteError) {
-            console.error("Failed to delete demo file:", deleteError);
-          }
+    // Запускаем обработку
+    processMatchesAsync(session.sessionId, body.matches);
 
-          return {
-            success: false,
-            matchId: match.tournamentId,
-            url: match.url,
-            error: "error",
-          };
-        }
-      })
+    return NextResponse.json({
+      sessionId: session.sessionId,
+      status: "processing_started",
+      totalMatches: session.totalMatches,
+      message: "Matches are being processed.",
+    });
+  } catch (error) {
+    console.error("Error processing matches request:", error);
+    return NextResponse.json({ error: error }, { status: 400 });
+  }
+}
+
+// Асинхронная обработка матчей (не блокирует ответ)
+async function processMatchesAsync(sessionId: string, matches: MatchNew[]) {
+  try {
+    console.log(`Starting async processing for session: ${sessionId}`);
+
+    // Обрабатываем матчи параллельно с ограничением
+    const parallelLimit = 1; // Максимум 1 одновременных скачивания
+    const chunks = [];
+
+    for (let i = 0; i < matches.length; i += parallelLimit) {
+      chunks.push(matches.slice(i, i + parallelLimit));
+    }
+
+    for (const chunk of chunks) {
+      await Promise.all(
+        chunk.map((match) => processSingleMatch(sessionId, match))
+      );
+    }
+
+    console.log(`Completed processing for session: ${sessionId}`);
+  } catch (error) {
+    console.error("Error in async processing:", error);
+  }
+}
+
+async function processSingleMatch(sessionId: string, match: any) {
+  let demoPath: string | undefined;
+
+  try {
+    console.log(`🔵 Starting match processing: ${match.url}`);
+    console.log(`Session ID: ${sessionId}`);
+
+    // ✅ Проверяем сессию перед началом
+    const session = await prismaSessionStore.getSession(sessionId);
+    if (!session) {
+      throw new Error(`Session ${sessionId} not found at start`);
+    }
+
+    console.log(`✅ Session verified, starting download...`);
+
+    // 1. Скачиваем демо
+    await prismaSessionStore.updateMatchProgress(sessionId, match.url, {
+      status: "downloading",
+      progress: 30,
+      currentStep: "Downloading demo",
+    });
+    /*
+    const downloadResult = await downloadService.downloadDemo(
+      sessionId,
+      match.url,
+      match.platform
     );
 
-    return Response.json({ results });
+    if (!downloadResult.success || !downloadResult.demoPath) {
+      throw new Error(`Download failed: ${downloadResult.error}`);
+    }
+
+    demoPath = downloadResult.demoPath;
+    */
+    demoPath = "19163994_17894657_2508301705-de_dust2.dem";
+    console.log(`✅ Demo downloaded: ${demoPath}`);
+
+    // 2. Отправляем на парсинг
+    await prismaSessionStore.updateMatchProgress(sessionId, match.url, {
+      status: "parsing",
+      progress: 60,
+      currentStep: "Sending to parser",
+    });
+
+    const parseResult = await demoParserService.parseDemo(
+      sessionId,
+      match.url,
+      demoPath
+    );
+
+    if (!parseResult.success) {
+      throw new Error(`Parse failed: ${parseResult.error}`);
+    }
+
+    console.log(`✅ Demo sent to parser, waiting for callback...`);
+
+    const waitStartTime = Date.now();
+    const waitTimeout = 30000; // 30 секунд
+
+    while (Date.now() - waitStartTime < waitTimeout) {
+      const session = await prismaSessionStore.getSession(sessionId);
+      const matchProgress = session?.matches.find(
+        (m: any) => m.url === match.url
+      );
+
+      if (matchProgress?.status === "completed") {
+        console.log(`✅ Callback received, parsing completed`);
+        break;
+      }
+
+      if (matchProgress?.status === "error") {
+        throw new Error(`Parsing failed: ${matchProgress.error}`);
+      }
+
+      // Ждем 2 секунды перед следующей проверкой
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Обновляем прогресс ожидания
+      const elapsed = Date.now() - waitStartTime;
+      const progress = 60 + Math.floor((elapsed / waitTimeout) * 35); // 60-95%
+
+      await prismaSessionStore.updateMatchProgress(sessionId, match.url, {
+        progress: Math.min(progress, 95),
+        currentStep: `Parsing in progress (${Math.floor(elapsed / 1000)}s)`,
+      });
+    }
+
+    // Проверяем таймаут
+    if (Date.now() - waitStartTime >= waitTimeout) {
+      throw new Error("Parsing timeout - no callback received");
+    }
+    // 3. Ждем callback (не блокируем - callback сам обновит статус)
+    // Просто выходим - callback обновит статус когда придет
   } catch (error) {
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    console.error(`❌ Error processing match ${match.url}:`, error);
+
+    await prismaSessionStore.updateMatchProgress(sessionId, match.url, {
+      status: "error",
+    });
+
+    // Очищаем файл при ошибке
+    if (demoPath) {
+      //await downloadService.cleanupDemoFile(demoPath);
+    }
   }
 }

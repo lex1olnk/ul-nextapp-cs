@@ -1,10 +1,3 @@
-export interface MatchInput {
-  url: string;
-  tournamentId?: string;
-  isFinal: boolean;
-  platform: "fastcup" | "cybershoke";
-}
-
 export interface MatchNew {
   id: string;
   url: string;
@@ -14,10 +7,11 @@ export interface MatchNew {
     name: string;
     status: string;
   };
+  platform: "fastcup" | "cybershoke";
   isFinal: boolean;
   bestOf: string;
   type?: string;
-  status: string;
+  status: "pending" | "downloading" | "parsing" | "completed" | "error";
   startedAt: string;
   updatedAt: string;
   text: string;

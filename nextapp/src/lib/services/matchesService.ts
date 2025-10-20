@@ -1,7 +1,7 @@
-import { MatchInput } from "@/types";
 import { prisma } from "../prisma";
 import { writeFileSync } from "node:fs";
 import { graphqlMatch } from "./query";
+import { MatchInput } from "@/types/demo-processing";
 
 interface FindAllParams {
   skip?: number;
@@ -139,7 +139,7 @@ export class MatchesService {
     }
 
     const data = await response.json();
-    console.log(data);
+
     if (!data.data?.match?.maps) {
       throw new Error("Invalid match data structure");
     }

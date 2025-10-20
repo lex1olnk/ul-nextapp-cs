@@ -99,7 +99,7 @@ const AddMatchForm: React.FC = () => {
 
   return (
     <div
-      className={`fixed inset-0 bg-black bg-opacity-50 text-black flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${
+      className={`fixed inset-0 bg-black/30 text-black flex items-center justify-center p-4 z-50 transition-opacity duration-300 ${
         isVisible ? "opacity-100" : "opacity-0"
       }`}
       onClick={handleBackdropClick}

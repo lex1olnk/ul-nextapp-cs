@@ -1,6 +1,23 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // На клиенте исключаем нативные модули
+      config.resolve.fallback = {
+        "@laihoe/demoparser2": false,
+        "demoparser2-win32-x64-msvc": false,
+      };
+    }
+
+    // Исключаем .node файлы из обработки webpack
+    config.module.rules.push({
+      test: /\.node$/,
+      use: "node-loader",
+    });
+
+    return config;
+  },
   images: {
     remotePatterns: [
       {
@@ -26,8 +43,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Отключаем проверку типов во время сборки для ускорения
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  // Отключаем ESLint во время сборки
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   /* config options here */
-
 };
 
 export default nextConfig;

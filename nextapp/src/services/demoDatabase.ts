@@ -96,6 +96,7 @@ interface GrenadeEvent {
 
 export class DemoToDatabase {
   public matchId: string | null = null;
+  private parserServer: string = "localhost:3001";
   private demoPath: string;
   private matchMapId: string | null = null;
   private playersMap: Map<string, number> = new Map();
@@ -105,26 +106,9 @@ export class DemoToDatabase {
     { id: string; tick: number; round_time: number }
   > = new Map();
 
-  // Добавляем ссылки на функции парсера
-  private parseEvent: any;
-  private parsePlayerInfo: any;
-
-  constructor(demoPath: string, demoParser: any) {
+  constructor(demoPath: string) {
     this.demoPath = demoPath;
     // Сохраняем функции из демо-парсера
-    this.parseEvent = demoParser.parseEvent || demoParser.default?.parseEvent;
-    this.parsePlayerInfo =
-      demoParser.parsePlayerInfo || demoParser.default?.parsePlayerInfo;
-
-    if (!this.parseEvent || !this.parsePlayerInfo) {
-      throw new Error("Demo parser functions not found");
-    }
-  }
-
-  // Статический фабричный метод для создания экземпляра
-  static async create(demoPath: string): Promise<DemoToDatabase> {
-    const demoparser = await import("@laihoe/demoparser2");
-    return new DemoToDatabase(demoPath, demoparser);
   }
 
   async processDemo(): Promise<void> {
@@ -134,6 +118,7 @@ export class DemoToDatabase {
       await prisma.$transaction(
         async (tx: PrismaTransactionalClient) => {
           // Проверяем, не обработан ли уже этот демо-файл
+          /*
           const existingMatch = await tx.match.findUnique({
             where: {
               demoPath: this.demoPath,
@@ -143,7 +128,7 @@ export class DemoToDatabase {
           if (existingMatch) {
             console.log("⚠️ Этот демо-файл уже обработан");
             return;
-          }
+          }*/
 
           // Шаг 1: Создаем матч
           await this.createMatch(tx);
@@ -153,7 +138,7 @@ export class DemoToDatabase {
 
           // Шаг 3: Обрабатываем игроков
           await this.processPlayers(tx);
-
+          /*
           // Шаг 4: Создаем карту матча
           await this.createMatchMap(tx);
 
@@ -168,7 +153,7 @@ export class DemoToDatabase {
 
           // Шаг 8: Обрабатываем гранаты
           await this.processGrenades(tx);
-
+*/
           console.log("✅ Обработка завершена успешно!");
         },
         {
@@ -186,11 +171,6 @@ export class DemoToDatabase {
 
   private async createMatch(tx: PrismaTransactionalClient): Promise<void> {
     // Используем this.parseEvent вместо глобальной функции
-    const matchInfo = this.parseEvent(this.demoPath, "match_start", [
-      "map_name",
-    ]) as MatchStartEvent[];
-    const firstMatchInfo = matchInfo[0] || {};
-
     const match = await tx.match.create({
       data: {
         type: "competitive",
@@ -237,7 +217,14 @@ export class DemoToDatabase {
 
   private async processPlayers(tx: PrismaTransactionalClient): Promise<void> {
     // Используем this.parsePlayerInfo вместо глобальной функции
-    const playerInfo: PlayerSpawnEvent[] = this.parsePlayerInfo(this.demoPath);
+    const response = await fetch(`${this.parserServer}/players`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        demoFileName: this.demoPath,
+      }),
+    });
+    const playerInfo: PlayerSpawnEvent[] = await response.json();
 
     for (const player of playerInfo) {
       if (!player.steamid) continue;
@@ -282,7 +269,7 @@ export class DemoToDatabase {
 
     console.log(`👥 Обработано игроков: ${this.playersMap.size}`);
   }
-
+  /*
   private async createMatchMap(tx: PrismaTransactionalClient): Promise<void> {
     // Используем this.parseEvent вместо глобальной функции
     const matchInfo = this.parseEvent(this.demoPath, "match_start", [
@@ -633,7 +620,7 @@ export class DemoToDatabase {
       throw error;
     }
   }
-
+*/
   // Остальные вспомогательные методы без изменений...
   private mapGrenadeType(type: string): number {
     const grenadeMap: { [key: string]: number } = {

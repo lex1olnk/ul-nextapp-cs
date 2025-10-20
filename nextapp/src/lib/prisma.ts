@@ -11,4 +11,10 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // Теперь полная типизация!
-export type { Match, User, Profile, Prisma } from "@prisma/client";
+export type {
+  Match,
+  User,
+  Profile,
+  Prisma,
+  ProcessingSession,
+} from "@prisma/client";

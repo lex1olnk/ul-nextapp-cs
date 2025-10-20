@@ -7,6 +7,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model ProcessingSession {
+  id String @id @default(cuid())
+  sessionId String @unique
+  status String
+  totalMatches Int
+  processedMatches Int
+  matches Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("processing_sessions")
+}
+
 model Tournament {
   id        String   @id @default(uuid()) @db.Uuid
   name      String
