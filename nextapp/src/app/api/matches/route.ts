@@ -9,6 +9,24 @@ import { NextResponse, NextRequest } from "next/server";
 
 const matchesService: MatchesService = new MatchesService();
 
+// Регулярное выражение для проверки URL матчей
+const MATCH_URL_REGEX = /https:\/\/cs2\.fastcup\.net\/matches\/\d+/g;
+
+// Функция для валидации URL матча
+function isValidMatchUrl(url: string): boolean {
+  return MATCH_URL_REGEX.test(url);
+}
+
+// Функция для фильтрации валидных матчей
+function filterValidMatches(matches: any[]): any[] {
+  matches.map((match) => {
+    const result = match.url.match(MATCH_URL_REGEX);
+    if (result) match.url = result[0];
+  });
+
+  return matches.filter((m) => m.url && isValidMatchUrl(m.url));
+}
+
 export async function GET() {
   try {
     const matches = await matchesService.findAll({});
@@ -34,7 +52,10 @@ export async function POST(request: NextRequest) {
 
     validateMatchesInput(body.matches);
 
-    const matchesProgress = body.matches.map((match) => ({
+    // Фильтруем только валидные матчи
+    const validMatches = filterValidMatches(body.matches);
+    console.log(validMatches);
+    const matchesProgress = validMatches.map((match) => ({
       url: match.url,
       tournamentId: match.tournamentId,
       platform: match.platform,
@@ -49,7 +70,7 @@ export async function POST(request: NextRequest) {
     console.log("✅ Session created in database:", session.sessionId);
 
     // Запускаем обработку
-    processMatchesAsync(session.sessionId, body.matches);
+    processMatchesAsync(session.sessionId, validMatches);
 
     return NextResponse.json({
       sessionId: session.sessionId,
@@ -90,13 +111,14 @@ async function processMatchesAsync(sessionId: string, matches: MatchNew[]) {
 
 async function processSingleMatch(sessionId: string, match: any) {
   let demoPath: string | undefined;
-
+  console.log(demoPath);
   try {
     console.log(`🔵 Starting match processing: ${match.url}`);
     console.log(`Session ID: ${sessionId}`);
 
     // ✅ Проверяем сессию перед началом
     const session = await prismaSessionStore.getSession(sessionId);
+    console.log(session);
     if (!session) {
       throw new Error(`Session ${sessionId} not found at start`);
     }

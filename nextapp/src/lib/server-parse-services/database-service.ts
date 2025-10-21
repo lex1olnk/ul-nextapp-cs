@@ -248,6 +248,7 @@ export class DatabaseService {
       if (!victimId || !roundId) continue;
 
       const weaponId = await this.getOrCreateWeapon(tx, kill.weapon);
+
       const isTeamkill = await this.isTeamKill(tx, killerId, victimId, matchId);
 
       await tx.matchKill.create({
@@ -342,23 +343,23 @@ export class DatabaseService {
     tx: PrismaTransactionalClient,
     weaponName: string
   ): Promise<number> {
-    let weapon = await tx.weapon.findFirst({
-      where: {
-        OR: [{ name: weaponName }, { internalName: weaponName }],
-      },
-    });
-
-    if (!weapon) {
-      weapon = await tx.weapon.create({
-        data: {
+    try {
+      const weapon = await tx.weapon.upsert({
+        where: {
+          name: weaponName, // Если name уникален
+          // или используйте internalName если он уникален
+        },
+        update: {}, // Ничего не обновляем если существует
+        create: {
           name: weaponName,
           internalName: weaponName,
-          type: this.mapWeaponType(weaponName),
         },
       });
-    }
 
-    return weapon.id;
+      return weapon.id;
+    } catch (error) {
+      throw new Error(`weapon doesn't created, ${error}`);
+    }
   }
 
   private async isTeamKill(

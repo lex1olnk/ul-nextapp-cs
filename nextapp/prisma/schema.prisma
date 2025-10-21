@@ -335,7 +335,7 @@ model MatchGrenade {
 
 model Weapon {
   id           Int     @id @map("weapon_id") @default(autoincrement())
-  name         String
+  name         String  @unique
   type         String?
   internalName String  @map("internal_name")
 

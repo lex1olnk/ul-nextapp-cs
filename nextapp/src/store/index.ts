@@ -11,6 +11,8 @@ import {
   type ProfileSlice,
   createParticipantSlice,
   type ParticipantSlice,
+  createProgressSlice,
+  ProgressSlice,
 } from "./slices";
 
 // Объединяем все слайсы в один тип
@@ -18,7 +20,8 @@ export type StoreState = TournamentSlice &
   MatchSlice &
   UISlice &
   ProfileSlice &
-  ParticipantSlice;
+  ParticipantSlice &
+  ProgressSlice;
 
 // Создаем главный store
 export const useStore = create<StoreState>()(
@@ -29,6 +32,7 @@ export const useStore = create<StoreState>()(
       ...createUISlice(...a),
       ...createProfileSlice(...a),
       ...createParticipantSlice(...a),
+      ...createProgressSlice(...a),
     }),
     {
       name: "store",

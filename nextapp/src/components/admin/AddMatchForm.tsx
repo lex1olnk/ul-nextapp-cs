@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 
-import type { Tournament } from "@/types";
+import type { MatchInput, Tournament } from "@/types";
 import { useStore } from "@/store";
-import { MatchInput } from "@/types/demo-processing";
 
 const AddMatchForm: React.FC = () => {
   const { tournaments, addMatches, setShowMatchForm, showMatchForm } =
