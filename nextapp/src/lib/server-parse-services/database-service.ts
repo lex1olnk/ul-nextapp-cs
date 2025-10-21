@@ -284,8 +284,28 @@ export class DatabaseService {
     playersMap: Map<any, any>,
     roundsMap: Map<any, any>
   ) {
-    // Аналогично processKills - агрегируем и сохраняем damage
-    // ... реализация
+    for (const damage of damages) {
+      const inflictorId = playersMap.get(damage.inflictorId);
+      const victimId = playersMap.get(damage.victimId);
+      const roundId = roundsMap.get(damage.round);
+
+      if (!inflictorId || !victimId || !roundId) continue;
+
+      const weaponId = await this.getOrCreateWeapon(tx, damage.weapon);
+      await tx.matchDamage.create({
+        data: {
+          inflictorId,
+          victimId,
+          weaponId,
+          hitboxGroup: damage.hitboxGroup,
+          hits: damage.hits,
+          damageNormalized: damage.damageNormalized,
+          damageReal: damage.damageReal,
+          roundId,
+          matchId: matchId,
+        },
+      });
+    }
   }
 
   private async processGrenades(

@@ -18,6 +18,15 @@ export interface ProcessingSession {
   updatedAt: Date;
 }
 
+export interface ProcessingProgress {
+  sessionId: string;
+  status: "processing" | "completed" | "error";
+  totalMatches: number;
+  processedMatches: number;
+  overallProgress: number;
+  matches: MatchProgress[];
+}
+
 export interface MatchProgress {
   url: string;
   tournamentId?: string;

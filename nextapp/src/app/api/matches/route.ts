@@ -109,7 +109,7 @@ async function processSingleMatch(sessionId: string, match: any) {
       progress: 30,
       currentStep: "Downloading demo",
     });
-    /*
+
     const downloadResult = await downloadService.downloadDemo(
       sessionId,
       match.url,
@@ -121,8 +121,6 @@ async function processSingleMatch(sessionId: string, match: any) {
     }
 
     demoPath = downloadResult.demoPath;
-    */
-    demoPath = "19163994_17894657_2508301705-de_dust2.dem";
     console.log(`✅ Demo downloaded: ${demoPath}`);
 
     // 2. Отправляем на парсинг
@@ -164,15 +162,6 @@ async function processSingleMatch(sessionId: string, match: any) {
 
       // Ждем 2 секунды перед следующей проверкой
       await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Обновляем прогресс ожидания
-      const elapsed = Date.now() - waitStartTime;
-      const progress = 60 + Math.floor((elapsed / waitTimeout) * 35); // 60-95%
-
-      await prismaSessionStore.updateMatchProgress(sessionId, match.url, {
-        progress: Math.min(progress, 95),
-        currentStep: `Parsing in progress (${Math.floor(elapsed / 1000)}s)`,
-      });
     }
 
     // Проверяем таймаут
