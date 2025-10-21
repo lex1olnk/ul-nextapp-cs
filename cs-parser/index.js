@@ -127,35 +127,28 @@ app.post("/parse-demo", async (req, res) => {
 
 async function sendCallbackWithRetry(callbackUrl, data, maxRetries = 3) {
   console.log(callbackUrl);
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(`📞 Sending callback (attempt ${attempt}/${maxRetries})...`);
 
-      const response = await fetch(callbackUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        timeout: 10000,
-      });
+  try {
+    console.log(`📞 Sending callback...`);
 
-      if (response.ok) {
-        console.log("✅ Callback sent successfully");
-        return;
-      } else {
-        console.log(
-          `⚠️ Callback failed with status ${response.status}, retrying...`
-        );
-      }
-    } catch (error) {
-      console.log(`⚠️ Callback attempt ${attempt} failed: ${error.message}`);
+    const response = await fetch(callbackUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      timeout: 10000,
+    });
+
+    if (response.ok) {
+      console.log("✅ Callback sent successfully");
+      return;
+    } else {
+      console.log(
+        `⚠️ Callback failed with status ${response.status}, retrying...`
+      );
     }
-
-    if (attempt < maxRetries) {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-    }
+  } catch (error) {
+    console.log(`⚠️ Callback failed: ${error.message}`);
   }
-
-  console.error("❌ All callback attempts failed");
 }
 
 app.get("/debug/files", async (req, res) => {

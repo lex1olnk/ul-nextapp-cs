@@ -10,7 +10,7 @@ function parseAllData(demoPath) {
     const players = parsePlayersInfo(demoPath);
     const rounds = parseRoundsInfo(demoPath);
     const kills = parseKillsInfo(demoPath);
-    const damages = parseDamagesInfo(demoPath);
+    const damages = parseDamagesInfo(demoPath, players);
     const grenades = parseGrenadesInfo(demoPath);
     const teams = parseTeamsInfo(players);
 
@@ -92,31 +92,21 @@ function parseKillsInfo(demoPath) {
     demoPath,
     "player_death",
     ["X", "Y", "Z"],
-    [
-      "total_rounds_played",
-      "round_start_time",
-      "game_phase",
-      "tick",
-      "attacker_steamid",
-      "user_steamid",
-      "assister_steamid",
-      "weapon",
-      "headshot",
-      "penetrated",
-      "attackerinair",
-      "noscope",
-      "hitgroup",
-      "attacker_x",
-      "attacker_y",
-      "victim_x",
-      "victim_y",
-      "distance",
-      "thrusmoke",
-      "round_time",
-    ]
+    ["total_rounds_played", "round_start_time", "game_phase"]
+  );
+  const zeroRounds = kills.filter((item) => item.total_rounds_played === 0);
+  const nonZeroRounds = kills.filter((item) => item.total_rounds_played > 0);
+
+  const maxRoundTime = Math.max(
+    ...zeroRounds.map((item) => item.round_start_time)
+  );
+  const maxTimeZeroRounds = zeroRounds.filter(
+    (item) => item.round_start_time === maxRoundTime
   );
 
-  return kills
+  const data = [...maxTimeZeroRounds, ...nonZeroRounds];
+
+  return data
     .filter((kill) => kill.game_phase !== 5)
     .map((kill) => ({
       attackerSteamId: kill.attacker_steamid,
@@ -148,30 +138,73 @@ function parseDamagesInfo(demoPath) {
     demoPath,
     "player_hurt",
     [],
-    [
-      "total_rounds_played",
-      "round_start_time",
-      "game_phase",
-      "attacker_steamid",
-      "user_steamid",
-      "weapon",
-      "dmg_health",
-      "health",
-      "hitgroup",
-    ]
+    ["total_rounds_played", "round_start_time", "game_phase"]
+  );
+  // Остальной код без изменений...
+  const zeroRounds = damages.filter((item) => item.total_rounds_played === 0);
+  const nonZeroRounds = damages.filter((item) => item.total_rounds_played > 0);
+
+  const maxRoundTime = Math.max(
+    ...zeroRounds.map((item) => item.round_start_time)
+  );
+  const maxTimeZeroRounds = zeroRounds.filter(
+    (item) => item.round_start_time === maxRoundTime
   );
 
-  return damages
-    .filter((damage) => damage.game_phase !== 5)
-    .map((damage) => ({
-      attackerSteamId: damage.attacker_steamid,
-      victimSteamId: damage.user_steamid,
-      weapon: damage.weapon,
-      damage: damage.dmg_health,
-      healthRemaining: damage.health,
-      hitgroup: damage.hitgroup,
-      round: damage.total_rounds_played,
-    }));
+  const data = [...maxTimeZeroRounds, ...nonZeroRounds];
+
+  const playerInfo = demoparser.parsePlayerInfo(demoPath); // Используем this.parsePlayerInfo
+  const playerHealth = new Map();
+
+  playerInfo.forEach((p) => {
+    if (p.steamid) {
+      playerHealth.set(p.steamid, { health: 100, currentRound: 0 });
+    }
+  });
+
+  const aggregatedMap = new Map();
+  for (const d of data) {
+    if (d.game_phase === 5) break;
+
+    const virtualRound = d.total_rounds_played;
+    const victimState = playerHealth.get(d.user_steamid) || {
+      health: 100,
+      currentRound: virtualRound,
+    };
+
+    if (victimState.currentRound !== virtualRound) {
+      victimState.health = 100;
+      victimState.currentRound = virtualRound;
+    }
+
+    const currentVictimHealth = victimState.health;
+    const normalizedDamage = Math.min(d.dmg_health, currentVictimHealth);
+    victimState.health = d.health;
+    playerHealth.set(d.user_steamid, victimState);
+
+    const key = `${d.attacker_steamid}-${d.user_steamid}-${d.weapon}-${d.hitgroup}-${d.total_rounds_played}`;
+    if (aggregatedMap.get(key) == null) {
+      aggregatedMap.set(key, {
+        damageReal: 0,
+        damageNormalized: 0,
+        hitboxGroup: d.hitgroup,
+        hits: 0,
+        inflictorId: d.attacker_steamid,
+        victimId: d.user_steamid,
+        weapon: d.weapon,
+        round: d.total_rounds_played,
+      });
+    }
+
+    const entry = aggregatedMap.get(key);
+    entry.hits += 1;
+    entry.damageReal += d.dmg_health;
+    entry.damageNormalized += normalizedDamage;
+  }
+
+  return Array.from(aggregatedMap.values()).map((damage) => ({
+    ...damage,
+  }));
 }
 
 // 6. Гранаты
