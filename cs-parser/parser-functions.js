@@ -12,6 +12,7 @@ function parseAllData(demoPath) {
     const kills = parseKillsInfo(demoPath);
     const damages = parseDamagesInfo(demoPath, players);
     const grenades = parseGrenadesInfo(demoPath);
+    const clutches = parseClutches(demoPath, rounds, kills);
     const teams = parseTeamsInfo(players);
 
     console.log(`✅ Demo parsing completed successfully`);
@@ -23,6 +24,7 @@ function parseAllData(demoPath) {
       kills,
       damages,
       grenades,
+      clutches,
       teams,
     };
   } catch (error) {
@@ -73,15 +75,15 @@ function parseRoundsInfo(demoPath) {
     ["round_start_time", "game_phase", "tick"]
   );
 
-  return roundEnds
-    .filter((round) => round.game_phase !== 5) // Исключаем warmup
+  return roundEnds // Исключаем warmup
     .map((round) => ({
-      roundNumber: (round.round || 0) - 1,
+      roundNumber: round.round - 1,
       winner: round.winner,
       reason: round.reason,
       tick: round.tick,
       roundStartTime: round.round_start_time,
-    }));
+    }))
+    .filter((f) => f.roundNumber > 0);
 }
 
 // 4. Убийства
@@ -91,7 +93,7 @@ function parseKillsInfo(demoPath) {
   const kills = demoparser.parseEvent(
     demoPath,
     "player_death",
-    ["X", "Y", "Z"],
+    ["X", "Y", "Z", "team_num"],
     ["total_rounds_played", "round_start_time", "game_phase"]
   );
   const zeroRounds = kills.filter((item) => item.total_rounds_played === 0);
@@ -118,12 +120,15 @@ function parseKillsInfo(demoPath) {
       airshot: kill.attackerinair || false,
       noscope: kill.noscope || false,
       round: kill.total_rounds_played,
+      victimTeamNum: kill.user_team_num,
       tick: kill.tick,
-      roundTime: kill.round_time || 0,
-      attackerX: kill.attacker_x || 0,
-      attackerY: kill.attacker_y || 0,
-      victimX: kill.victim_x || 0,
-      victimY: kill.victim_y || 0,
+      roundTime: kill.round_start_time || 0,
+      attackerX: kill.attacker_X || 0,
+      attackerY: kill.attacker_Y || 0,
+      attackerY: kill.attacker_Z || 0,
+      victimX: kill.user_X || 0,
+      victimY: kill.user_Y || 0,
+      victimZ: kill.user_Z || 0,
       distance: kill.distance || 0,
       throughSmoke: kill.thrusmoke || false,
       hitgroup: kill.hitgroup,
@@ -275,6 +280,96 @@ function parseTeamsInfo(players) {
   });
 
   return Object.values(teams);
+}
+
+const getSideNumber = (ch) => (ch === "CT" ? 3 : 2);
+
+function parseClutches(demoPath, rounds, kills) {
+  const myrounds = rounds.map((r) => r);
+  if (!rounds && !kills) return [];
+  console.log("💣 Parsing clutches...");
+  const grp = Object.groupBy(kills, (k) => k.round);
+
+  Object.values(grp).map((k, index) => {
+    myrounds[index].kills = k;
+  });
+
+  let result = [];
+
+  myrounds.map((r) => {
+    result = [...result, ...findClutchOld(demoPath, r)];
+  });
+
+  return result;
+}
+
+function findClutchOld(demoPath, round) {
+  try {
+    const playersState = {};
+    const clutchSituations = [];
+    let teams = { 2: 5, 3: 5 };
+
+    demoparser.parseTicks(demoPath, ["team_num"], [round.tick]).map((p) => {
+      if (playersState[p.steamid] === undefined) playersState[p.steamid] = p;
+      playersState[p.steamid].isAlive = true;
+    });
+
+    let against = 0;
+    let last = 1;
+    let enemy = 1;
+
+    for (const kill of round.kills) {
+      playersState[kill.victimSteamId].isAlive = false;
+      teams[kill.victimTeamNum]--;
+
+      if (teams[2] === 1 || teams[3] === 1) {
+        last = teams[2] === 1 ? 2 : 3;
+        enemy = last === 2 ? 3 : 2;
+        against = teams[enemy];
+        break;
+      }
+    }
+
+    const lastPlayer = Object.keys(playersState).find(
+      (key) =>
+        (playersState[key].isAlive === true) &
+        (playersState[key].team_num === last)
+    );
+
+    if (lastPlayer) {
+      const isSuccess = getSideNumber(round.winner) === last;
+
+      clutchSituations.push({
+        teamNum: last,
+        steamId: lastPlayer,
+        amount: against,
+        success: isSuccess,
+        winner: round.winner,
+        round: round.roundNumber,
+      });
+    }
+
+    // Дополнительный клатч при 9+ убийствах
+    if (round.kills.length > 8) {
+      const lastKill = round.kills[8];
+      const isEnemyWinner = getSideNumber(round.winner) === enemy;
+
+      clutchSituations.push({
+        teamNum: enemy,
+        steamId: isEnemyWinner
+          ? lastKill.attackerSteamId
+          : lastKill.victimSteamId,
+        amount: 1,
+        success: isEnemyWinner,
+        winner: round.winner,
+        round: round.roundNumber,
+      });
+    }
+
+    return clutchSituations;
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 // Функции для маппинга (как в твоем классе)
