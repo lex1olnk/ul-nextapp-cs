@@ -14,6 +14,10 @@ const {
   parseTeamsInfo,
 } = require("./parser-functions");
 
+const ArchiveService = require("./archive-service");
+
+const archiveService = new ArchiveService();
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -99,10 +103,14 @@ app.post("/parse-demo", async (req, res) => {
       );
     }
 
-    // Парсим данные
-    console.log("🔄 Parsing demo...");
-    const parsedData = await parseAllData(demoPath);
+    // Получаем путь к .dem файлу (распаковываем если нужно)
+    const actualDemoPath = await archiveService.getDemoPath(demoPath);
 
+    console.log("🔄 Parsing demo...");
+    const parsedData = await parseAllData(actualDemoPath);
+    if (actualDemoPath !== demoPath) {
+      archiveService.cleanupTempFile(actualDemoPath);
+    }
     // Отправляем callback
     if (callbackUrl) {
       console.log("📤 Sending callback...");

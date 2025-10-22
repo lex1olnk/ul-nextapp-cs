@@ -72,16 +72,27 @@ function parseRoundsInfo(demoPath) {
     demoPath,
     "round_end",
     ["winner", "reason", "round_num", "mvps"],
-    ["round_start_time", "game_phase", "tick"]
+    ["round_start_time", "game_phase", "tick", "total_rounds_played"]
+  );
+  // Берем только последнее событие для каждого total_rounds_played
+  const uniqueRounds = Object.values(
+    roundEnds.reduce((acc, round) => {
+      const key = round.total_rounds_played;
+      if (!acc[key] || round.tick > acc[key].tick) {
+        acc[key] = round;
+      }
+      return acc;
+    }, {})
   );
 
-  return roundEnds // Исключаем warmup
+  return uniqueRounds
     .map((round) => ({
-      roundNumber: round.round - 1,
+      roundNumber: round.total_rounds_played,
       winner: round.winner,
       reason: round.reason,
       tick: round.tick,
       roundStartTime: round.round_start_time,
+      gamePhase: round.game_phase,
     }))
     .filter((f) => f.roundNumber > 0);
 }
