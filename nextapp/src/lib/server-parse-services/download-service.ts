@@ -37,7 +37,7 @@ export class DownloadService {
         progress: 10,
         currentStep: "Getting demo URL from platform",
       });
-
+      console.log(matchUrl, platform);
       // Получаем ссылку на демо в зависимости от платформы
       const demoUrl = await this.getDemoUrl(matchUrl, platform);
 
@@ -52,7 +52,12 @@ export class DownloadService {
       });
 
       // Скачиваем файл
-      const demoPath = await this.downloadFile(demoUrl, sessionId, matchUrl);
+      const demoPath = await this.downloadFile(
+        demoUrl,
+        sessionId,
+        matchUrl,
+        platform
+      );
 
       // Обновляем статус - скачивание завершено
       await prismaSessionStore.updateMatchProgress(sessionId, matchUrl, {
@@ -132,18 +137,35 @@ export class DownloadService {
   }
 
   private async getCybershokeDemoUrl(matchUrl: string): Promise<string> {
-    // Заглушка - нужно будет реализовать логику для Cybershoke
-    throw new Error("Cybershoke demo download not implemented yet");
+    try {
+      // Извлекаем ID матча из URL
+      // Регулярное выражение для извлечения ID матча из URL Cybershoke
+      const match = matchUrl.match(/cybershoke\.net\/.*?\/match\/(\d+)/);
+
+      if (!match || !match[1]) {
+        throw new Error("Invalid Cybershoke match URL format");
+      }
+
+      const matchId = match[1];
+      // Формируем URL для демо файла
+      const demoUrl = `https://cdn-de-1.cybershoke.net/demos/${matchId}`;
+      console.log(demoUrl);
+      return demoUrl;
+    } catch (error) {
+      throw new Error(`Failed to get Cybershoke demo URL: ${error}`);
+    }
   }
 
   async downloadFile(
     demoUrl: string,
     sessionId: string,
-    matchUrl: string
+    matchUrl: string,
+    platform: "fastcup" | "cybershoke"
   ): Promise<string> {
-    const fileName = `demo_${sessionId}_${Date.now()}.dem`;
-    //const filePath = path.join(this.DEMOS_DIR, fileName);
-    const filePath = "19163994_17894657_2508301705-de_dust2.dem";
+    const fileName = `demo_${sessionId}_${Date.now()}${
+      platform == "fastcup" ? ".dem" : ".zip"
+    }`;
+    const filePath = path.join(this.DEMOS_DIR, fileName);
     const response = await fetch(demoUrl);
 
     if (!response.ok) {
@@ -151,21 +173,21 @@ export class DownloadService {
         `Download failed: ${response.status} ${response.statusText}`
       );
     }
-    /*
+
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
     await fs.writeFile(filePath, buffer);
-*/
+
     // ✅ Ждем 3 секунды чтобы файл гарантированно записался
     console.log(`⏳ Waiting for file to be fully written...`);
     await new Promise((resolve) => setTimeout(resolve, 500));
-    /*
+
     const stats = await fs.stat(filePath);
     if (stats.size === 0) {
       throw new Error("Downloaded file is empty");
     }
-*/
+
     console.log(`✅ Demo downloaded to: ${filePath}`);
     return filePath;
   }

@@ -10,16 +10,23 @@ import { NextResponse, NextRequest } from "next/server";
 const matchesService: MatchesService = new MatchesService();
 
 // Регулярное выражение для проверки URL матчей
-const MATCH_URL_REGEX = /https:\/\/cs2\.fastcup\.net\/matches\/\d+/g;
+const FASTCUP_URL_REGEX = /https:\/\/cs2\.fastcup\.net\/matches\/\d+/;
+const CYBERSHOKE_URL_REGEX = /https:\/\/cybershoke\.net\/\w+\/match\/\d+/;
+
+// Общее регулярное выражение для извлечения URL
+const MATCH_URL_REGEX = new RegExp(
+  `(${FASTCUP_URL_REGEX.source}|${CYBERSHOKE_URL_REGEX.source})`,
+  "g"
+);
 
 // Функция для валидации URL матча
 function isValidMatchUrl(url: string): boolean {
-  return MATCH_URL_REGEX.test(url);
+  return FASTCUP_URL_REGEX.test(url) || CYBERSHOKE_URL_REGEX.test(url);
 }
 
 // Функция для фильтрации валидных матчей
 function filterValidMatches(matches: any[]): any[] {
-  matches.map((match) => {
+  matches.forEach((match) => {
     const result = match.url.match(MATCH_URL_REGEX);
     if (result) match.url = result[0];
   });
@@ -54,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     // Фильтруем только валидные матчи
     const validMatches = filterValidMatches(body.matches);
-    console.log(validMatches);
+
     const matchesProgress = validMatches.map((match) => ({
       url: match.url,
       tournamentId: match.tournamentId,
@@ -111,14 +118,14 @@ async function processMatchesAsync(sessionId: string, matches: MatchNew[]) {
 
 async function processSingleMatch(sessionId: string, match: any) {
   let demoPath: string | undefined;
-  console.log(demoPath);
+
   try {
     console.log(`🔵 Starting match processing: ${match.url}`);
     console.log(`Session ID: ${sessionId}`);
 
     // ✅ Проверяем сессию перед началом
     const session = await prismaSessionStore.getSession(sessionId);
-    console.log(session);
+
     if (!session) {
       throw new Error(`Session ${sessionId} not found at start`);
     }
