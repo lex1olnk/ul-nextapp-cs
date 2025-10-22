@@ -74,6 +74,14 @@ export class DatabaseService {
         roundsMap
       );
 
+      await this.processClutches(
+        tx,
+        match.id,
+        parsedData.clutches,
+        playersMap,
+        roundsMap
+      );
+
       console.log("✅ All data saved to database successfully");
       return match.id;
     });
@@ -219,12 +227,12 @@ export class DatabaseService {
           winMatchTeamId: winMatchTeamId,
           matchId: matchId,
           matchMapId: matchMapId,
-          roundNumber: round.roundNumber,
+          roundNumber: round.roundNumber - 1,
           endReason: this.mapEndReason(round.reason),
         },
       });
 
-      roundsMap.set(round.roundNumber, roundRecord.id);
+      roundsMap.set(roundRecord.roundNumber, roundRecord.id);
     }
 
     return roundsMap;
@@ -334,6 +342,32 @@ export class DatabaseService {
           entityId: grenade.entityId,
           tick: grenade.tick || 0,
           roundTime: 0,
+        },
+      });
+    }
+  }
+
+  private async processClutches(
+    tx: PrismaTransactionalClient,
+    matchId: string,
+    clutches: any[],
+    playersMap: Map<any, any>,
+    roundsMap: Map<any, any>
+  ) {
+    for (const clutch of clutches) {
+      const userId = playersMap.get(clutch.steamId);
+      const roundId = roundsMap.get(clutch.round - 1);
+
+      if (!userId || !roundId) continue;
+
+      await tx.matchClutch.create({
+        data: {
+          userId: userId,
+          matchId: matchId,
+          roundId: roundId,
+          success: clutch.success,
+          amount: clutch.amount,
+          createdAt: new Date(),
         },
       });
     }

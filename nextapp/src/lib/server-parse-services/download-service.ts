@@ -142,8 +142,8 @@ export class DownloadService {
     matchUrl: string
   ): Promise<string> {
     const fileName = `demo_${sessionId}_${Date.now()}.dem`;
-    const filePath = path.join(this.DEMOS_DIR, fileName);
-
+    //const filePath = path.join(this.DEMOS_DIR, fileName);
+    const filePath = "19163994_17894657_2508301705-de_dust2.dem";
     const response = await fetch(demoUrl);
 
     if (!response.ok) {
@@ -151,21 +151,21 @@ export class DownloadService {
         `Download failed: ${response.status} ${response.statusText}`
       );
     }
-
+    /*
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
     await fs.writeFile(filePath, buffer);
-
+*/
     // ✅ Ждем 3 секунды чтобы файл гарантированно записался
     console.log(`⏳ Waiting for file to be fully written...`);
     await new Promise((resolve) => setTimeout(resolve, 500));
-
+    /*
     const stats = await fs.stat(filePath);
     if (stats.size === 0) {
       throw new Error("Downloaded file is empty");
     }
-
+*/
     console.log(`✅ Demo downloaded to: ${filePath}`);
     return filePath;
   }
