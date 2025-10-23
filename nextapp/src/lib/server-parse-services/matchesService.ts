@@ -3,11 +3,6 @@ import { writeFileSync } from "node:fs";
 import { graphqlMatch } from "./query";
 import { MatchInput } from "@/types/demo-processing";
 
-interface FindAllParams {
-  skip?: number;
-  take?: number;
-}
-
 interface FastcupMatchResponse {
   data: {
     match: {
@@ -21,33 +16,52 @@ interface FastcupMatchResponse {
     };
   };
 }
-
+interface FindAllParams {
+  where?: { tournamentId?: string; status?: string; type?: string };
+  skip?: number;
+  take?: number;
+  orderBy?: any;
+  include?: any;
+}
 export class MatchesService {
-  async findAll(params: FindAllParams) {
-    const { skip, take } = params;
+  async findAll(params: FindAllParams = {}) {
+    const { where, skip, take, orderBy, include } = params;
 
     // Базовый запрос
     const query: FindAllParams = {};
-
+    //console.log(params);
+    if (where) query.where = where;
     if (skip !== undefined) query.skip = +skip;
     if (take !== undefined) query.take = +take;
-    /*
-    if (include) query.include = include;
-    if (where) query.where = where;
-    if (orderBy) query.orderBy = orderBy;*/
+    if (orderBy) query.orderBy = orderBy;
 
-    // Если не включен tournament, добавляем по умолчанию для отображения названия
+    // Если не указан include, добавляем базовые связи
+    query.include = include || {
+      tournament: {
+        select: { id: true, name: true },
+      },
+      /*
+      teams: {
+        select: { id: true, name: true, score: true, isWinner: true },
+      },
+      maps: {
+        select: { id: true, number: true, mapId: true, gameStatus: true },
+      },*/
+    };
 
     try {
       const matches = await prisma.match.findMany(query);
-
-      return {
-        matches,
-        skip: skip || 0,
-        take: take || 10,
-      };
+      return matches;
     } catch (error: any) {
       throw new Error(`Failed to fetch matches: ${error.message}`);
+    }
+  }
+
+  async count(where?: any) {
+    try {
+      return await prisma.match.count(where);
+    } catch (error: any) {
+      throw new Error(`Failed to count matches: ${error.message}`);
     }
   }
 

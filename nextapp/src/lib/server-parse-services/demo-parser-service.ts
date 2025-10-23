@@ -6,13 +6,14 @@ export class DemoParserService {
   async parseDemo(
     sessionId: string,
     matchUrl: string,
+    tournamentId: string | null,
     demoPath: string
   ): Promise<{ success: boolean; error?: string }> {
     try {
       console.log(`🔄 Sending demo to parser: ${demoPath}`);
 
       const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-      const callbackUrl = `${baseUrl}/api/parse/callback?sessionId=${sessionId}&matchUrl=${encodeURIComponent(matchUrl)}`;
+      const callbackUrl = `${baseUrl}/api/parse/callback?sessionId=${sessionId}&matchUrl=${encodeURIComponent(matchUrl)}${tournamentId ? "&tournamentId=" + tournamentId : ""}`;
 
       console.log(`📞 Callback URL: ${callbackUrl}`);
 

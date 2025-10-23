@@ -34,11 +34,84 @@ function filterValidMatches(matches: any[]): any[] {
   return matches.filter((m) => m.url && isValidMatchUrl(m.url));
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const matches = await matchesService.findAll({});
-    return NextResponse.json(matches);
+    const { searchParams } = new URL(request.url);
+
+    // Параметры фильтрации
+    const tournamentId = searchParams.get("tournamentId");
+    const status = searchParams.get("status");
+    const type = searchParams.get("type");
+
+    // Параметры пагинации
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const skip = (page - 1) * limit;
+
+    // Параметры сортировки
+    const sortBy = searchParams.get("sortBy") || "createdAt";
+    const sortOrder = searchParams.get("sortOrder") || "desc";
+
+    // Строим фильтр
+    const where: {
+      tournamentId?: string;
+      status?: string;
+      type?: string;
+    } = {};
+
+    if (tournamentId) {
+      where.tournamentId = tournamentId;
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (type) {
+      where.type = type;
+    }
+
+    // Получаем данные с пагинацией
+    const [matches, total] = await Promise.all([
+      matchesService.findAll({
+        where,
+        skip,
+        take: limit,
+        orderBy: { [sortBy]: sortOrder },
+        include: {
+          tournament: true,
+          teams: true,
+          maps: true,
+        },
+      }),
+      matchesService.count({ where }),
+    ]);
+
+    // Метаданные пагинации
+    const totalPages = Math.ceil(total / limit);
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1;
+
+    return NextResponse.json({
+      data: matches,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext,
+        hasPrev,
+        nextPage: hasNext ? page + 1 : null,
+        prevPage: hasPrev ? page - 1 : null,
+      },
+      filters: {
+        tournamentId,
+        status,
+        type,
+      },
+    });
   } catch (error) {
+    console.error("Failed to fetch matches:", error);
     return NextResponse.json(
       { error: "Failed to fetch matches" },
       { status: 500 }
@@ -49,7 +122,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body: MatchesResponse = await request.json();
-
+    console.table(body);
     if (!body.matches) {
       return NextResponse.json(
         { error: "Missing matches array" },
@@ -75,6 +148,7 @@ export async function POST(request: NextRequest) {
     const session = await prismaSessionStore.createSession(matchesProgress);
 
     console.log("✅ Session created in database:", session.sessionId);
+    console.log(matchesProgress);
 
     // Запускаем обработку
     processMatchesAsync(session.sessionId, validMatches);
@@ -162,6 +236,7 @@ async function processSingleMatch(sessionId: string, match: any) {
     const parseResult = await demoParserService.parseDemo(
       sessionId,
       match.url,
+      match.tournamentId,
       demoPath
     );
 

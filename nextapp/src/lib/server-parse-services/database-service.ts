@@ -8,7 +8,12 @@ type PrismaTransactionalClient = Parameters<
 const prisma = new PrismaClient();
 
 export class DatabaseService {
-  async saveParsedData(sessionId: string, matchUrl: string, parsedData: any) {
+  async saveParsedData(
+    sessionId: string,
+    matchUrl: string,
+    tournamentId: string | null,
+    parsedData: any
+  ) {
     return await prisma.$transaction(async (tx) => {
       console.log("💾 Saving parsed data to database...");
 
@@ -17,6 +22,7 @@ export class DatabaseService {
         tx,
         sessionId,
         matchUrl,
+        tournamentId,
         parsedData.matchInfo
       );
 
@@ -91,6 +97,7 @@ export class DatabaseService {
     tx: PrismaTransactionalClient,
     sessionId: string,
     matchUrl: string,
+    tournamentId: string | null,
     matchInfo: any
   ) {
     return await tx.match.create({
@@ -102,6 +109,7 @@ export class DatabaseService {
         hasWinner: true,
         startedAt: new Date(),
         finishedAt: new Date(),
+        tournamentId,
         maxRoundsCount: 30,
         serverInstanceId: "demo_parser",
         isFinal: false,
