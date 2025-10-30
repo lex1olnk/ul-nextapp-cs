@@ -1,5 +1,5 @@
 import type { StateCreator } from "zustand";
-import type { ApiState, MatchInput, MatchNew } from "@/types";
+import type { ApiState, MatchesResponse, MatchInput, MatchNew } from "@/types";
 import { createMatches, getMatches } from "@/services";
 
 interface CreateMatchData {
@@ -98,14 +98,14 @@ export const createMatchSlice: StateCreator<MatchSlice, [], [], MatchSlice> = (
       };
 
       const response = await getMatches(params);
-
+      console.log(response);
       set({
-        matches: response.matches,
+        matches: response.data,
         pagination: {
-          currentPage: response.take / 10,
-          pageSize: 10,
-          total: response.total,
-          totalPages: Math.ceil(response.total / 10),
+          currentPage: response.pagination.page / 10,
+          pageSize: response.pagination.limit,
+          total: response.pagination.total,
+          totalPages: response.pagination.totalPages,
         },
         loading: false,
       });

@@ -113,7 +113,7 @@ function AdminDashboard() {
                   Total Matches
                 </p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {matches.length}
+                  {matches?.length}
                 </p>
               </div>
             </div>

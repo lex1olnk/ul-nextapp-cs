@@ -5,6 +5,7 @@ export interface MatchNew {
   tournament?: {
     id: string;
     name: string;
+    demoPath: string;
     status: string;
   };
   platform: "fastcup" | "cybershoke";
@@ -19,10 +20,22 @@ export interface MatchNew {
 }
 
 export interface MatchesResponse {
-  matches: MatchNew[];
-  total: number;
-  skip: number;
-  take: number;
+  data: MatchNew[];
+  filters: {
+    status: null | string;
+    tournamentId: null | string;
+    type: null | string;
+  };
+  pagination: {
+    hasNext: boolean;
+    hasPrev: boolean;
+    limit: number;
+    nextPage: number;
+    page: number;
+    prevPage: number | null;
+    total: number;
+    totalPages: number;
+  };
 }
 
 export interface MatchQueryParams {

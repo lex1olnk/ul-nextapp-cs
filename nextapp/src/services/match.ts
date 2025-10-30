@@ -39,11 +39,12 @@ export const getMatches = async (
   const response = await api.get<MatchesResponse>("/matches", {
     params: cleanParams,
   });
+
   return response.data;
 };
 
 // Получение матча по ID
-export const getMatchById = async (id: string): Promise<MatchNew> => {
+export const getMatchById = async (id: string): Promise<any> => {
   const response = await api.get<MatchNew>(`/matches/${id}`);
 
   return {
@@ -64,7 +65,7 @@ export const getMatchById = async (id: string): Promise<MatchNew> => {
 export const updateMatch = async (
   id: string,
   updates: Partial<MatchInput>
-): Promise<MatchNew> => {
+): Promise<any> => {
   const response = await api.put<MatchNew>(`/matches/${id}`, updates);
 
   return {

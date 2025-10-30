@@ -247,7 +247,7 @@ export const MatchManagement: React.FC = () => {
       )}
 
       {/* Состояние ошибки */}
-      {error && !loading && (
+      {error && !loading && matches && (
         <div className="bg-red-50 rounded-lg p-6 text-center">
           <div className="text-red-500 mb-4">
             <svg
@@ -278,7 +278,7 @@ export const MatchManagement: React.FC = () => {
       )}
 
       {/* Успешная загрузка - пустой список */}
-      {!loading && !error && matches.length === 0 && (
+      {!loading && !error && (!matches || matches.length === 0) && (
         <div className="bg-gray-50 rounded-lg p-6 text-center">
           <div className="text-gray-500 mb-4">
             <svg
@@ -317,7 +317,7 @@ export const MatchManagement: React.FC = () => {
       )}
 
       {/* Успешная загрузка - список матчей */}
-      {!loading && !error && matches.length > 0 && (
+      {!loading && !error && matches && matches.length > 0 && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">

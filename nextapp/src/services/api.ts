@@ -1,7 +1,7 @@
 import axios, { type AxiosRequestConfig } from "axios";
 
 export const api = axios.create({
-  baseURL: "/api" as string,
+  baseURL: "http://localhost:3000/api" as string,
   withCredentials: true,
   headers: { "Content-Type": "application/json" },
 });

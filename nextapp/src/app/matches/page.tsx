@@ -1,6 +1,6 @@
 import PlayersTable from "@/components/matches/PlayersTable";
 import { getTournaments } from "../upload/api";
-import { getMatches } from "./api";
+import { getMatches } from "./_api/api";
 
 export const revalidate = 3600;
 
@@ -20,8 +20,10 @@ export default async function PlayersStatsPage() {
     <div>
       <div className="players-stats-container">
         <h1 className="my-8 text-center text-5xl">ULMIX STATS</h1>
-        
-        {players && tournaments && <PlayersTable players={players} ulTournaments={tournaments}/>}
+
+        {players && tournaments && (
+          <PlayersTable players={players} ulTournaments={tournaments} />
+        )}
       </div>
     </div>
   );

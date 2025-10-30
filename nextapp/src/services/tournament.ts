@@ -1,7 +1,6 @@
 import type {
   ClutchStats,
   CreateTournamentData,
-  MatchStatsProps,
   Tournament,
   WeaponStats,
 } from "@/types";
@@ -76,18 +75,30 @@ export const deleteTournament = async (id: string): Promise<void> => {
   await api.delete(`/tournaments/${id}`);
 };
 
-export const getGraphWeapons = async (): Promise<WeaponStats[]> => {
-  const response = await api.get<WeaponStats[]>("/stats/weapons");
+export const getGraphWeapons = async (
+  playerId: number,
+  tournamentId: string | null
+): Promise<WeaponStats[]> => {
+  const response = await api.get<{ weapons: WeaponStats[] }>(`/stats/weapon`, {
+    params: {
+      playerId,
+      tournamentId,
+    },
+  });
 
-  return response.data;
+  return response.data.weapons;
 };
 
-export const getClutchTotal = async (
-  tournamentId: string
-): Promise<MatchStatsProps[]> => {
-  const response = await api.get<MatchStatsProps[]>(
-    `/stats/clutchTotal/${tournamentId}`
-  );
+export const getClutchStats = async (
+  playerId: number,
+  tournamentId: string | null
+): Promise<ClutchStats[]> => {
+  const response = await api.get<{ clutch: ClutchStats[] }>(`/stats/clutch`, {
+    params: {
+      playerId,
+      tournamentId,
+    },
+  });
 
-  return response.data;
+  return response.data.clutch;
 };

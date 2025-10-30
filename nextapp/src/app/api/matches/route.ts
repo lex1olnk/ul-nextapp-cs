@@ -283,7 +283,7 @@ async function processSingleMatch(sessionId: string, match: any) {
 
     // Очищаем файл при ошибке
     if (demoPath) {
-      //await downloadService.cleanupDemoFile(demoPath);
+      await downloadService.cleanupDemoFile(demoPath);
     }
   }
 }

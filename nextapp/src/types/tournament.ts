@@ -90,10 +90,8 @@ export interface WeaponStats {
   noscope: number | null;
 }
 
-export interface MatchStatsProps {
-  title: string;
-  winPercent: number;
-  losePercent: number;
-  rounds: number;
-  flexValue: number;
+export interface ClutchStats {
+  amount: number; // 1v1, 1v2, 1v3, 1v4, 1v5
+  success: boolean;
+  count: number;
 }
