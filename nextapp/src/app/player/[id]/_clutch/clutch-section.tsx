@@ -9,6 +9,6 @@ export async function ClutchSection({
   tournamentId: string | null;
 }) {
   const clutchStats = await getClutchStats(playerId, tournamentId);
-  console.log(clutchStats);
+
   return <ClutchStats data={clutchStats} />;
 }
