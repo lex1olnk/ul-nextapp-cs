@@ -125,6 +125,7 @@ function parseKillsInfo(demoPath) {
       attackerSteamId: kill.attacker_steamid,
       victimSteamId: kill.user_steamid,
       assisterSteamId: kill.assister_steamid,
+      attackerTeam: kill.attacker_team_num,
       weapon: kill.weapon,
       headshot: kill.headshot || false,
       wallbang: kill.penetrated ? kill.penetrated > 0 : false,
@@ -153,7 +154,7 @@ function parseDamagesInfo(demoPath) {
   const damages = demoparser.parseEvent(
     demoPath,
     "player_hurt",
-    [],
+    ["team_num"],
     ["total_rounds_played", "round_start_time", "game_phase"]
   );
   // Остальной код без изменений...
@@ -209,6 +210,7 @@ function parseDamagesInfo(demoPath) {
         victimId: d.user_steamid,
         weapon: d.weapon,
         round: d.total_rounds_played,
+        inflictorTeam: d.attacker_team_num,
       });
     }
 
@@ -360,21 +362,41 @@ function findClutchOld(demoPath, round) {
       });
     }
 
+    for (let i = 0; i < 8 && i < round.kills.length; i++) {
+      playersState[round.kills[i].victimSteamId].isAlive = false;
+    }
     // Дополнительный клатч при 9+ убийствах
     if (round.kills.length > 8) {
-      const lastKill = round.kills[8];
       const isEnemyWinner = getSideNumber(round.winner) === enemy;
 
-      clutchSituations.push({
-        teamNum: enemy,
-        steamId: isEnemyWinner
-          ? lastKill.attackerSteamId
-          : lastKill.victimSteamId,
-        amount: 1,
-        success: isEnemyWinner,
-        winner: round.winner,
-        round: round.roundNumber,
-      });
+      // Находим последнего выжившего из противоположной команды
+      const lastSurvivingEnemy = Object.keys(playersState).find(
+        (key) =>
+          playersState[key].isAlive === true &&
+          playersState[key].team_num === enemy
+      );
+
+      let clutchPlayerSteamId = lastPlayer + "-1";
+
+      if (isEnemyWinner) {
+        // Если победила вражеская команда, берем последнего выжившего врага
+        clutchPlayerSteamId = lastSurvivingEnemy;
+      } else {
+        // Если победила основная клатч-команда, берем последнего выжившего из нее
+        clutchPlayerSteamId = lastPlayer;
+      }
+
+      // Если нашли игрока, создаем клатч-ситуацию
+      if (clutchPlayerSteamId) {
+        clutchSituations.push({
+          teamNum: enemy,
+          steamId: clutchPlayerSteamId,
+          amount: 1,
+          success: isEnemyWinner,
+          winner: round.winner,
+          round: round.roundNumber,
+        });
+      }
     }
 
     return clutchSituations;
