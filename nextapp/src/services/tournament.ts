@@ -102,3 +102,17 @@ export const getClutchStats = async (
 
   return response.data.clutch;
 };
+
+export const getStatsData = async (
+  playerId: number,
+  tournamentId: string | null
+) => {
+  const response = await api.get(`/stats/stats`, {
+    params: {
+      playerId,
+      tournamentId,
+    },
+  });
+
+  return response.data;
+};

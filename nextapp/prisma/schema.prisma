@@ -55,6 +55,7 @@ model TournamentTeam {
 model TournamentParticipant {
   id               String  @id @default(uuid()) @db.Uuid
   profileId        Int     @map("profile_id")
+  draftOrder       Int     @map("draft_order")
   tournamentId     String  @map("tournament_id") @db.Uuid
   tournamentTeamId String? @map("tournament_team_id") @db.Uuid
 
@@ -180,7 +181,7 @@ model MatchMember {
 
 model User {
   id        Int     @id @default(autoincrement())
-  nickName  String  @map("nick_name")
+  nickname  String  @map("nickname")
   avatar    String?
   profileId Int?    @map("profile_id")
   steamId   String  @unique @map("steam_id")
@@ -219,6 +220,7 @@ model Round {
   startedAt      DateTime       @map("started_at")
   finishedAt     DateTime       @map("finished_at")
   winMatchTeamId String         @map("win_match_team_id") @db.Uuid
+  winTeamNum     Int            @map("win_team_num")
   matchId        String         @map("match_id") @db.Uuid
   matchMapId     String         @map("match_map_id") @db.Uuid
   roundNumber    Int            @map("round_number")
@@ -239,7 +241,7 @@ model MatchKill {
   id               String   @id @default(uuid()) @db.Uuid
   createdAt        DateTime @map("created_at")
   killerId         Int?      @map("killer_id")
-  victimId         Int?     @map("victim_id")
+  victimId         Int     @map("victim_id")
   assistantId      Int?     @map("assistant_id")
   weaponId         Int?     @map("weapon_id")
   isWallbang       Boolean  @map("is_wallbang")
@@ -252,6 +254,7 @@ model MatchKill {
   distance         Float
   matchId          String   @map("match_id") @db.Uuid
   roundId          String   @map("round_id") @db.Uuid
+  killerTeam       Int      @map("killer_team")
   roundTime        Int      @map("round_time")
   killerPositionX  Float    @map("killer_position_x")
   killerPositionY  Float    @map("killer_position_y")
@@ -263,10 +266,9 @@ model MatchKill {
   round            Round    @relation(fields: [roundId], references: [id])
   weapon           Weapon?  @relation(fields: [weaponId], references: [id])
   killer           User?    @relation("KillerKills", fields: [killerId], references: [id])
-  victim           User?    @relation("VictimKills", fields: [victimId], references: [id])
+  victim           User    @relation("VictimKills", fields: [victimId], references: [id])
   assistant        User?    @relation("AssistantKills", fields: [assistantId], references: [id])
 
-  //@@unique([killerId, victimId, matchId, roundId])
   @@map("match_kill")
 }
 
@@ -274,6 +276,7 @@ model MatchDamage {
   id               String @id @default(uuid()) @db.Uuid
   inflictorId      Int    @map("inflictor_id")
   victimId         Int    @map("victim_id")
+  inflictorTeam    Int    @map("inflictor_team")
   weaponId         Int    @map("weapon_id")
   hitboxGroup      String @map("hitbox_group")
   damageReal       Int    @map("damage_real")
@@ -306,7 +309,7 @@ model MatchClutch {
   round Round @relation(fields: [roundId], references: [id])
   user  User  @relation(fields: [userId], references: [id])
 
-  @@id([userId, matchId, roundId])
+  @@id([userId, roundId])
   @@map("match_clutch")
 }
 

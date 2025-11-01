@@ -1,10 +1,15 @@
 import { type StateCreator } from "zustand";
-import type { Profile, ApiState, PaginationParams } from "@/types";
-import { getProfiles, getProfilesCount } from "@/services";
+import type {
+  Profile,
+  ApiState,
+  PaginationParams,
+  ProfilesResponse,
+} from "@/types";
+import { addProfiles, getProfiles, getProfilesCount } from "@/services";
+import { api } from "@/lib/api";
 
 export interface ProfileSlice extends ApiState {
   profiles: Profile[];
-  totalPages: number;
   totalProfiles: number;
   loadingTotalCount: boolean;
   pagination: {
@@ -15,9 +20,20 @@ export interface ProfileSlice extends ApiState {
 
   // Действия
   fetchProfiles: (page?: number, pageSize?: number) => Promise<void>;
-  fetchTotalProfilesCount: () => Promise<void>;
+  /*fetchTotalProfilesCount: () => Promise<void>;*/
   setProfiles: (profiles: Profile[]) => void;
   setPagination: (pagination: Partial<ProfileSlice["pagination"]>) => void;
+  addProfiles: (
+    formData: {
+      name: string;
+      email: string | null;
+      faceitLink: string | null;
+      users: {
+        id: number;
+        nickname: string;
+      }[];
+    }[]
+  ) => void;
   clearError: () => void;
 }
 
@@ -33,7 +49,6 @@ export const createProfileSlice: StateCreator<
   loading: false,
   error: null,
   totalProfiles: 0,
-  totalPages: 0,
   loadingTotalCount: false,
   pagination: {
     currentPage: 1,
@@ -46,18 +61,18 @@ export const createProfileSlice: StateCreator<
     set({ loading: true, error: null });
 
     try {
-      const skip = (page - 1) * pageSize;
-      const params: PaginationParams = { take: pageSize, skip };
+      const params = { limit: pageSize, page };
 
-      const response: Profile[] = await getProfiles(params);
+      const response: ProfilesResponse = await getProfiles(params);
 
       set({
-        profiles: response,
+        profiles: response.data,
         pagination: {
-          currentPage: page,
+          currentPage: response.pagination.page,
           pageSize,
-          total: pageSize,
+          total: response.pagination.totalPages,
         },
+        totalProfiles: response.pagination.total,
         loading: false,
       });
     } catch (error) {
@@ -70,6 +85,39 @@ export const createProfileSlice: StateCreator<
     }
   },
 
+  addProfiles: async (
+    data: {
+      name: string;
+      email: string | null;
+      faceitLink: string | null;
+      users: {
+        id: number;
+        nickname: string;
+      }[];
+    }[]
+  ) => {
+    set({ loading: true, error: null });
+
+    try {
+      const response = await addProfiles(data);
+
+      set({ loading: false });
+      return response;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to add participants";
+
+      set({
+        error: errorMessage,
+        loading: false,
+      });
+
+      throw new Error(errorMessage);
+    }
+  },
+  /*
+
+
   fetchTotalProfilesCount: async () => {
     set({ loadingTotalCount: true });
 
@@ -77,7 +125,7 @@ export const createProfileSlice: StateCreator<
       const totalProfiles = await getProfilesCount();
       const totalPages = Math.ceil(totalProfiles / 10);
       set({
-        totalPages,
+        pagination:,
         loadingTotalCount: false,
       });
     } catch (error) {
@@ -91,7 +139,7 @@ export const createProfileSlice: StateCreator<
       });
     }
   },
-
+*/
   setProfiles: (profiles: Profile[]) => {
     set({ profiles });
   },

@@ -1,11 +1,10 @@
 import { platform } from "os";
 import { api } from "./api";
 import type {
-  Match,
+  AdminMatchesResponse,
   MatchInput,
   MatchNew,
   MatchQueryParams,
-  MatchesResponse,
 } from "@/types";
 
 export const createMatches = async (data: {
@@ -30,13 +29,13 @@ export const createMatches = async (data: {
 // Получение всех матчей
 export const getMatches = async (
   params: MatchQueryParams
-): Promise<MatchesResponse> => {
+): Promise<AdminMatchesResponse> => {
   // Очищаем параметры от undefined значений
   const cleanParams = Object.fromEntries(
     Object.entries(params).filter(([_, value]) => value !== undefined)
   );
 
-  const response = await api.get<MatchesResponse>("/matches", {
+  const response = await api.get<AdminMatchesResponse>("/matches", {
     params: cleanParams,
   });
 

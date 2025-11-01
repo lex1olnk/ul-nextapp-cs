@@ -155,9 +155,9 @@ export class DatabaseService {
       // Создаем/обновляем пользователя
       const user = await tx.user.upsert({
         where: { steamId: player.steamId },
-        update: { nickName: player.name },
+        update: { nickname: player.name },
         create: {
-          nickName: player.name,
+          nickname: player.name,
           steamId: player.steamId,
         },
       });
@@ -233,6 +233,7 @@ export class DatabaseService {
           finishedAt: new Date(),
           tick: round.tick || 0,
           winMatchTeamId: winMatchTeamId,
+          winTeamNum: round.winner === "T" ? 2 : 3,
           matchId: matchId,
           matchMapId: matchMapId,
           roundNumber: round.roundNumber - 1,
@@ -254,14 +255,15 @@ export class DatabaseService {
     roundsMap: Map<any, any>
   ) {
     for (const kill of kills) {
-      const killerId = playersMap.get(kill.attackerSteamId);
+      let killerId = playersMap.get(kill.attackerSteamId);
+
       const victimId = playersMap.get(kill.victimSteamId);
       const assisterId = kill.assisterSteamId
         ? playersMap.get(kill.assisterSteamId)
         : undefined;
       const roundId = roundsMap.get(kill.round);
 
-      if (!victimId || !roundId) continue;
+      if (!killerId || !victimId || !roundId) continue;
 
       const weaponId = await this.getOrCreateWeapon(tx, kill.weapon);
 
@@ -280,6 +282,7 @@ export class DatabaseService {
           isNoscope: kill.noscope || false,
           isTeamkill: isTeamkill,
           matchId: matchId,
+          killerTeam: kill.attackerTeam,
           roundId: roundId,
           tick: kill.tick || 0,
           roundTime: kill.roundTime || 0,
@@ -314,6 +317,7 @@ export class DatabaseService {
           inflictorId,
           victimId,
           weaponId,
+          inflictorTeam: damage.inflictorTeam,
           hitboxGroup: damage.hitboxGroup,
           hits: damage.hits,
           damageNormalized: damage.damageNormalized,
@@ -363,21 +367,25 @@ export class DatabaseService {
     roundsMap: Map<any, any>
   ) {
     for (const clutch of clutches) {
-      const userId = playersMap.get(clutch.steamId);
-      const roundId = roundsMap.get(clutch.round - 1);
+      try {
+        const userId = playersMap.get(clutch.steamId);
+        const roundId = roundsMap.get(clutch.round - 1);
 
-      if (!userId || !roundId) continue;
+        if (!userId || !roundId) continue;
 
-      await tx.matchClutch.create({
-        data: {
-          userId: userId,
-          matchId: matchId,
-          roundId: roundId,
-          success: clutch.success,
-          amount: clutch.amount,
-          createdAt: new Date(),
-        },
-      });
+        await tx.matchClutch.create({
+          data: {
+            userId: userId,
+            matchId: matchId,
+            roundId: roundId,
+            success: clutch.success,
+            amount: clutch.amount,
+            createdAt: new Date(),
+          },
+        });
+      } catch (e) {
+        console.error(e);
+      }
     }
   }
 

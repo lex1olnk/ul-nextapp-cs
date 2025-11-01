@@ -1,10 +1,9 @@
 import { Metadata } from "next";
 import { Nunito } from "next/font/google";
-import { headers } from "next/headers";
-import "@/app/globals.css";
 import { Navbar } from "@/components/Navbar";
+import "@/app/globals.css";
 
-const nunito = Nunito({ subsets: ["latin"] });
+const nunito = Nunito({ weight: "400", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -16,16 +15,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const headersList = await headers();
-  const pathname = headersList.get("x-invoke-path") || "";
-
-  const isAdminRoute = pathname.startsWith("/admin");
-
   return (
-    <html lang="en">
-      <body className={`${nunito.className} antialiased`}>
-        {!isAdminRoute && <Navbar />}
-        <main className={isAdminRoute ? "" : "pt-16"}>{children}</main>
+    <html lang="en" className={nunito.className}>
+      <body>
+        <Navbar />
+        <main className={"pt-16"}>{children}</main>
       </body>
     </html>
   );

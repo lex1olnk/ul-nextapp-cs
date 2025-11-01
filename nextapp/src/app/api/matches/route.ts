@@ -2,36 +2,40 @@ import { demoParserService } from "@/lib/server-parse-services/demo-parser-servi
 import { downloadService } from "@/lib/server-parse-services/download-service";
 import { MatchesService } from "@/lib/server-parse-services/matchesService";
 import { prismaSessionStore } from "@/lib/server-parse-services/prisma-session-store";
-
+import { prisma } from "@/lib/prisma";
 import { validateMatchesInput } from "@/lib/validation/match-validation";
 import { Match, MatchesResponse, MatchNew } from "@/types";
 import { NextResponse, NextRequest } from "next/server";
 
 const matchesService: MatchesService = new MatchesService();
 
-// Регулярное выражение для проверки URL матчей
-const FASTCUP_URL_REGEX = /https:\/\/cs2\.fastcup\.net\/matches\/\d+/;
-const CYBERSHOKE_URL_REGEX = /https:\/\/cybershoke\.net\/\w+\/match\/\d+/;
+function filterValidMatches(matches: any[]) {
+  return matches.filter((match) => {
+    if (!match.url) return false;
 
-// Общее регулярное выражение для извлечения URL
-const MATCH_URL_REGEX = new RegExp(
-  `(${FASTCUP_URL_REGEX.source}|${CYBERSHOKE_URL_REGEX.source})`,
-  "g"
-);
+    // Проверяем URL на валидность
+    const FASTCUP_URL_REGEX = /https:\/\/cs2\.fastcup\.net\/matches\/\d+/;
+    const CYBERSHOKE_URL_REGEX = /https:\/\/cybershoke\.net\/\w+\/match\/\d+/;
 
-// Функция для валидации URL матча
-function isValidMatchUrl(url: string): boolean {
-  return FASTCUP_URL_REGEX.test(url) || CYBERSHOKE_URL_REGEX.test(url);
-}
+    const urlMatch = match.url.match(/(https?:\/\/[^\s]+)/);
+    const url = urlMatch ? urlMatch[0] : match.url;
 
-// Функция для фильтрации валидных матчей
-function filterValidMatches(matches: any[]): any[] {
-  matches.forEach((match) => {
-    const result = match.url.match(MATCH_URL_REGEX);
-    if (result) match.url = result[0];
+    const isValid =
+      FASTCUP_URL_REGEX.test(url) || CYBERSHOKE_URL_REGEX.test(url);
+
+    if (isValid) {
+      // Оставляем только валидную часть URL
+      if (FASTCUP_URL_REGEX.test(url)) {
+        const fastcupMatch = url.match(FASTCUP_URL_REGEX);
+        match.url = fastcupMatch ? fastcupMatch[0] : url;
+      } else if (CYBERSHOKE_URL_REGEX.test(url)) {
+        const cybershokeMatch = url.match(CYBERSHOKE_URL_REGEX);
+        match.url = cybershokeMatch ? cybershokeMatch[0] : url;
+      }
+    }
+
+    return isValid;
   });
-
-  return matches.filter((m) => m.url && isValidMatchUrl(m.url));
 }
 
 export async function GET(request: Request) {
@@ -121,8 +125,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: MatchesResponse = await request.json();
-    console.table(body);
+    const body = await request.json();
+
     if (!body.matches) {
       return NextResponse.json(
         { error: "Missing matches array" },
@@ -130,87 +134,126 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    validateMatchesInput(body.matches);
-
-    // Фильтруем только валидные матчи
+    // Валидация и фильтрация матчей
     const validMatches = filterValidMatches(body.matches);
 
-    const matchesProgress = validMatches.map((match) => ({
-      url: match.url,
-      tournamentId: match.tournamentId,
-      platform: match.platform,
-      status: "pending",
-      progress: 0,
-      currentStep: "Waiting to start",
-    }));
+    const results: Array<{
+      matchUrl: string;
+      sessionId: string;
+      status: string;
+    }> = [];
 
-    // ✅ Создаем сессию в БД
-    const session = await prismaSessionStore.createSession(matchesProgress);
+    // Создаем сессии для каждого матча
+    for (const match of validMatches) {
+      // Проверяем существующий матч
+      const existingMatch = await prisma.match.findUnique({
+        where: { demoPath: match.url },
+      });
 
-    console.log("✅ Session created in database:", session.sessionId);
-    console.log(matchesProgress);
+      if (existingMatch) {
+        results.push({
+          matchUrl: match.url,
+          sessionId: "already_exists",
+          status: "skipped",
+        });
+        continue;
+      }
 
-    // Запускаем обработку
-    processMatchesAsync(session.sessionId, validMatches);
+      // Создаем индивидуальную сессию для матча
+      const individualSession = await prismaSessionStore.createSession([
+        {
+          url: match.url,
+          tournamentId: match.tournamentId,
+          platform: match.platform,
+          status: "pending",
+          progress: 0,
+          currentStep: "Waiting to start",
+        },
+      ]);
+
+      results.push({
+        matchUrl: match.url,
+        sessionId: individualSession.sessionId,
+        status: "pending",
+      });
+    }
+
+    // Запускаем обработку ПОСЛЕДОВАТЕЛЬНО (по одному матчу)
+    processMatchesSequentially(results, validMatches);
 
     return NextResponse.json({
-      sessionId: session.sessionId,
-      status: "processing_started",
-      totalMatches: session.totalMatches,
-      message: "Matches are being processed.",
+      results: results,
+      total: results.length,
+      processing: results.filter((r) => r.status === "pending").length,
+      skipped: results.filter((r) => r.status === "skipped").length,
+      message: "Matches are being processed sequentially (one by one)",
     });
   } catch (error) {
     console.error("Error processing matches request:", error);
-    return NextResponse.json({ error: error }, { status: 400 });
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 400 }
+    );
   }
 }
 
-// Асинхронная обработка матчей (не блокирует ответ)
-async function processMatchesAsync(sessionId: string, matches: MatchNew[]) {
-  try {
-    console.log(`Starting async processing for session: ${sessionId}`);
+// Последовательная обработка матчей
+async function processMatchesSequentially(results: any[], validMatches: any[]) {
+  const processingMatches = results.filter((r) => r.status === "pending");
 
-    // Обрабатываем матчи параллельно с ограничением
-    const parallelLimit = 1; // Максимум 1 одновременных скачивания
-    const chunks = [];
+  console.log(
+    `Starting SEQUENTIAL processing of ${processingMatches.length} matches`
+  );
 
-    for (let i = 0; i < matches.length; i += parallelLimit) {
-      chunks.push(matches.slice(i, i + parallelLimit));
+  for (let i = 0; i < processingMatches.length; i++) {
+    const result = processingMatches[i];
+
+    // Находим полные данные матча по URL
+    const matchData = validMatches.find((m) => m.url === result.matchUrl);
+
+    if (!matchData) {
+      console.error(`Match data not found for URL: ${result.matchUrl}`);
+      continue;
     }
 
-    for (const chunk of chunks) {
-      await Promise.all(
-        chunk.map((match) => processSingleMatch(sessionId, match))
-      );
-    }
+    console.log(
+      `🔵 Processing match ${i + 1}/${processingMatches.length}: ${result.matchUrl}`
+    );
 
-    console.log(`Completed processing for session: ${sessionId}`);
-  } catch (error) {
-    console.error("Error in async processing:", error);
+    // Обрабатываем один матч и ЖДЕМ его завершения
+    await processSingleMatch(result.sessionId, matchData);
+
+    // Пауза между матчами (2 секунды)
+    if (i < processingMatches.length - 1) {
+      console.log(`⏸️ Waiting 2 seconds before next match...`);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
   }
+
+  console.log(`✅ Completed processing all matches sequentially`);
 }
 
+// Функция обработки одного матча
 async function processSingleMatch(sessionId: string, match: any) {
   let demoPath: string | undefined;
 
   try {
     console.log(`🔵 Starting match processing: ${match.url}`);
-    console.log(`Session ID: ${sessionId}`);
 
-    // ✅ Проверяем сессию перед началом
-    const session = await prismaSessionStore.getSession(sessionId);
-
-    if (!session) {
-      throw new Error(`Session ${sessionId} not found at start`);
-    }
-
-    console.log(`✅ Session verified, starting download...`);
+    // Обновляем статус - начало обработки
+    await prismaSessionStore.updateMatchProgress(sessionId, match.url, {
+      status: "processing",
+      progress: 10,
+      currentStep: "Starting download",
+    });
 
     // 1. Скачиваем демо
     await prismaSessionStore.updateMatchProgress(sessionId, match.url, {
       status: "downloading",
       progress: 30,
-      currentStep: "Downloading demo",
+      currentStep: "Downloading demo file",
     });
 
     const downloadResult = await downloadService.downloadDemo(
@@ -230,7 +273,7 @@ async function processSingleMatch(sessionId: string, match: any) {
     await prismaSessionStore.updateMatchProgress(sessionId, match.url, {
       status: "parsing",
       progress: 60,
-      currentStep: "Sending to parser",
+      currentStep: "Sending demo to parser",
     });
 
     const parseResult = await demoParserService.parseDemo(
@@ -246,8 +289,10 @@ async function processSingleMatch(sessionId: string, match: any) {
 
     console.log(`✅ Demo sent to parser, waiting for callback...`);
 
+    // 3. Ждем callback от парсера
     const waitStartTime = Date.now();
     const waitTimeout = 30000; // 30 секунд
+    let callbackReceived = false;
 
     while (Date.now() - waitStartTime < waitTimeout) {
       const session = await prismaSessionStore.getSession(sessionId);
@@ -256,7 +301,8 @@ async function processSingleMatch(sessionId: string, match: any) {
       );
 
       if (matchProgress?.status === "completed") {
-        console.log(`✅ Callback received, parsing completed`);
+        console.log(`✅ Callback received, parsing completed for ${match.url}`);
+        callbackReceived = true;
         break;
       }
 
@@ -269,18 +315,23 @@ async function processSingleMatch(sessionId: string, match: any) {
     }
 
     // Проверяем таймаут
-    if (Date.now() - waitStartTime >= waitTimeout) {
-      throw new Error("Parsing timeout - no callback received");
+    if (!callbackReceived) {
+      throw new Error(
+        "Parsing timeout - no callback received within 30 seconds"
+      );
     }
-    // 3. Ждем callback (не блокируем - callback сам обновит статус)
-    // Просто выходим - callback обновит статус когда придет
+
+    // 4. Успешное завершение
+    console.log(`🎉 Match processing completed successfully: ${match.url}`);
   } catch (error) {
     console.error(`❌ Error processing match ${match.url}:`, error);
 
     await prismaSessionStore.updateMatchProgress(sessionId, match.url, {
       status: "error",
+      error: error instanceof Error ? error.message : "Unknown error",
+      currentStep: "Error occurred during processing",
     });
-
+  } finally {
     // Очищаем файл при ошибке
     if (demoPath) {
       await downloadService.cleanupDemoFile(demoPath);

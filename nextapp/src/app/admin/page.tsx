@@ -1,15 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import ProfilesTab from "@/components/admin/tabs/ProfilesTab";
-import TournamentList from "@/components/admin/TournamentList";
-import ParticipantList from "@/components/admin/ParticipantList";
-import MatchManagement from "@/components/admin/MatchManagement";
-import AddTournamentForm from "@/components/admin/AddTournamentForm";
 
-import AddMatchForm from "@/components/admin/AddMatchForm";
+import ProfilesTab from "@/components/admin/tabs/ProfilesTab";
+import TournamentList from "@/components/admin/tabs/TournamentList";
+import ParticipantList from "@/components/admin/tabs/ParticipantList";
+import MatchManagement from "@/components/admin/tabs/MatchManagement";
+
+import AddTournamentForm from "@/components/admin/UI/AddTournamentForm";
+import AddMatchForm from "@/components/admin/UI/AddMatchForm";
+import AddParticipantsForm from "@/components/admin/UI/AddParticipantForm";
+import AddProfileForm from "@/components/admin/UI/AddProfileForm";
+
 import { useStore } from "@/store";
-import AddParticipantsForm from "@/components/admin/AddParticipantForm";
 
 type ActiveTab = "tournaments" | "participants" | "matches" | "profiles";
 
@@ -25,7 +28,7 @@ function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 text-black">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -140,7 +143,12 @@ function AdminDashboard() {
               <AddMatchForm />
             </>
           )}
-          {activeTab === "profiles" && <ProfilesTab />}
+          {activeTab === "profiles" && (
+            <>
+              <ProfilesTab />
+              <AddProfileForm />
+            </>
+          )}
         </div>
       </main>
 

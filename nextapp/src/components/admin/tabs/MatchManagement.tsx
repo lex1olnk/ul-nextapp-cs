@@ -1,7 +1,128 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useStore } from "@/store";
 import type { MatchQueryParams } from "@/types/match";
 import { deleteMatch } from "@/services";
+
+interface ProcessingSession {
+  sessionId: string;
+  status: string;
+  totalMatches: number;
+  processedMatches: number;
+  matches: Array<{
+    url: string;
+    status: string;
+    progress: number;
+    currentStep: string;
+    error?: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const SessionItem = React.memo(
+  ({
+    session,
+    getSessionStatusColor,
+    getSessionStatusText,
+  }: {
+    session: ProcessingSession;
+    getSessionStatusColor: (status: string) => string;
+    getSessionStatusText: (status: string) => string;
+  }) => {
+    return (
+      <div
+        className={`
+        bg-white border rounded-lg p-4 
+        transition-all duration-300 ease-in-out
+        animate-fadeIn
+        ${
+          session.status === "completed"
+            ? "border-green-200 bg-green-50"
+            : session.status === "error"
+              ? "border-red-200 bg-red-50"
+              : "border-gray-200"
+        }
+      `}
+      >
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <h4 className="font-medium text-gray-900">
+              Сессия: {session.sessionId.slice(0, 64)}...
+            </h4>
+            <p className="text-sm text-gray-600">
+              Создана: {new Date(session.createdAt).toLocaleString("ru-RU")}
+              {session.status === "completed" && session.updatedAt && (
+                <span className="ml-2">
+                  • Завершена:{" "}
+                  {new Date(session.updatedAt).toLocaleString("ru-RU")}
+                </span>
+              )}
+            </p>
+          </div>
+          <span
+            className={`px-2 py-1 rounded text-xs border ${getSessionStatusColor(
+              session.status
+            )}`}
+          >
+            {getSessionStatusText(session.status)}
+          </span>
+        </div>
+
+        {/* Детали матчей в сессии */}
+        <div className="space-y-2">
+          {session.matches.map((match, index) => (
+            <div
+              key={`${session.sessionId}-${index}`}
+              className={`flex justify-between items-center text-sm p-2 rounded transition-colors duration-300 ${
+                match.status === "completed"
+                  ? "bg-green-100 border border-green-200"
+                  : match.status === "error"
+                    ? "bg-red-100 border border-red-200"
+                    : "bg-gray-50"
+              }`}
+            >
+              <div className="flex-1 truncate mr-2">
+                <span className="font-medium">{match.url}</span>
+                <div className="text-xs text-gray-500">
+                  {match.currentStep}
+                  {match.error && (
+                    <span className="text-red-600 ml-2">• {match.error}</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span
+                  className={`px-2 py-1 rounded text-xs ${getSessionStatusColor(
+                    match.status
+                  )}`}
+                >
+                  {getSessionStatusText(match.status)}
+                </span>
+                <div className="w-64 bg-gray-200 rounded-full h-1.5">
+                  <div
+                    className={`h-1.5 rounded-full transition-all duration-500 ${
+                      match.status === "completed"
+                        ? "bg-green-500"
+                        : match.status === "error"
+                          ? "bg-red-500"
+                          : "bg-blue-500"
+                    }`}
+                    style={{ width: `${match.progress}%` }}
+                  ></div>
+                </div>
+                <span className="text-xs text-gray-500 w-8">
+                  {match.progress}%
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+);
+
+SessionItem.displayName = "SessionItem";
 
 export const MatchManagement: React.FC = () => {
   const setShowMatchForm = useStore((state) => state.setShowMatchForm);
@@ -19,6 +140,10 @@ export const MatchManagement: React.FC = () => {
     total: 0,
   });
 
+  const [activeSessions, setActiveSessions] = useState<ProcessingSession[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState(Date.now());
+
   // Фильтры
   const [filters, setFilters] = useState({
     tournamentId: "",
@@ -30,11 +155,92 @@ export const MatchManagement: React.FC = () => {
   useEffect(() => {
     fetchTournaments();
     loadMatches();
+    loadAllSessions();
   }, [pagination.skip, pagination.take, filters]);
+
+  // Слушаем события от AddMatchForm
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === "NEW_SESSIONS_CREATED") {
+        console.log("🔄 New sessions detected, refreshing...");
+        setLastUpdate(Date.now());
+
+        // Показываем уведомление
+        const newSessionCount = event.data.sessions.filter(
+          (s: any) => s.status === "pending"
+        ).length;
+        if (newSessionCount > 0) {
+          console.log(`Начата обработка ${newSessionCount} матчей`);
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
+  // Авто-обновление при изменении lastUpdate или активных сессий
+  useEffect(() => {
+    loadAllSessions();
+
+    // Адаптивный polling в зависимости от активных сессий
+    const intervalTime = activeSessions.length > 0 ? 3000 : 15000;
+
+    const interval = setInterval(() => {
+      loadAllSessions();
+    }, intervalTime);
+
+    return () => clearInterval(interval);
+  }, [lastUpdate, activeSessions.length]);
+
+  // Также обновляем при фокусе окна
+  useEffect(() => {
+    const handleFocus = () => {
+      loadAllSessions();
+      loadMatches();
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, []);
+
+  // Оптимизированная загрузка сессий
+  const loadAllSessions = useCallback(async () => {
+    try {
+      setSessionsLoading(true);
+      const response = await fetch("/api/matches/sessions");
+      if (response.ok) {
+        const newSessions = await response.json();
+
+        setActiveSessions((prevSessions) => {
+          // Сравниваем по sessionId и статусам для оптимизации
+          if (prevSessions.length !== newSessions.length) {
+            return newSessions;
+          }
+
+          const hasChanges = prevSessions.some((prevSession, index) => {
+            const newSession = newSessions[index];
+            return (
+              prevSession.sessionId !== newSession.sessionId ||
+              prevSession.status !== newSession.status ||
+              prevSession.processedMatches !== newSession.processedMatches ||
+              JSON.stringify(prevSession.matches) !==
+                JSON.stringify(newSession.matches)
+            );
+          });
+
+          return hasChanges ? newSessions : prevSessions;
+        });
+      }
+    } catch (err) {
+      console.error("Failed to load sessions:", err);
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, []);
 
   const loadMatches = async () => {
     try {
-      // Формируем параметры запроса
       const params: MatchQueryParams = {
         skip: pagination.skip,
         take: pagination.take,
@@ -62,7 +268,7 @@ export const MatchManagement: React.FC = () => {
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
-    setPagination((prev) => ({ ...prev, skip: 0 })); // Сброс пагинации при изменении фильтров
+    setPagination((prev) => ({ ...prev, skip: 0 }));
   };
 
   const handlePageChange = (newSkip: number) => {
@@ -83,14 +289,16 @@ export const MatchManagement: React.FC = () => {
     }
 
     try {
-      // Вызов API для удаления матча с cascade
       await deleteMatch(matchId);
-
-      // Обновляем список матчей после удаления
       await loadMatches();
     } catch (err) {
       console.error("Failed to delete match:", err);
     }
+  };
+
+  const handleForceRefresh = () => {
+    setLastUpdate(Date.now());
+    loadMatches();
   };
 
   const clearFilters = () => {
@@ -120,10 +328,56 @@ export const MatchManagement: React.FC = () => {
     return colorMap[status] || "bg-gray-100 text-gray-800 border-gray-200";
   };
 
+  const getSessionStatusColor = useCallback((status: string) => {
+    const colorMap: { [key: string]: string } = {
+      processing: "bg-blue-100 text-blue-800 border-blue-200",
+      downloading: "bg-purple-100 text-purple-800 border-purple-200",
+      parsing: "bg-orange-100 text-orange-800 border-orange-200",
+      completed: "bg-green-100 text-green-800 border-green-200",
+      error: "bg-red-100 text-red-800 border-red-200",
+    };
+    return colorMap[status] || "bg-gray-100 text-gray-800 border-gray-200";
+  }, []);
+
+  const getSessionStatusText = useCallback((status: string) => {
+    const statusMap: { [key: string]: string } = {
+      processing: "Обработка",
+      downloading: "Скачивание",
+      parsing: "Парсинг",
+      completed: "Завершено",
+      error: "Ошибка",
+    };
+    return statusMap[status] || status;
+  }, []);
+
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6 ">
-        <h2 className="text-2xl font-bold text-gray-800">Управление матчами</h2>
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center space-x-4">
+          <h2 className="text-2xl font-bold text-gray-800">
+            Управление матчами
+          </h2>
+          {/* Кнопка принудительного обновления */}
+          <button
+            onClick={handleForceRefresh}
+            className="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            title="Обновить"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+          </button>
+        </div>
         <button
           onClick={() => setShowMatchForm(true)}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center"
@@ -132,11 +386,29 @@ export const MatchManagement: React.FC = () => {
         </button>
       </div>
 
-      {/* Фильтры */}
-      <div
-        aria-disabled
-        className="bg-white rounded-lg border p-4 mb-6 text-black border-white"
-      >
+      {activeSessions.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3">
+            Сессии обработки ({activeSessions.length})
+            <span className="text-sm font-normal text-gray-600 ml-2">
+              • показаны за последние 24 часа
+            </span>
+          </h3>
+          <div className="space-y-3">
+            {activeSessions.map((session) => (
+              <SessionItem
+                key={session.sessionId}
+                session={session}
+                getSessionStatusColor={getSessionStatusColor}
+                getSessionStatusText={getSessionStatusText}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Остальной код (фильтры, список матчей и т.д.) остается без изменений */}
+      <div className="bg-white rounded-lg border p-4 mb-6 text-black border-white">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Фильтр по турнирам */}
           <div>
@@ -158,7 +430,6 @@ export const MatchManagement: React.FC = () => {
               ))}
             </select>
           </div>
-
           {/* Фильтр по статусу */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

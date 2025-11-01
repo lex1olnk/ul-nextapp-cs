@@ -1,14 +1,18 @@
-import type { PaginationParams, Profile } from "@/types";
+import type { PaginationParams, Profile, ProfilesResponse } from "@/types";
 import { api } from "./api";
 
 // Получение профилей с пагинацией
-export const getProfiles = async (
-  params: PaginationParams
-): Promise<Profile[]> => {
-  const response = await api.get<Profile[]>("/users/profiles", {
+export const getProfiles = async ({
+  limit,
+  page,
+}: {
+  limit: number;
+  page: number;
+}): Promise<ProfilesResponse> => {
+  const response = await api.get<ProfilesResponse>("/users/profile", {
     params: {
-      take: params.take,
-      skip: params.skip,
+      limit,
+      page,
     },
   });
 
@@ -21,4 +25,20 @@ export const getProfilesCount = async (): Promise<number> => {
     count: number;
   }>("/users/profiles/count");
   return response.data.count;
+};
+
+export const addProfiles = async (
+  data: {
+    name: string;
+    email: string | null;
+    faceitLink: string | null;
+    users: {
+      id: number;
+      nickname: string;
+    }[];
+  }[]
+) => {
+  const response = await api.post("/users/profile", {
+    data,
+  });
 };

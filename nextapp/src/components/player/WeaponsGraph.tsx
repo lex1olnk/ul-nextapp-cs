@@ -8,6 +8,7 @@ import {
   type GraphNode,
 } from "@/components/player";
 import { WeaponStats } from "@/types";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 interface TransformedWeaponData {
   title: string;
@@ -19,6 +20,16 @@ interface TransformedWeaponData {
 }
 
 export const WeaponsGraph = ({ data }: { data: TransformedWeaponData[] }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useLayoutEffect(() => {
+    setIsMounted(true);
+  }, []);
+  const [containerSize, setContainerSize] = useState({
+    width: 1200,
+    height: 1200,
+  });
   const graphSequenceManual: GraphNode[] = [
     // Первый цикл паттерна (3 фигуры)
     {
@@ -177,7 +188,25 @@ export const WeaponsGraph = ({ data }: { data: TransformedWeaponData[] }) => {
   const showData = graphSequenceManual.filter(
     (node) => data.length > node.index
   ); // Фильтру
-  console.log(showData);
+
+  // Вычисляем общую высоту графа на основе данных
+  useEffect(() => {
+    const calculateContainerSize = () => {
+      if (!showData.length) return;
+
+      // Вычисляем примерную высоту на основе количества элементов и их позиций
+      const baseHeight = 200; // стартовая позиция
+      const elementSpacing = 170; // расстояние между элементами
+      const estimatedHeight = baseHeight + showData.length * elementSpacing;
+
+      setContainerSize({
+        width: 1600, // фиксированная ширина для горизонтальных ветвей
+        height: Math.max(800, estimatedHeight), // минимальная высота 800px
+      });
+    };
+
+    calculateContainerSize();
+  }, [showData.length]);
 
   const headerStyle: React.CSSProperties = {
     textAlign: "center" as const,
@@ -192,6 +221,8 @@ export const WeaponsGraph = ({ data }: { data: TransformedWeaponData[] }) => {
   const graphContainerStyle: React.CSSProperties = {
     position: "relative",
     width: "100%",
+    height: `${containerSize.height}px`,
+    minHeight: "800px",
     margin: "0 auto",
     border: "none",
   };
@@ -205,20 +236,21 @@ export const WeaponsGraph = ({ data }: { data: TransformedWeaponData[] }) => {
   };
 
   return (
-    <div className="h-fit mx-auto relative w-full">
+    <div className="h-fit mx-auto relative w-full" ref={containerRef}>
       <div style={headerStyle}>Weapon Distribution Graph with Figures</div>
       <div style={infoStyle}>SYSTEM_GRAPH_VIEW // BRANCH_FIGURES_ENABLED</div>
 
       <div style={graphContainerStyle} className="h-fit">
-        <GraphSequence
-          sequence={showData}
-          currentIndex={0}
-          startX={900}
-          startY={50}
-          baseLength={160}
-        />
+        {isMounted && (
+          <GraphSequence
+            sequence={showData}
+            currentIndex={0}
+            startX={600}
+            startY={50}
+            baseLength={160}
+          />
+        )}
       </div>
-
       <div style={infoStyle}>
         {`// Branch Figures Active | Total Nodes: ${showData.length}`}
       </div>

@@ -21,7 +21,7 @@ export interface MatchSlice extends ApiState {
     orderBy?: string;
     where?: string;
   };
-
+  recentSessionIds: string[];
   // Действия
   addMatches: (data: CreateMatchData) => Promise<void>;
   fetchMatches: (filter: Partial<MatchSlice["filters"]>) => Promise<void>;
@@ -32,6 +32,10 @@ export interface MatchSlice extends ApiState {
   clearFilters: () => void;
   setPagination: (pagination: Partial<MatchSlice["pagination"]>) => void;
   clearError: () => void;
+
+  addRecentSession: (sessionId: string) => void;
+  clearRecentSession: (sessionId: string) => void;
+  clearRecentSessions: () => void;
 }
 
 export const createMatchSlice: StateCreator<MatchSlice, [], [], MatchSlice> = (
@@ -39,6 +43,7 @@ export const createMatchSlice: StateCreator<MatchSlice, [], [], MatchSlice> = (
   get
 ) => ({
   // Начальное состояние
+  recentSessionIds: [],
   matches: [],
   loading: false,
   error: null,
@@ -53,6 +58,30 @@ export const createMatchSlice: StateCreator<MatchSlice, [], [], MatchSlice> = (
   filters: {
     take: 10,
     skip: 0,
+  },
+
+  addRecentSession: (sessionId: string) => {
+    set((state) => ({
+      recentSessionIds: [...state.recentSessionIds, sessionId],
+    }));
+
+    // Автоматически очищаем через 5 минут
+    setTimeout(
+      () => {
+        get().clearRecentSession(sessionId);
+      },
+      5 * 60 * 1000
+    );
+  },
+
+  clearRecentSession: (sessionId: string) => {
+    set((state) => ({
+      recentSessionIds: state.recentSessionIds.filter((id) => id !== sessionId),
+    }));
+  },
+
+  clearRecentSessions: () => {
+    set({ recentSessionIds: [] });
   },
   addMatches: async (data: CreateMatchData) => {
     set({ loading: true, error: null });

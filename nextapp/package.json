@@ -10,11 +10,13 @@
   },
   "dependencies": {
     "@prisma/client": "^6.17.1",
+    "@svgr/webpack": "^8.1.0",
     "axios": "^1.8.4",
     "next": "15.3.1",
     "prisma": "^6.17.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "url-loader": "^4.1.1",
     "zustand": "^5.0.8"
   },
   "devDependencies": {

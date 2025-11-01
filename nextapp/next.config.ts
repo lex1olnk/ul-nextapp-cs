@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
       use: "node-loader",
     });
 
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ["@svgr/webpack", "url-loader"],
+    });
+
     return config;
   },
   images: {

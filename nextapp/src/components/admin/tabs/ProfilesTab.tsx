@@ -3,19 +3,20 @@ import { useStore } from "@/store";
 import { useShallow } from "zustand/shallow";
 
 const ProfilesTab: React.FC = () => {
-  const { profiles, pagination, loading, totalPages, totalProfiles } = useStore(
+  const { profiles, pagination, loading, totalProfiles } = useStore(
     useShallow((state) => ({
       profiles: state.profiles,
       pagination: state.pagination,
       loading: state.loading,
-      totalPages: state.totalPages,
       totalProfiles: state.totalProfiles,
     }))
   );
-  const { fetchProfiles, fetchTotalProfilesCount } = useStore(
+
+  const { fetchProfiles, setShowProfileForm } = useStore(
     useShallow((state) => ({
       fetchProfiles: state.fetchProfiles,
-      fetchTotalProfilesCount: state.fetchTotalProfilesCount,
+      setShowProfileForm: state.setShowProfileForm,
+      //fetchTotalProfilesCount: state.fetchTotalProfilesCount,
     }))
   );
 
@@ -23,10 +24,6 @@ const ProfilesTab: React.FC = () => {
   useEffect(() => {
     fetchProfiles(1, 10);
   }, [fetchProfiles]);
-
-  useEffect(() => {
-    fetchTotalProfilesCount();
-  }, []);
 
   // Обработчик смены страницы
   const handlePageChange = useCallback(
@@ -62,15 +59,19 @@ const ProfilesTab: React.FC = () => {
           Управление профилями
         </h2>
         <div className="text-sm text-gray-600">
-          Всего профилей: {totalProfiles}
+          <button
+            onClick={() => setShowProfileForm(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200"
+          >
+            + Add Profile
+          </button>
         </div>
       </div>
-
       {/* Пагинация */}
       <div className="flex justify-between items-center mb-4 p-4 bg-gray-50 rounded-lg">
         <div className="flex items-center space-x-4">
           <span className="text-sm text-gray-600">
-            Страница {pagination.currentPage} из {totalPages}
+            Страница {pagination.currentPage} из {pagination.total}
           </span>
 
           <select
@@ -100,17 +101,17 @@ const ProfilesTab: React.FC = () => {
                   (pagination.currentPage - 1) * pagination.pageSize + 1
                 }-${Math.min(
                   pagination.currentPage * pagination.pageSize,
-                  pagination.currentPage * pagination.total
-                )} из ${pagination.currentPage * pagination.total}`
+                  totalProfiles
+                )} из ${totalProfiles}`
               : "Нет данных"}
           </span>
 
           <button
             onClick={() => handlePageChange(pagination.currentPage + 1)}
             disabled={
-              pagination.currentPage === totalPages ||
+              pagination.currentPage === pagination.total ||
               loading ||
-              totalPages === 0
+              pagination.total === 0
             }
             className="px-3 py-1 text-sm bg-white border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
           >

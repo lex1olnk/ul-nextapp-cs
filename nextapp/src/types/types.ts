@@ -123,10 +123,12 @@ export interface Profile {
 }
 
 export interface ProfilesResponse {
-  profiles: Profile[];
-  total: number;
-  page: number;
-  totalPages: number;
+  data: Profile[];
+  pagination: {
+    total: number;
+    page: number;
+    totalPages: number;
+  };
 }
 
 export interface PaginationParams {

@@ -29,6 +29,9 @@ export const ClutchStats = ({ data }: ClutchStatsProps) => {
   );
 
   // Создаем массив для всех возможных ситуаций от 1v1 до 1v5
+  const clutchSituationsTotalCount = data.reduce((acc, item) => {
+    return acc + item.count;
+  }, 0);
   const clutchSituations = [1, 2, 3, 4, 5].map((amount) => {
     const situation = groupedData[amount] || { won: 0, lost: 0 };
     const total = situation.won + situation.lost;
@@ -47,51 +50,62 @@ export const ClutchStats = ({ data }: ClutchStatsProps) => {
   });
 
   return (
-    <div className="p-6 bg-gray-900 rounded-lg">
+    <div className="w-7xl mx-auto">
       <h2 className="text-2xl font-bold text-white mb-6 text-center">
         Clutch Situations
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="flex flex-row">
         {clutchSituations.map((situation) => (
           <div
             key={situation.amount}
-            className="bg-gray-800 rounded-lg p-4 border border-gray-700"
+            style={{
+              flex: `${situation.total} 1 150px`,
+            }}
           >
             {/* Заголовок */}
-            <div className="text-lg font-bold text-white text-center mb-4">
+            <div className="text-lg font-bold text-white">
               {situation.label}
             </div>
 
             {/* Процент побед на белом фоне */}
-            <div className="bg-white rounded-lg p-3 mb-2 text-center">
-              <div className="text-2xl font-bold text-gray-900">
-                {situation.winRate}%
+            <div className="flex-row flex border-white border-[1px]">
+              <div
+                className="bg-white p-3"
+                style={{
+                  flex: `${situation.won} 1 75px`,
+                }}
+              >
+                <div className="text-xl font-bold text-gray-900">
+                  {situation.winRate}%
+                </div>
               </div>
-              <div className="text-sm text-gray-600">Won</div>
-            </div>
 
-            {/* Процент поражений на черном фоне */}
-            <div className="bg-black rounded-lg p-3 mb-3 text-center border border-gray-700">
-              <div className="text-2xl font-bold text-white">
-                {situation.loseRate}%
+              {/* Процент поражений на черном фоне */}
+              <div
+                className="bg-black p-3"
+                style={{
+                  flex: `${situation.lost} 1 75px`,
+                }}
+              >
+                <div className="text-xl font-bold text-white">
+                  {situation.loseRate}%
+                </div>
               </div>
-              <div className="text-sm text-gray-400">Lost</div>
             </div>
 
             {/* Количество клатчей */}
-            <div className="text-center">
-              <div className="text-sm text-gray-400 mb-1">Total Clutches</div>
-              <div className="text-xl font-bold text-gray-300">
-                {situation.total}
-              </div>
+
+            <div className="text-lg text-gray-300">
+              {situation.total} rounds
             </div>
 
-            {/* Детальная статистика */}
+            {/* 
             <div className="flex justify-between text-xs text-gray-500 mt-2">
               <span>W: {situation.won}</span>
               <span>L: {situation.lost}</span>
             </div>
+            Детальная статистика */}
           </div>
         ))}
       </div>
