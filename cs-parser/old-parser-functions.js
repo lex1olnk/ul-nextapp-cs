@@ -15,9 +15,6 @@ function parseAllData(demoPath) {
     const clutches = parseClutches(demoPath, rounds, kills);
     const teams = parseTeamsInfo(players);
 
-    const economies = parseRoundStartEquipment(demoPath);
-    const blinds = parseBlindEvents(demoPath);
-
     console.log(`✅ Demo parsing completed successfully`);
 
     return {
@@ -29,8 +26,6 @@ function parseAllData(demoPath) {
       grenades,
       clutches,
       teams,
-      economies,
-      blinds,
     };
   } catch (error) {
     console.error(`❌ Demo parsing failed: ${error.message}`);
@@ -150,31 +145,6 @@ function parseKillsInfo(demoPath) {
       throughSmoke: kill.thrusmoke || false,
       hitgroup: kill.hitgroup,
     }));
-}
-
-function parsePurchasesInfo(demoPath) {
-  console.log("🛒 Parsing item_purchase events...");
-  try {
-    const purchases = parseEvent(
-      demoPath,
-      "item_purchase",
-      ["user_steamid", "weapon", "team_num", "player_money"],
-      ["total_rounds_played"]
-    );
-    //console.log(purchases);
-    return purchases.map((p) => ({
-      steamId: p.steamid,
-      itemName: p.item_name, // Flashbang, AK-47, HE Grenade
-      cost: p.cost, // Цена покупки
-      team: p.user_team_num, // Команда, совершившая покупку
-      round: p.total_rounds_played,
-      tick: p.tick,
-      wasSold: p.was_sold, // Была ли продана (обычно false для покупки)
-    }));
-  } catch (e) {
-    console.error("Failed to parse item_purchase:", e.message);
-    return [];
-  }
 }
 
 // 5. Урон
@@ -408,11 +378,19 @@ function findClutchOld(demoPath, round) {
 
       let clutchPlayerSteamId = lastPlayer + "-1";
 
+      if (isEnemyWinner) {
+        // Если победила вражеская команда, берем последнего выжившего врага
+        clutchPlayerSteamId = lastSurvivingEnemy;
+      } else {
+        // Если победила основная клатч-команда, берем последнего выжившего из нее
+        clutchPlayerSteamId = lastPlayer;
+      }
+
       // Если нашли игрока, создаем клатч-ситуацию
       if (clutchPlayerSteamId) {
         clutchSituations.push({
           teamNum: enemy,
-          steamId: lastSurvivingEnemy,
+          steamId: clutchPlayerSteamId,
           amount: 1,
           success: isEnemyWinner,
           winner: round.winner,
@@ -424,117 +402,6 @@ function findClutchOld(demoPath, round) {
     return clutchSituations;
   } catch (err) {
     console.log(err);
-  }
-}
-
-// 5. Покупки (НОВАЯ ФУНКЦИЯ/КОРРЕКТИРОВКА)
-function parseRoundStartEquipment(demoPath) {
-  console.log("🛡️ Parsing round-start equipment, filtering Knife Round...");
-
-  // 1. Получаем все события round_start
-  const roundStartEvents = demoparser.parseEvent(demoPath, "round_start", [
-    "total_rounds_played",
-    "tick",
-    "round_start_time",
-  ]);
-
-  // --- ЛОГИКА ФИЛЬТРАЦИИ НОЖЕВОГО РАУНДА ---
-  const zeroRounds = roundStartEvents.filter(
-    (item) => item.total_rounds_played === 0
-  );
-
-  // Находим тик самого ПОЗДНЕГО события round_start с total_rounds_played = 0.
-  // Это будет Пистолетный раунд (Раунд 1), а не Ножевой.
-  const lastTickForZero = Math.max(...zeroRounds.map((item) => item.tick));
-
-  // Фильтруем все события, исключая самое раннее с total_rounds_played=0 (ножевой)
-  // и оставляя только последнее с total_rounds_played=0 (пистолетный) и все остальные.
-  const filteredRoundStarts = roundStartEvents.filter((event) => {
-    // Если total_rounds_played > 0, оставляем
-    if (event.total_rounds_played > 0) return true;
-
-    // Если total_rounds_played == 0, оставляем только то, у которого максимальный тик
-    return event.tick === lastTickForZero;
-  });
-  // ------------------------------------------
-
-  const FREEZE_TICKS = 15 * 128;
-  const equipmentByRound = {};
-
-  filteredRoundStarts.forEach((event) => {
-    // !!! ИСПРАВЛЕНИЕ СМЕЩЕНИЯ:
-    const actualRoundNumber = event.total_rounds_played + 1;
-
-    if (actualRoundNumber < 1) return;
-
-    const equipmentCheckTick = event.tick + FREEZE_TICKS + 2;
-
-    // 1. Получаем состояние игроков в нужный тик
-    const equipmentTicks = demoparser.parseTicks(
-      demoPath,
-      ["steamid", "team_num", "balance", "inventory"],
-      [equipmentCheckTick]
-    );
-
-    const playersEquipment = [];
-
-    equipmentTicks.forEach((tickData) => {
-      if (tickData.team_num !== 2 && tickData.team_num !== 3) return;
-
-      // 2. Формируем объект данных игрока
-      playersEquipment.push({
-        roundNumber: actualRoundNumber,
-        steamId: tickData.steamid,
-        teamNum: tickData.team_num,
-        moneyStart: tickData.balance,
-        inventory: tickData.inventory || [],
-        tick: tickData.tick,
-      });
-    });
-
-    // 3. Сохраняем данные для текущего раунда
-    equipmentByRound[actualRoundNumber] = {
-      roundNumber: actualRoundNumber,
-      players: playersEquipment,
-    };
-  });
-
-  const parsedData = Object.values(equipmentByRound);
-
-  console.log(
-    `✅ Parsed equipment for ${parsedData.length} rounds (Filtered Knife Round)`
-  );
-
-  return parsedData;
-}
-
-// 6. Ослепления (НОВАЯ ФУНКЦИЯ)
-function parseBlindEvents(demoPath) {
-  console.log("👁️ Parsing player_blind events...");
-  try {
-    const blindEvents = demoparser.parseEvent(
-      demoPath,
-      "player_blind",
-      [
-        "user_steamid",
-        "entity_id",
-        "blind_duration",
-        "attacker_steamid", // Добавляем attacker
-      ],
-      ["total_rounds_played", "tick", "round_start_time"] // Добавляем tick и round_start_time для очистки
-    );
-
-    return blindEvents.map((b) => ({
-      steamId: b.user_steamid, // Ослепленный
-      attackerSteamId: b.attacker_steamid, // Флешер
-      duration: b.blind_duration,
-      round: b.total_rounds_played,
-      tick: b.tick,
-      round_start_time: b.round_start_time || 0, // Важно для cleanFastcupZeroRounds
-    }));
-  } catch (e) {
-    console.error("Failed to parse player_blind:", e.message);
-    return [];
   }
 }
 

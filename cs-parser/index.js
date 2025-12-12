@@ -3,16 +3,8 @@ const express = require("express");
 const fs = require("fs");
 const cors = require("cors");
 const path = require("path");
-const {
-  parseAllData,
-  parseMatchInfo,
-  parsePlayersInfo,
-  parseRoundsInfo,
-  parseKillsInfo,
-  parseDamagesInfo,
-  parseGrenadesInfo,
-  parseTeamsInfo,
-} = require("./parser-functions");
+const { parseAllData } = require("./parser-functions");
+const { analyzeMatchData } = require("./demo-analyzer"); // <--- ДОБАВЛЕНО
 
 const ArchiveService = require("./archive-service");
 
@@ -26,6 +18,87 @@ const PROJECT_ROOT = path.join(__dirname, "..");
 const SHARED_DEMOS_DIR = path.join(PROJECT_ROOT, "shared-demos");
 app.use(cors());
 app.use(express.json());
+
+// -------------------------------------------------------------
+// 💡 СИНХРОННЫЙ МАРШРУТ: /parse-demo-sync
+// Ждет завершения парсинга и возвращает JSON с данными
+// -------------------------------------------------------------
+app.post("/parse-demo-sync", async (req, res) => {
+  const { fileName } = req.body;
+  console.log(`📨 Received SYNC parse request for file: ${fileName}`);
+
+  if (!fileName) {
+    return res.status(400).json({
+      success: false,
+      error: "fileName is required in request body.",
+    });
+  }
+
+  try {
+    const demoPath = path.join(SHARED_DEMOS_DIR, fileName);
+    let fileExists = false;
+    let attempts = 0;
+    const maxAttempts = 5;
+
+    // --- ЛОГИКА ОЖИДАНИЯ И ПРОВЕРКИ ФАЙЛА ---
+    while (!fileExists && attempts < maxAttempts) {
+      try {
+        // Использование синхронных методов для проверки в асинхронной функции
+        fs.accessSync(demoPath);
+        const stats = fs.statSync(demoPath);
+
+        if (stats.size > 0) {
+          fileExists = true;
+          break;
+        }
+      } catch (fileError) {
+        console.log(
+          `⏳ File not ready (attempt ${attempts + 1}/${maxAttempts})...`
+        );
+        attempts++;
+        if (attempts < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+      }
+    }
+
+    if (!fileExists) {
+      throw new Error(`File not found or empty after checks: ${fileName}.`);
+    }
+    // --- КОНЕЦ ЛОГИКИ ОЖИДАНИЯ ---
+
+    // Используем ArchiveService для обработки .zip/.rar и получения пути к .dem
+    const actualDemoPath = await archiveService.getDemoPath(demoPath);
+    console.log("🔄 Parsing demo...");
+
+    // 🚨 ЗАПУСК СИНХРОННОГО ПАРСИНГА
+    const parsedData = await parseAllData(actualDemoPath);
+
+    // 2. ЗАПУСК АНАЛИЗА
+    //console.log("📊 Starting data analysis...");
+    //const analysisResult = analyzeMatchData(parsedData); // <--- ВЫЗОВ АНАЛИЗАТОРА
+    // Очистка временных файлов, если демо было распаковано
+    if (actualDemoPath !== demoPath) {
+      archiveService.cleanupTempFile(actualDemoPath);
+    }
+
+    console.log(`✅ Demo parsed successfully. Returning data.`);
+
+    // 📢 ОТВЕТ С ДАННЫМИ
+    return res.json({
+      success: true,
+      data: parsedData,
+      //analysis: analysisResult,
+    });
+  } catch (error) {
+    console.error(`❌ SYNC Parse failed: ${error.message}`);
+
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
 
 app.post("/parse-demo", async (req, res) => {
   const { fileName, callbackUrl } = req.body;

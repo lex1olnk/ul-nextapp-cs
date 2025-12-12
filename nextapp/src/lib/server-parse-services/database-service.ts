@@ -1,11 +1,11 @@
 // services/database-service.ts
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import { PrismaClient } from "@/../prisma/generated/client";
 
+// Тип для транзакционного клиента Prisma
 type PrismaTransactionalClient = Parameters<
   Parameters<PrismaClient["$transaction"]>[0]
 >[0];
-
-const prisma = new PrismaClient();
 
 export class DatabaseService {
   async saveParsedData(
@@ -27,9 +27,9 @@ export class DatabaseService {
       );
 
       // 2. Создаем команды
-      const teamsMap = await this.createTeams(tx, match.id, parsedData.teams);
+      //const teamsMap = await this.createTeams(tx, match.id, parsedData.teams);
 
-      // 3. Сохраняем игроков
+      // 3. Сохраняем игроков и MatchMember (Users - upsert, MatchMembers - createMany)
       const playersMap = await this.processPlayers(
         tx,
         match.id,
@@ -44,7 +44,7 @@ export class DatabaseService {
         parsedData.matchInfo
       );
 
-      // 5. Сохраняем раунды
+      // 5. Сохраняем раунды (Round - create, чтобы получить roundsMap)
       const roundsMap = await this.processRounds(
         tx,
         match.id,
@@ -53,7 +53,7 @@ export class DatabaseService {
         teamsMap
       );
 
-      // 6. Сохраняем убийства
+      // 6. Сохраняем убийства (MatchKill - createMany)
       await this.processKills(
         tx,
         match.id,
@@ -62,7 +62,7 @@ export class DatabaseService {
         roundsMap
       );
 
-      // 7. Сохраняем урон
+      // 7. Сохраняем урон (MatchDamage - createMany)
       await this.processDamages(
         tx,
         match.id,
@@ -71,7 +71,7 @@ export class DatabaseService {
         roundsMap
       );
 
-      // 8. Сохраняем гранаты
+      // 8. Сохраняем гранаты (MatchGrenade - createMany)
       await this.processGrenades(
         tx,
         match.id,
@@ -80,6 +80,7 @@ export class DatabaseService {
         roundsMap
       );
 
+      // 9. Сохраняем клочи (MatchClutch - createMany)
       await this.processClutches(
         tx,
         match.id,
@@ -88,10 +89,32 @@ export class DatabaseService {
         roundsMap
       );
 
+      // 10. Сохраняем слепоту (MatchBlind - createMany)
+      await this.processBlinds(
+        tx,
+        match.id,
+        parsedData.blinds,
+        playersMap,
+        roundsMap
+      );
+
+      // 11. Сохраняем экономику и инвентарь (MatchPlayerEconomy - create, MatchInventory - createMany)
+      await this.processEconomies(
+        tx,
+        match.id,
+        parsedData.economies,
+        playersMap,
+        roundsMap
+      );
+
       console.log("✅ All data saved to database successfully");
       return match.id;
     });
   }
+
+  // -----------------------------------------------------------------
+  // 💾 CRUD: Match, Team, Map (ОСТАВЛЕНЫ ИНДИВИДУАЛЬНЫЕ CREATE/UPSERT)
+  // -----------------------------------------------------------------
 
   private async createMatch(
     tx: PrismaTransactionalClient,
@@ -143,46 +166,6 @@ export class DatabaseService {
     return teamsMap;
   }
 
-  private async processPlayers(
-    tx: PrismaTransactionalClient,
-    matchId: string,
-    players: any[],
-    teamsMap: Map<any, any>
-  ) {
-    const playersMap = new Map();
-
-    for (const player of players) {
-      // Создаем/обновляем пользователя
-      const user = await tx.user.upsert({
-        where: { steamId: player.steamId },
-        update: { nickname: player.name },
-        create: {
-          nickname: player.name,
-          steamId: player.steamId,
-        },
-      });
-
-      playersMap.set(player.steamId, user.id);
-
-      // Создаем запись участника матча
-      const teamId = teamsMap.get(player.teamNumber);
-      await tx.matchMember.create({
-        data: {
-          hash: `${matchId}_${user.id}`,
-          role: "player",
-          ready: true,
-          connected: true,
-          isLeaver: false,
-          matchId: matchId,
-          userId: user.id,
-          matchTeamId: teamId,
-        },
-      });
-    }
-
-    return playersMap;
-  }
-
   private async createMatchMap(
     tx: PrismaTransactionalClient,
     matchId: string,
@@ -214,6 +197,58 @@ export class DatabaseService {
     });
   }
 
+  // -----------------------------------------------------------------
+  // 🚀 CRUD: Players (User + MatchMember)
+  // -----------------------------------------------------------------
+
+  private async processPlayers(
+    tx: PrismaTransactionalClient,
+    matchId: string,
+    players: any[],
+    teamsMap: Map<any, any>
+  ) {
+    const playersMap = new Map();
+    const membersData = [];
+
+    for (const player of players) {
+      // 1. Создаем/обновляем пользователя (upsert - индивидуально)
+      const user = await tx.user.upsert({
+        where: { steamId: player.steamId },
+        update: { nickname: player.name },
+        create: {
+          nickname: player.name,
+          steamId: player.steamId,
+        },
+      });
+
+      playersMap.set(player.steamId, user.id);
+
+      // 2. Собираем данные для создания участника матча
+      const teamId = teamsMap.get(player.teamNumber);
+      membersData.push({
+        hash: `${matchId}_${user.id}`,
+        role: "player",
+        ready: true,
+        connected: true,
+        isLeaver: false,
+        matchId: matchId,
+        userId: user.id,
+        matchTeamId: teamId,
+      });
+    }
+
+    // 3. Пакетная вставка MatchMember
+    if (membersData.length > 0) {
+      await tx.matchMember.createMany({ data: membersData });
+    }
+
+    return playersMap;
+  }
+
+  // -----------------------------------------------------------------
+  // 🚀 CRUD: Rounds (ОСТАВЛЕН ИНДИВИДУАЛЬНЫЙ CREATE ДЛЯ roundsMap)
+  // -----------------------------------------------------------------
+
   private async processRounds(
     tx: PrismaTransactionalClient,
     matchId: string,
@@ -222,7 +257,9 @@ export class DatabaseService {
     teamsMap: Map<any, any>
   ) {
     const roundsMap = new Map();
+    const roundsData = [];
 
+    // Создаем по одному, чтобы получить ID для roundsMap
     for (const round of rounds) {
       const winMatchTeamId = teamsMap.get(round.winner === "T" ? 2 : 3);
 
@@ -247,6 +284,10 @@ export class DatabaseService {
     return roundsMap;
   }
 
+  // -----------------------------------------------------------------
+  // 🚀 CRUD: Kills (CREATE MANY)
+  // -----------------------------------------------------------------
+
   private async processKills(
     tx: PrismaTransactionalClient,
     matchId: string,
@@ -254,9 +295,11 @@ export class DatabaseService {
     playersMap: Map<any, any>,
     roundsMap: Map<any, any>
   ) {
-    for (const kill of kills) {
-      let killerId = playersMap.get(kill.attackerSteamId);
+    const killsData = [];
+    const weaponIdsCache = new Map<string, number>();
 
+    for (const kill of kills) {
+      const killerId = playersMap.get(kill.attackerSteamId);
       const victimId = playersMap.get(kill.victimSteamId);
       const assisterId = kill.assisterSteamId
         ? playersMap.get(kill.assisterSteamId)
@@ -265,37 +308,49 @@ export class DatabaseService {
 
       if (!killerId || !victimId || !roundId) continue;
 
-      const weaponId = await this.getOrCreateWeapon(tx, kill.weapon);
+      let weaponId = weaponIdsCache.get(kill.weapon);
+      if (!weaponId) {
+        weaponId = await this.getOrCreateWeapon(tx, kill.weapon);
+        weaponIdsCache.set(kill.weapon, weaponId);
+      }
 
+      // Примечание: isTeamKill требует DB-запроса, что замедляет цикл.
+      // Это оставлено для функциональной корректности.
       const isTeamkill = await this.isTeamKill(tx, killerId, victimId, matchId);
 
-      await tx.matchKill.create({
-        data: {
-          createdAt: new Date(),
-          killerId: killerId,
-          victimId: victimId,
-          assistantId: assisterId,
-          weaponId: weaponId,
-          isHeadshot: kill.headshot || false,
-          isWallbang: kill.wallbang || false,
-          isAirshot: kill.airshot || false,
-          isNoscope: kill.noscope || false,
-          isTeamkill: isTeamkill,
-          matchId: matchId,
-          killerTeam: kill.attackerTeam,
-          roundId: roundId,
-          tick: kill.tick || 0,
-          roundTime: kill.roundTime || 0,
-          killerPositionX: kill.attackerX || 0,
-          killerPositionY: kill.attackerY || 0,
-          victimPositionX: kill.victimX || 0,
-          victimPositionY: kill.victimY || 0,
-          distance: kill.distance || 0,
-          isThroughSmoke: kill.throughSmoke || false,
-        },
+      killsData.push({
+        createdAt: new Date(),
+        killerId: killerId,
+        victimId: victimId,
+        assistantId: assisterId,
+        weaponId: weaponId,
+        isHeadshot: kill.headshot || false,
+        isWallbang: kill.wallbang || false,
+        isAirshot: kill.airshot || false,
+        isNoscope: kill.noscope || false,
+        isTeamkill: isTeamkill,
+        matchId: matchId,
+        killerTeam: kill.attackerTeam,
+        roundId: roundId,
+        tick: kill.tick || 0,
+        roundTime: kill.roundTime || 0,
+        killerPositionX: kill.attackerX || 0,
+        killerPositionY: kill.attackerY || 0,
+        victimPositionX: kill.victimX || 0,
+        victimPositionY: kill.victimY || 0,
+        distance: kill.distance || 0,
+        isThroughSmoke: kill.throughSmoke || false,
       });
     }
+
+    if (killsData.length > 0) {
+      await tx.matchKill.createMany({ data: killsData });
+    }
   }
+
+  // -----------------------------------------------------------------
+  // 🚀 CRUD: Damages (CREATE MANY)
+  // -----------------------------------------------------------------
 
   private async processDamages(
     tx: PrismaTransactionalClient,
@@ -304,6 +359,9 @@ export class DatabaseService {
     playersMap: Map<any, any>,
     roundsMap: Map<any, any>
   ) {
+    const damagesData = [];
+    const weaponIdsCache = new Map<string, number>();
+
     for (const damage of damages) {
       const inflictorId = playersMap.get(damage.inflictorId);
       const victimId = playersMap.get(damage.victimId);
@@ -311,23 +369,34 @@ export class DatabaseService {
 
       if (!inflictorId || !victimId || !roundId) continue;
 
-      const weaponId = await this.getOrCreateWeapon(tx, damage.weapon);
-      await tx.matchDamage.create({
-        data: {
-          inflictorId,
-          victimId,
-          weaponId,
-          inflictorTeam: damage.inflictorTeam,
-          hitboxGroup: damage.hitboxGroup,
-          hits: damage.hits,
-          damageNormalized: damage.damageNormalized,
-          damageReal: damage.damageReal,
-          roundId,
-          matchId: matchId,
-        },
+      let weaponId = weaponIdsCache.get(damage.weapon);
+      if (!weaponId) {
+        weaponId = await this.getOrCreateWeapon(tx, damage.weapon);
+        weaponIdsCache.set(damage.weapon, weaponId);
+      }
+
+      damagesData.push({
+        inflictorId,
+        victimId,
+        weaponId,
+        inflictorTeam: damage.inflictorTeam,
+        hitboxGroup: damage.hitboxGroup,
+        hits: damage.hits,
+        damageNormalized: damage.damageNormalized,
+        damageReal: damage.damageReal,
+        roundId,
+        matchId: matchId,
       });
     }
+
+    if (damagesData.length > 0) {
+      await tx.matchDamage.createMany({ data: damagesData });
+    }
   }
+
+  // -----------------------------------------------------------------
+  // 🚀 CRUD: Grenades (CREATE MANY)
+  // -----------------------------------------------------------------
 
   private async processGrenades(
     tx: PrismaTransactionalClient,
@@ -336,28 +405,36 @@ export class DatabaseService {
     playersMap: Map<any, any>,
     roundsMap: Map<any, any>
   ) {
+    const grenadesData = [];
+
     for (const grenade of grenades) {
       const userId = playersMap.get(grenade.userSteamId);
       const roundId = roundsMap.get(grenade.round);
 
       if (!userId || !roundId) continue;
 
-      await tx.matchGrenade.create({
-        data: {
-          userId: userId,
-          matchId: matchId,
-          roundId: roundId,
-          grenadeType: this.mapGrenadeType(grenade.type),
-          detonatePositionX: grenade.x || 0,
-          detonatePositionY: grenade.y || 0,
-          detonatePositionZ: grenade.z || 0,
-          entityId: grenade.entityId,
-          tick: grenade.tick || 0,
-          roundTime: 0,
-        },
+      grenadesData.push({
+        userId: userId,
+        matchId: matchId,
+        roundId: roundId,
+        grenadeType: this.mapGrenadeType(grenade.type),
+        detonatePositionX: grenade.x || 0,
+        detonatePositionY: grenade.y || 0,
+        detonatePositionZ: grenade.z || 0,
+        entityId: grenade.entityId,
+        tick: grenade.tick || 0,
+        roundTime: 0,
       });
     }
+
+    if (grenadesData.length > 0) {
+      await tx.matchGrenade.createMany({ data: grenadesData });
+    }
   }
+
+  // -----------------------------------------------------------------
+  // 🚀 CRUD: Clutches (CREATE MANY)
+  // -----------------------------------------------------------------
 
   private async processClutches(
     tx: PrismaTransactionalClient,
@@ -366,6 +443,8 @@ export class DatabaseService {
     playersMap: Map<any, any>,
     roundsMap: Map<any, any>
   ) {
+    const clutchesData = [];
+
     for (const clutch of clutches) {
       try {
         const userId = playersMap.get(clutch.steamId);
@@ -373,21 +452,186 @@ export class DatabaseService {
 
         if (!userId || !roundId) continue;
 
-        await tx.matchClutch.create({
-          data: {
-            userId: userId,
-            matchId: matchId,
-            roundId: roundId,
-            success: clutch.success,
-            amount: clutch.amount,
-            createdAt: new Date(),
-          },
+        clutchesData.push({
+          userId: userId,
+          matchId: matchId,
+          roundId: roundId,
+          success: clutch.success,
+          amount: clutch.amount,
+          createdAt: new Date(),
         });
       } catch (e) {
+        // Ловим ошибку парсинга конкретного элемента, но продолжаем цикл
         console.error(e);
       }
     }
+
+    if (clutchesData.length > 0) {
+      await tx.matchClutch.createMany({
+        data: clutchesData,
+        // skipDuplicates: true // Можно добавить для обработки составных ключей, если данные не гарантируют уникальность
+      });
+    }
   }
+
+  // -----------------------------------------------------------------
+  // 🚀 CRUD: Blinds (CREATE MANY)
+  // -----------------------------------------------------------------
+
+  private async processBlinds(
+    tx: PrismaTransactionalClient,
+    matchId: string,
+    blinds: any[],
+    playersMap: Map<any, any>,
+    roundsMap: Map<any, any>
+  ) {
+    if (!blinds) return;
+
+    const data = blinds
+      .map((blind) => {
+        const attackerId = playersMap.get(blind.attackerSteamId);
+        const victimId = playersMap.get(blind.victimSteamId);
+        const roundId = roundsMap.get(blind.round);
+
+        if (!attackerId || !victimId || !roundId) return null;
+
+        return {
+          attackerId: attackerId,
+          victimId: victimId,
+          matchId: matchId,
+          roundId: roundId,
+          duration: blind.duration || 0,
+          tick: blind.tick || 0,
+        };
+      })
+      .filter((b) => b !== null);
+
+    if (data.length > 0) {
+      await tx.matchBlind.createMany({ data });
+    }
+  }
+
+  // -----------------------------------------------------------------
+  // 🚀 CRUD: Economies & Inventories (CREATE / CREATE MANY)
+  // -----------------------------------------------------------------
+
+  /**
+   * Обрабатывает данные об экономике (MatchPlayerEconomy) и инвентаре (MatchInventory)
+   * для каждого игрока в каждом раунде. Использует Promise.all для параллельного выполнения
+   * операций и повышения производительности.
+   * * @param tx Транзакционный клиент Prisma.
+   * @param matchId ID матча.
+   * @param economies Массив данных об экономике (из parseRoundStartEquipment).
+   * @param playersMap Карта {SteamId: UserId}.
+   * @param roundsMap Карта {RoundNumber: RoundId}.
+   */
+  private async processEconomies(
+    tx: PrismaTransactionalClient,
+    matchId: string,
+    economies: {
+      roundNumber: number;
+      players: {
+        steamId: string;
+        teamNum: number;
+        moneyStart: number;
+        inventory: String[];
+        tick: number;
+      }[];
+    }[],
+    playersMap: Map<string, number>, // Предполагаем string
+    roundsMap: Map<number, string> // Предполагаем number -> string
+  ): Promise<void> {
+    if (!economies || economies.length === 0) return;
+
+    // 1. Создаем массив промисов для параллельного выполнения операций
+    const economyPromises = economies.flatMap((roundEco) => {
+      // roundEco.players — это массив игроков для данного раунда
+      if (!roundEco.players || !Array.isArray(roundEco.players)) return [];
+
+      const roundId = roundsMap.get(roundEco.roundNumber);
+
+      // Итерируем по каждому игроку в раунде
+      return roundEco.players.map((playerEco) => {
+        const userId = playersMap.get(playerEco.steamId);
+        const teamId = playerEco.teamNum;
+
+        if (!userId || !roundId) {
+          // Возвращаем разрешенный промис, чтобы не сломать Promise.all
+          return Promise.resolve();
+        }
+
+        // Создаем промис для ОДНОЙ цепочки:
+        // 1. Создание Economy Record
+        // 2. Создание Inventory Records
+        return (async () => {
+          // 1. Создаем запись MatchPlayerEconomy (родительская запись)
+          // ОПЕРАЦИЯ: CREATE
+          const economyRecord = await tx.matchPlayerEconomy.create({
+            data: {
+              userId: userId,
+              matchId: matchId,
+              roundId: roundId,
+              startMoney: playerEco.moneyStart || 0, // moneyStart из исправленного парсера
+              teamNum: teamId,
+              tick: playerEco.tick || 0,
+            },
+          });
+
+          // 2. Создаем записи MatchInventory (дочерние записи)
+          // ОПЕРАЦИЯ: CREATEMANY (предполагаем, что processInventories использует createMany)
+          if (playerEco.inventory && Array.isArray(playerEco.inventory)) {
+            await this.processInventories(
+              tx,
+              userId,
+              roundId,
+              economyRecord.id, // ID созданной записи экономики
+              playerEco.inventory
+            );
+          }
+        })(); // Самовызывающаяся асинхронная функция
+      });
+    });
+
+    // 2. Выполняем все операции параллельно
+    await Promise.all(economyPromises);
+  }
+
+  private async processInventories(
+    tx: PrismaTransactionalClient,
+    userId: number,
+    roundId: string,
+    economySnapshotId: string,
+    inventoryData: any[]
+  ) {
+    const inventoryItems = [];
+    const weaponIdsCache = new Map<string, number>();
+
+    for (const item of inventoryData) {
+      let weaponId = weaponIdsCache.get(item.weaponName);
+      if (!weaponId) {
+        weaponId = await this.getOrCreateWeapon(tx, item.weaponName);
+        weaponIdsCache.set(item.weaponName, weaponId);
+      }
+
+      inventoryItems.push({
+        userId: userId,
+        roundId: roundId,
+        weaponId: weaponId,
+        economySnapshotId: economySnapshotId, // Ссылка на родительскую запись
+      });
+    }
+
+    if (inventoryItems.length > 0) {
+      // Пакетная вставка инвентаря
+      await tx.matchInventory.createMany({
+        data: inventoryItems,
+      });
+    }
+  }
+
+  // -----------------------------------------------------------------
+  // ⚙️ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ (Оставлены без изменений)
+  // -----------------------------------------------------------------
 
   private async getOrCreateWeapon(
     tx: PrismaTransactionalClient,
@@ -396,18 +640,25 @@ export class DatabaseService {
     try {
       const weapon = await tx.weapon.upsert({
         where: {
-          name: weaponName, // Если name уникален
-          // или используйте internalName если он уникален
+          name: weaponName,
         },
-        update: {}, // Ничего не обновляем если существует
+        update: {},
         create: {
           name: weaponName,
           internalName: weaponName,
+          inventoryName: weaponName,
+          cost: 0,
+          // Примечание: Убедитесь, что `cost` и `type` не являются обязательными,
+          // или предоставьте дефолтные значения.
         },
       });
-
       return weapon.id;
     } catch (error) {
+      // Обработка возможного конфликта (например, concurrent upsert)
+      const existing = await tx.weapon.findUnique({
+        where: { name: weaponName },
+      });
+      if (existing) return existing.id;
       throw new Error(`weapon doesn't created, ${error}`);
     }
   }

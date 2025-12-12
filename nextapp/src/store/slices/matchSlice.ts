@@ -127,7 +127,7 @@ export const createMatchSlice: StateCreator<MatchSlice, [], [], MatchSlice> = (
       };
 
       const response = await getMatches(params);
-      console.log(response);
+
       set({
         matches: response.data,
         pagination: {
@@ -151,6 +151,7 @@ export const createMatchSlice: StateCreator<MatchSlice, [], [], MatchSlice> = (
     set((state) => ({
       filters: { ...state.filters, ...newFilters },
     }));
+
     // Автоматически применяем фильтры с первой страницы
     get().fetchMatches(newFilters);
   },

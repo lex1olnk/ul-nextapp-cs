@@ -75,3 +75,12 @@ export interface MatchMember {
   matchTeamId?: number;
   userId?: number;
 }
+
+export interface MatchItem {
+  id: string;
+  url: string;
+  status: string;
+  progress: number;
+  currentStep: string;
+  error?: string;
+}
