@@ -1,6 +1,7 @@
 // services/database-service.ts
 import { prisma } from "@/lib/prisma";
-import { PrismaClient } from "@/../prisma/generated/client";
+import { Prisma, PrismaClient } from "@/../prisma/generated/client";
+import { Weapon } from "@prisma/client";
 
 // Тип для транзакционного клиента Prisma
 type PrismaTransactionalClient = Parameters<
@@ -27,7 +28,7 @@ export class DatabaseService {
       );
 
       // 2. Создаем команды
-      //const teamsMap = await this.createTeams(tx, match.id, parsedData.teams);
+      const teamsMap = await this.createTeams(tx, match.id, parsedData.teams);
 
       // 3. Сохраняем игроков и MatchMember (Users - upsert, MatchMembers - createMany)
       const playersMap = await this.processPlayers(
@@ -542,7 +543,7 @@ export class DatabaseService {
     roundsMap: Map<number, string> // Предполагаем number -> string
   ): Promise<void> {
     if (!economies || economies.length === 0) return;
-
+    const weapons = await tx.weapon.findMany({});
     // 1. Создаем массив промисов для параллельного выполнения операций
     const economyPromises = economies.flatMap((roundEco) => {
       // roundEco.players — это массив игроков для данного раунда
@@ -585,7 +586,8 @@ export class DatabaseService {
               userId,
               roundId,
               economyRecord.id, // ID созданной записи экономики
-              playerEco.inventory
+              playerEco.inventory,
+              weapons
             );
           }
         })(); // Самовызывающаяся асинхронная функция
@@ -601,16 +603,20 @@ export class DatabaseService {
     userId: number,
     roundId: string,
     economySnapshotId: string,
-    inventoryData: any[]
+    inventoryData: any[],
+    weapons: Weapon[]
   ) {
     const inventoryItems = [];
     const weaponIdsCache = new Map<string, number>();
 
+    weapons.map((w) => {
+      weaponIdsCache.set(w.inventoryName, w.id);
+    });
+    //console.log(weaponIdsCache, inventoryData);
     for (const item of inventoryData) {
-      let weaponId = weaponIdsCache.get(item.weaponName);
+      let weaponId = weaponIdsCache.get(item);
       if (!weaponId) {
-        weaponId = await this.getOrCreateWeapon(tx, item.weaponName);
-        weaponIdsCache.set(item.weaponName, weaponId);
+        weaponId = 0;
       }
 
       inventoryItems.push({
@@ -637,29 +643,57 @@ export class DatabaseService {
     tx: PrismaTransactionalClient,
     weaponName: string
   ): Promise<number> {
+    if (
+      !weaponName ||
+      weaponName.trim() === "" ||
+      weaponName === "undefined" ||
+      weaponName === "null"
+    ) {
+      return 0;
+    }
     try {
-      const weapon = await tx.weapon.upsert({
-        where: {
-          name: weaponName,
-        },
-        update: {},
-        create: {
-          name: weaponName,
-          internalName: weaponName,
-          inventoryName: weaponName,
-          cost: 0,
-          // Примечание: Убедитесь, что `cost` и `type` не являются обязательными,
-          // или предоставьте дефолтные значения.
-        },
-      });
-      return weapon.id;
-    } catch (error) {
-      // Обработка возможного конфликта (например, concurrent upsert)
+      // Сначала пытаемся найти существующее оружие
       const existing = await tx.weapon.findUnique({
         where: { name: weaponName },
+        select: { id: true },
       });
-      if (existing) return existing.id;
-      throw new Error(`weapon doesn't created, ${error}`);
+
+      if (existing) {
+        return existing.id;
+      }
+
+      // Если не найдено - создаем новое
+      try {
+        const weapon = await tx.weapon.create({
+          data: {
+            name: weaponName,
+            internalName: weaponName,
+            inventoryName: weaponName,
+            cost: 0,
+            // type можно не указывать, так как оно optional
+          },
+        });
+        return weapon.id;
+      } catch (createError) {
+        // Обработка редкого случая конкурентного создания
+        if (
+          createError instanceof Prisma.PrismaClientKnownRequestError &&
+          createError.code === "P2002"
+        ) {
+          // Кто-то другой уже создал запись
+          const existing = await tx.weapon.findUnique({
+            where: { name: weaponName },
+            select: { id: true },
+          });
+          if (existing) {
+            return existing.id;
+          }
+        }
+        throw createError;
+      }
+    } catch (error) {
+      console.error(`Error in getOrCreateWeapon for "${weaponName}":`, error);
+      throw error; // Пробрасываем ошибку выше для обработки в вызывающем коде
     }
   }
 

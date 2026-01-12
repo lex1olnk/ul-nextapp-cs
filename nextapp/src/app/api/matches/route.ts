@@ -291,7 +291,7 @@ async function processSingleMatch(sessionId: string, match: any) {
 
     // 3. Ждем callback от парсера
     const waitStartTime = Date.now();
-    const waitTimeout = 30000; // 30 секунд
+    const waitTimeout = 60000; // 60 секунд
     let callbackReceived = false;
 
     while (Date.now() - waitStartTime < waitTimeout) {

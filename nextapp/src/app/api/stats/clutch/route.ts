@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Добавляем задержку для тестирования Suspense
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    //await new Promise((resolve) => setTimeout(resolve, 2000));
 
     const result: any[] = await prisma.$queryRaw`
       SELECT amount

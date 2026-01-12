@@ -11,6 +11,8 @@ export default async function WeaponsPage({
 }) {
   const stats = await getGraphWeapons(playerId, tournamentId);
 
+  if (!stats || stats.length === 0) return <div>Данные отсутствуют</div>;
+
   const transformedData = stats.map((weaponStat) => ({
     title: weaponStat.weapon,
     rows: [
@@ -27,6 +29,6 @@ export default async function WeaponsPage({
         : []),
     ],
   }));
-  if (stats.length === 0) return <div>Данные отсутствуют</div>;
+
   return <WeaponsGraph data={transformedData} />;
 }

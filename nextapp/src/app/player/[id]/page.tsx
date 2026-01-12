@@ -10,25 +10,32 @@ export default async function PlayerPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: number }>;
+  params: Promise<{ id: string }>; // В Next.js параметры пути приходят как строки
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { id } = await params;
   const resolvedSearchParams = await searchParams;
-  const tournamentId = resolvedSearchParams.tournamentId as string | null;
 
+  // Безопасное извлечение tournamentId
+  const tournamentIdRaw = resolvedSearchParams.tournamentId;
+  const tournamentId =
+    typeof tournamentIdRaw === "string" ? tournamentIdRaw : null;
+
+  // Не забудьте преобразовать id игрока в число, если API ждет number
+  const playerId = parseInt(id, 10);
+  console.log({ playerId, tournamentId });
   return (
     <div className="relative flex justify-center flex-col w-6xl mx-auto ">
       <div></div>
       <Suspense fallback={<WeaponsSkeleton />}>
-        <WeaponsPage playerId={id} tournamentId={tournamentId} />
+        <WeaponsPage playerId={playerId} tournamentId={tournamentId} />
       </Suspense>
       <Suspense fallback={<ClutchSectionSkeleton />}>
-        <ClutchSection playerId={id} tournamentId={tournamentId} />
+        <ClutchSection playerId={playerId} tournamentId={tournamentId} />
       </Suspense>
 
-      <PlayerCardSection playerId={id} />
-      <StatsSection playerId={id} tournamentId={tournamentId} />
+      <PlayerCardSection playerId={playerId} />
+      <StatsSection playerId={playerId} tournamentId={tournamentId} />
     </div>
   );
 }

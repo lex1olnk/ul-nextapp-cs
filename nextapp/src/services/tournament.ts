@@ -82,7 +82,7 @@ export const getGraphWeapons = async (
   const response = await api.get<{ weapons: WeaponStats[] }>(`/stats/weapon`, {
     params: {
       playerId,
-      tournamentId,
+      tournamentId: tournamentId ?? undefined,
     },
   });
 
@@ -96,7 +96,7 @@ export const getClutchStats = async (
   const response = await api.get<{ clutch: ClutchStats[] }>(`/stats/clutch`, {
     params: {
       playerId,
-      tournamentId,
+      tournamentId: tournamentId ?? undefined,
     },
   });
 
