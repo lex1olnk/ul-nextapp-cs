@@ -1,0 +1,17 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0a;color:#fff;font-family:"Nunito",sans-serif;width:700px;padding:0;display:flex}
+.cell{flex:1;height:150px;position:relative;overflow:hidden;border-right:1px solid #18181b}
+.cell:last-child{border-right:none}
+.dots{background-image:radial-gradient(#fff 1px,transparent 1px);background-size:24px 24px;opacity:.15}
+.zebra-wrap{display:flex;align-items:center;justify-content:center}
+.zebra{width:80%;height:26px;background:repeating-linear-gradient(-45deg,#27272a,#27272a 4px,transparent 4px,transparent 10px);opacity:.5}
+.wm{font-weight:900;font-style:italic;text-transform:uppercase;color:rgba(255,255,255,.05);font-size:90px;position:absolute;bottom:-18px;right:-6px;letter-spacing:-.05em;line-height:1}
+.lbl{position:absolute;top:10px;left:10px;font-family:ui-monospace,Menlo,monospace;font-size:8px;letter-spacing:.25em;text-transform:uppercase;color:#52525b;z-index:2}
+</style></head><body>
+<div class="cell dots"><span class="lbl">DOT GRID · radial · 15%</span></div>
+<div class="cell zebra-wrap"><span class="lbl">ZEBRA HATCH · 45° · 50%</span><div class="zebra"></div></div>
+<div class="cell"><span class="lbl">WATERMARK · white/5</span><span class="wm">DATA</span></div>
+</body></html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0a;color:#fff;font-family:"Nunito",sans-serif;width:700px;padding:24px;display:flex;gap:18px}
+.meta{font-family:ui-monospace,Menlo,monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#52525b;margin-top:10px}
+.box{flex:1}
+.card{position:relative;height:96px;border:1px solid #18181b;background:rgba(24,24,27,.10)}
+.tick{position:absolute;width:16px;height:16px}
+.t1{top:-1px;left:-1px;border-top:1px solid #52525b;border-left:1px solid #52525b}
+.t2{bottom:-1px;right:-1px;border-bottom:1px solid #52525b;border-right:1px solid #52525b}
+.b1{height:30px;border:1px solid #18181b;margin-bottom:8px}
+.b2{height:30px;border:1px solid #27272a;margin-bottom:8px}
+.b3{height:30px;border:1px dashed #27272a}
+.rl{font-family:ui-monospace,Menlo,monospace;font-size:8px;letter-spacing:.12em;color:#52525b;padding:3px 5px}
+</style></head><body>
+<div class="box">
+  <div class="card"><div class="tick t1"></div><div class="tick t2"></div><span class="rl" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#a1a1aa">CARD · CORNER TICKS · NO RADIUS</span></div>
+  <div class="meta">SQUARE ALWAYS — radius 0 · only avatars use rounded-full</div>
+</div>
+<div class="box">
+  <div class="b1"><span class="rl">BORDER · ZINC-900 · #18181B</span></div>
+  <div class="b2"><span class="rl">DIVIDER · ZINC-800 · #27272A</span></div>
+  <div class="b3"><span class="rl">EMPTY · DASHED ZINC-800</span></div>
+  <div class="meta">1px borders carry all structure</div>
+</div>
+</body></html>

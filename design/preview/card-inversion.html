@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,700;0,900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0a;color:#fff;font-family:"Nunito",sans-serif;width:700px;padding:22px;display:flex;gap:14px}
+.mono{font-family:ui-monospace,Menlo,monospace}
+.cap{font-family:ui-monospace,Menlo,monospace;font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:#52525b;margin-bottom:9px;display:block}
+
+/* shared card */
+.icard{position:relative;overflow:hidden;border:1px solid #18181b;padding:18px 20px;cursor:pointer;flex:1}
+.wipe{position:absolute;left:0;top:0;width:2px;height:100%;background:#fff;transform:scaleY(0);transform-origin:top}
+.player{font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:-.02em;margin-top:8px;margin-bottom:3px}
+.sub{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase}
+.stat{font-weight:900;font-style:italic;font-size:22px;letter-spacing:-.04em;margin-top:12px}
+.hint{position:absolute;bottom:8px;right:10px;font-family:ui-monospace,Menlo,monospace;font-size:7px;letter-spacing:.18em;text-transform:uppercase;opacity:.4;transition:opacity .3s}
+
+/* ---- AUTO-ANIMATE card (left) ---- */
+.auto .icard-inner{animation:invert-bg 3.6s ease-in-out infinite}
+.auto .wipe{animation:wipe-bar 3.6s ease-in-out infinite}
+.auto .player-txt{animation:invert-txt 3.6s ease-in-out infinite}
+.auto .sub{animation:invert-sub 3.6s ease-in-out infinite}
+@keyframes invert-bg{
+  0%,18%{background:rgba(24,24,27,.10);color:#fff}
+  32%,68%{background:#fff;color:#000}
+  82%,100%{background:rgba(24,24,27,.10);color:#fff}
+}
+@keyframes wipe-bar{
+  0%,16%{transform:scaleY(0);background:#fff}
+  28%,70%{transform:scaleY(1);background:#000}
+  78%,100%{transform:scaleY(0);background:#fff}
+}
+@keyframes invert-txt{
+  0%,18%{color:#fff}32%,68%{color:#000}82%,100%{color:#fff}
+}
+@keyframes invert-sub{
+  0%,18%{color:#52525b}32%,68%{color:rgba(0,0,0,.45)}82%,100%{color:#52525b}
+}
+
+/* ---- HOVER card (right) ---- */
+.hover-card{background:rgba(24,24,27,.10);color:#fff;transition:background .28s,color .28s}
+.hover-card .wipe{transition:transform .28s cubic-bezier(.4,0,.2,1)}
+.hover-card .sub{color:#52525b;transition:color .28s}
+.hover-card:hover{background:#fff;color:#000}
+.hover-card:hover .wipe{transform:scaleY(1)}
+.hover-card:hover .sub{color:rgba(0,0,0,.45)}
+.hover-card:hover .hint{opacity:0}
+</style></head><body>
+
+<!-- left: auto-cycles -->
+<div style="flex:1">
+  <span class="cap">AUTO — loops the transition</span>
+  <div class="auto">
+    <div class="icard icard-inner">
+      <div class="wipe"></div>
+      <div class="cap" style="margin-bottom:0">// PLAYER_ENTRY</div>
+      <div class="player player-txt">s1mple</div>
+      <div class="sub">NAVI · RATING 1.31</div>
+      <div class="stat">1.31</div>
+    </div>
+  </div>
+</div>
+
+<!-- right: hover-interactive -->
+<div style="flex:1">
+  <span class="cap">INTERACTIVE — hover me</span>
+  <div class="icard hover-card">
+    <div class="wipe"></div>
+    <div class="cap" style="margin-bottom:0">// PLAYER_ENTRY</div>
+    <div class="player">donk</div>
+    <div class="sub">SPIRIT · RATING 1.28</div>
+    <div class="stat">1.28</div>
+    <span class="hint">HOVER →</span>
+  </div>
+</div>
+
+</body></html>
