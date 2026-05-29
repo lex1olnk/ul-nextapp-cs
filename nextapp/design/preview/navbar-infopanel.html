@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0a;color:#fff;font-family:"Nunito",sans-serif;width:700px;padding:22px;display:flex;gap:14px}
+.mono{font-family:ui-monospace,Menlo,monospace}
+.cap{font-family:ui-monospace,Menlo,monospace;font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:#52525b;margin-bottom:9px;display:block}
+
+/* left: info panel */
+.panel{flex:1.1;border:1px solid #18181b;background:rgba(24,24,27,.05);backdrop-filter:blur(4px);padding:16px}
+.ph{font-size:10px;font-weight:700;color:#52525b;text-transform:uppercase;letter-spacing:.3em;margin-bottom:12px}
+.kv{display:flex;justify-content:space-between;border-bottom:1px solid #18181b;padding:6px 0;font-family:ui-monospace,Menlo,monospace;font-size:11px}
+.kv:last-child{border:none;padding-bottom:0}
+.k{color:#3f3f46}.v{color:#fff}
+
+/* right: navbar diagram */
+.nb-wrap{flex:1;display:flex;flex-direction:column}
+.nb-bar{background:rgba(0,0,0,.8);backdrop-filter:blur(8px);border:1px solid #27272a;padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:900;font-style:italic;letter-spacing:-.04em;text-transform:uppercase;font-size:14px}
+.links{display:flex;gap:14px;font-family:ui-monospace,Menlo,monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#71717a}
+.pull-row{display:flex;justify-content:center;margin:3px 0}
+.pull{width:40px;height:3px;background:#3f3f46}
+.nb-desc{font-family:ui-monospace,Menlo,monospace;font-size:8px;letter-spacing:.15em;color:#3f3f46;text-transform:uppercase;text-align:center;margin-top:8px;padding-top:8px;border-top:1px solid #18181b}
+</style></head><body>
+
+<div class="panel">
+  <div class="ph">Event_Details</div>
+  <div class="kv"><span class="k">STATUS:</span><span class="v" style="color:#22c55e">[ ONGOING ]</span></div>
+  <div class="kv"><span class="k">MAPS:</span><span class="v">BO3</span></div>
+  <div class="kv"><span class="k">NODE:</span><span class="v">0x1A3F2B</span></div>
+</div>
+
+<div class="nb-wrap">
+  <span class="cap">NAVBAR · fixed top · hidden</span>
+  <div class="nb-bar">
+    <span class="brand">CS2_PARSER</span>
+    <div class="links"><span>MATCHES</span><span>PLAYERS</span></div>
+  </div>
+  <div class="pull-row"><div class="pull"></div></div>
+  <div class="nb-desc">slides down on hover · bg black/80 blur</div>
+</div>
+
+</body></html>

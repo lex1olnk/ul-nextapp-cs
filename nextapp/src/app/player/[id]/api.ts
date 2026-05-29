@@ -2,9 +2,7 @@
 
 export async function getPlayerMatches(id: string, ul_id: string, page: number) {
   try {
-    const response = await fetch(`https://ul-backend.vercel.app/api/player/${id}/matches?ul_id=${ul_id}&page=${page}`, {
-      cache: 'no-store', // Отключает кеширование
-    })
+    const response = await fetch(`https://ul-backend.vercel.app/api/player/${id}/matches?ul_id=${ul_id}&page=${page}`)
 
     const data = await response.json();
     return data;

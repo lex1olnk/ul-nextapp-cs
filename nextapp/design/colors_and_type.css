@@ -1,0 +1,171 @@
+/* ============================================================
+   CS2 PARSER STATS — Design Tokens
+   Brutalist + Terminal + Tech-magazine.
+   Monochrome (black / white / zinc) + orange accent.
+   ------------------------------------------------------------
+   Load Nunito (real brand sans, via next/font in the app):
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800;1,900&display=swap" rel="stylesheet">
+   Mono = the Tailwind default system stack (no webfont needed).
+   ============================================================ */
+
+:root {
+  /* ---- Raw brand vars (from globals.css) ---- */
+  --background:  #0c0c0c;   /* body background            */
+  --foreground:  #171717;
+  --light-dark:  #242424;
+  --my-gray:     #2b2b2b;
+
+  /* ---- Surfaces ---- */
+  --page:        #0a0a0a;   /* main page background (bg-[#0a0a0a]) */
+  --surface:     #0c0c0c;
+  --card:        rgba(24,24,27,0.10);  /* zinc-900/10 — card fill   */
+  --card-faint:  rgba(24,24,27,0.05);  /* zinc-900/5  — sidebar fill */
+
+  /* ---- Zinc scale (Tailwind) — the entire neutral system ---- */
+  --zinc-200: #e4e4e7;
+  --zinc-300: #d4d4d8;
+  --zinc-400: #a1a1aa;
+  --zinc-500: #71717a;
+  --zinc-600: #52525b;
+  --zinc-700: #3f3f46;
+  --zinc-800: #27272a;
+  --zinc-900: #18181b;
+  --zinc-950: #09090b;
+
+  /* ---- Text roles ---- */
+  --fg1: #ffffff;            /* primary text            */
+  --fg2: var(--zinc-400);    /* secondary text          */
+  --fg3: var(--zinc-500);    /* caption / metadata      */
+  --fg-meta: var(--zinc-600);/* deep meta               */
+  --fg-ghost: var(--zinc-800);/* watermark / disabled    */
+
+  /* ---- Borders ---- */
+  --border:       var(--zinc-900);  /* default card/row border */
+  --border-soft:  var(--zinc-800);  /* dividers, hr            */
+  --border-corner:var(--zinc-600);  /* decorative card corners */
+
+  /* ---- Inversion (the signature hover state) ---- */
+  --invert-bg: #ffffff;
+  --invert-fg: #000000;
+
+  /* ---- Accents (use ONLY as accents: status / progress / FX) ---- */
+  --orange-400: #fb923c;
+  --orange-500: #f97316;   /* primary accent — CS2 feel */
+  --orange-700: #c2410c;
+  --green-500:  #22c55e;   /* status: ongoing / success */
+  --yellow-400: #facc15;   /* status: warning           */
+  /* duel-master rotation */
+  --red-500:  #ef4444;
+  --green-400:#4ade80;
+  --cyan-400: #22d3ee;
+  --blue-500: #3b82f6;
+
+  /* ---- Selection ---- */
+  --selection-bg: #ffffff;
+  --selection-fg: #000000;
+
+  /* ============================================================
+     TYPOGRAPHY
+     ============================================================ */
+  --font-sans: "Nunito", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+               "Liberation Mono", monospace;
+
+  /* Display / heading scale — always font-black (900), italic,
+     tracking-tighter, uppercase. Values mirror Tailwind text-* used. */
+  --text-watermark: 20vw;   /* corner ghost text     */
+  --text-h1:        6rem;    /* text-8xl page H1      */
+  --text-h2:        4.5rem;  /* text-7xl section H2   */
+  --text-h3:        3rem;    /* text-5xl card name    */
+  --text-stat:      1.875rem;/* text-3xl stat numbers */
+  --text-rank:      1.5rem;  /* text-2xl table rank   */
+  --text-team:      1.25rem; /* text-xl team / row    */
+  --text-body:      0.875rem;/* text-sm body          */
+
+  /* Mono caption scale (system-log labels) */
+  --text-cap-lg: 11px;
+  --text-cap:    10px;
+  --text-cap-sm: 9px;
+  --text-cap-xs: 8px;
+
+  --tracking-tighter: -0.05em;
+  --tracking-tag:     0.3em;   /* mono section tags    */
+  --tracking-tag-lg:  0.5em;   /* widest mono labels   */
+}
+
+/* ============================================================
+   SEMANTIC ELEMENT STYLES — apply on a page with .cs2 root,
+   or copy the rules you need.
+   ============================================================ */
+.cs2 {
+  background: var(--page);
+  color: var(--fg1);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+.cs2 ::selection { background: var(--selection-bg); color: var(--selection-fg); }
+
+.cs2 h1, .h1 {
+  font-family: var(--font-sans);
+  font-size: var(--text-h1);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: var(--tracking-tighter);
+  text-transform: uppercase;
+  line-height: 0.95;
+  margin: 0;
+}
+.cs2 h2, .h2 {
+  font-size: var(--text-h2);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: var(--tracking-tighter);
+  text-transform: uppercase;
+  line-height: 0.95;
+  margin: 0;
+}
+.cs2 h3, .h3 {
+  font-size: var(--text-h3);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: var(--tracking-tighter);
+  margin: 0;
+}
+
+/* The big italic numbers in stat cards / ratings */
+.stat-number {
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: var(--tracking-tighter);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Standard body copy (kept short — this brand avoids paragraphs) */
+.cs2 p, .p {
+  font-size: var(--text-body);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--fg2);
+  margin: 0;
+}
+
+/* The system-log caption — the connective tissue of the whole UI */
+.caption, .syslog {
+  font-family: var(--font-mono);
+  font-size: var(--text-cap);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-tag-lg);
+  color: var(--fg3);
+  font-weight: 700;
+}
+
+/* key:value technical line */
+.kv {
+  font-family: var(--font-mono);
+  font-size: var(--text-cap-lg);
+}
+.kv .k { color: var(--fg-meta); }
+.kv .v { color: var(--fg1); }
+
+code, .mono { font-family: var(--font-mono); }

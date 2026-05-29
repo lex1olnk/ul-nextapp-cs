@@ -1,0 +1,88 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,700;0,900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0a;color:#fff;font-family:"Nunito",sans-serif;width:700px;padding:20px;display:flex;gap:12px;height:260px}
+.cap{font-family:ui-monospace,Menlo,monospace;font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:#52525b;margin-bottom:8px;display:block}
+
+/* ---- TERMINAL BOOT (left) ---- */
+.terminal{flex:1.05;border:1px dashed #27272a;padding:14px 16px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
+.t-header{font-family:ui-monospace,Menlo,monospace;font-size:8px;letter-spacing:.25em;text-transform:uppercase;color:#27272a;margin-bottom:10px;flex-shrink:0}
+.line{font-family:ui-monospace,Menlo,monospace;font-size:10px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;height:0;opacity:0;line-height:1.7;flex-shrink:0}
+.line.go{animation:ln-in 0s steps(1,end) forwards}
+@keyframes ln-in{to{height:1.7em;opacity:1}}
+.l1{animation-delay:.3s}.l2{animation-delay:.9s}.l3{animation-delay:1.5s}
+.l4{animation-delay:2.1s}.l5{animation-delay:2.7s}.l6{animation-delay:3.3s}
+.ok{color:#22c55e}.fail{color:#ef4444}.warn{color:#facc15}.dim{color:#27272a}.ora{color:#f97316}
+.cursor{display:inline-block;width:7px;height:11px;background:#fff;margin-left:2px;vertical-align:middle;
+  animation:blink .9s steps(1,end) infinite;animation-delay:4s;opacity:0}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+
+/* ---- SKELETON ROWS (right) ---- */
+.sk-box{flex:1;border:1px solid #18181b;background:rgba(24,24,27,.05);padding:14px 16px;display:flex;flex-direction:column;justify-content:space-between}
+.sk-head{display:flex;gap:8px;padding-bottom:10px;border-bottom:1px solid #18181b;margin-bottom:2px}
+.sk-row{display:flex;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid #18181b}
+.sk-row:last-of-type{border-bottom:none}
+.sk{background:#1c1c21;animation:pulse 1.8s ease-in-out infinite}
+.sk-row:nth-child(2){animation-delay:.1s}
+.sk-row:nth-child(3){animation-delay:.2s}
+.sk-row:nth-child(4){animation-delay:.3s}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+.sk.num{width:24px;height:14px;flex-shrink:0}
+.sk.name{height:12px;flex:1}
+.sk.wide{height:12px;flex:1.4}
+.sk.sm{width:40px;height:10px;flex-shrink:0}
+.sk.md{width:56px;height:12px;flex-shrink:0}
+.sk.bar{height:2px;flex:1;margin-top:3px;background:#18181b}
+.sk.bar-fill{height:2px;background:#1c1c21;animation:pulse 1.8s ease-in-out infinite}
+.no-data{font-family:ui-monospace,Menlo,monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#27272a;text-align:center;padding-top:10px;border-top:1px solid #18181b;margin-top:2px}
+</style></head><body>
+
+<!-- terminal boot — awaiting signal -->
+<div class="terminal">
+  <div class="t-header">// LIVE_BROADCAST_MODULE</div>
+  <div class="line go l1"><span class="dim">&gt; </span>NET_SCAN<span class="dim">.............</span>INIT</div>
+  <div class="line go l2"><span class="dim">&gt; </span>NODE_RESOLVE<span class="dim">......</span><span class="ora">0x1A3F2B</span></div>
+  <div class="line go l3"><span class="dim">&gt; </span>HANDSHAKE<span class="dim">.........</span><span class="warn">TIMEOUT_3</span></div>
+  <div class="line go l4"><span class="dim">&gt; </span>FALLBACK_LINK<span class="dim">.....</span><span class="fail">REFUSED</span></div>
+  <div class="line go l5"><span class="dim">&gt; </span>SIGNAL_ACQUIRE<span class="dim">.....</span><span class="fail">NO_CARRIER</span></div>
+  <div class="line go l6"><span class="dim">&gt; </span>Live_Broadcasting_Subsystem_Awaiting_Signal<span class="cursor"></span></div>
+</div>
+
+<!-- skeleton ghost rows — no data -->
+<div class="sk-box">
+  <div>
+    <!-- header row -->
+    <div class="sk-head">
+      <div class="sk num"></div>
+      <div class="sk name" style="flex:1.6"></div>
+      <div class="sk sm"></div>
+      <div class="sk md"></div>
+    </div>
+    <!-- ghost data rows -->
+    <div class="sk-row">
+      <div class="sk num"></div>
+      <div><div class="sk name" style="width:90px"></div><div class="sk bar-fill" style="width:56px;margin-top:5px"></div></div>
+      <div style="flex:1"></div>
+      <div class="sk sm"></div>
+      <div><div class="sk md"></div><div class="sk bar" style="width:56px;margin-top:4px"><div class="sk bar-fill" style="width:70%"></div></div></div>
+    </div>
+    <div class="sk-row" style="opacity:.7">
+      <div class="sk num"></div>
+      <div><div class="sk name" style="width:72px"></div><div class="sk bar-fill" style="width:44px;margin-top:5px"></div></div>
+      <div style="flex:1"></div>
+      <div class="sk sm"></div>
+      <div><div class="sk md"></div><div class="sk bar" style="width:56px;margin-top:4px"><div class="sk bar-fill" style="width:55%"></div></div></div>
+    </div>
+    <div class="sk-row" style="opacity:.45">
+      <div class="sk num"></div>
+      <div><div class="sk name" style="width:82px"></div><div class="sk bar-fill" style="width:50px;margin-top:5px"></div></div>
+      <div style="flex:1"></div>
+      <div class="sk sm"></div>
+      <div><div class="sk md"></div><div class="sk bar" style="width:56px;margin-top:4px"><div class="sk bar-fill" style="width:42%"></div></div></div>
+    </div>
+  </div>
+  <div class="no-data">NO_DATA_FOR_TOURNAMENT</div>
+</div>
+
+</body></html>

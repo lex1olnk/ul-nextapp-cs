@@ -1,0 +1,113 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,700;0,900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0a;color:#fff;font-family:"Nunito",sans-serif;width:700px;padding:20px;display:flex;flex-direction:column;gap:10px}
+.mono{font-family:ui-monospace,Menlo,monospace}
+.cap{font-family:ui-monospace,Menlo,monospace;font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:#52525b}
+.num{font-weight:900;font-style:italic;letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+
+/* ── player card ── */
+.pcard{border:1px solid #18181b;background:rgba(24,24,27,.07)}
+
+/* header row */
+.pcard-head{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:0;border-bottom:1px solid #18181b;padding:12px 16px}
+.rank-num{font-size:28px;font-weight:900;font-style:italic;color:#27272a;border-right:1px solid #18181b;padding-right:14px;margin-right:14px;line-height:1}
+.pname{font-size:20px;font-weight:900;font-style:italic;letter-spacing:-.04em;text-transform:uppercase}
+.pteam{font-family:ui-monospace,Menlo,monospace;font-size:9px;color:#52525b;letter-spacing:.15em;text-transform:uppercase;margin-top:2px}
+.pbadge{display:flex;align-items:center;gap:8px}
+.badge-lbl{font-family:ui-monospace,Menlo,monospace;font-size:8px;letter-spacing:.15em;color:#3f3f46;text-transform:uppercase}
+
+/* stat grid: 5 equal columns */
+.stat-grid{display:grid;grid-template-columns:repeat(5,1fr)}
+.stat-cell{padding:12px 14px;border-right:1px solid #18181b}
+.stat-cell:last-child{border-right:none}
+.stat-label{font-family:ui-monospace,Menlo,monospace;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:#52525b;display:block;margin-bottom:6px}
+.stat-val{font-size:26px}
+.stat-val .unit{font-size:12px;color:#71717a;font-weight:700;font-style:normal}
+.bar-row{height:2px;background:#18181b;margin-top:6px;overflow:hidden}
+.bar-fill{height:100%}
+.trend{font-family:ui-monospace,Menlo,monospace;font-size:8px;letter-spacing:.05em;margin-top:4px}
+.up{color:#22c55e}.dn{color:#ef4444}.neu{color:#52525b}
+
+/* ── secondary card ── */
+.scard{border:1px solid #18181b;background:rgba(24,24,27,.07);display:grid;grid-template-columns:1fr 1fr;gap:0}
+.sc-cell{padding:12px 16px}
+.sc-cell+.sc-cell{border-left:1px solid #18181b}
+.twobar{display:flex;height:22px;overflow:hidden;border:1px solid #18181b;margin:8px 0 5px}
+.tw-w{background:#fff;color:#000;display:flex;align-items:center;padding:0 8px;font-weight:900;font-style:italic;font-size:11px;white-space:nowrap}
+.tw-l{flex:1;background:#18181b;color:#52525b;display:flex;align-items:center;justify-content:flex-end;padding:0 8px;font-weight:900;font-style:italic;font-size:11px;white-space:nowrap}
+</style></head><body>
+
+<!-- primary stat card -->
+<div class="pcard">
+  <div class="pcard-head">
+    <div style="display:flex;align-items:center;grid-column:1/-1;gap:0;width:100%">
+      <span class="rank-num">01</span>
+      <div style="flex:1">
+        <div class="pname">ZywOo</div>
+        <div class="pteam">Team Vitality · PGL Major 2026</div>
+      </div>
+      <div class="pbadge">
+        <span class="badge-lbl">RANK_TIER</span>
+        <img src="../assets/rank5.svg" height="26" alt="T5">
+      </div>
+    </div>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-cell">
+      <span class="stat-label">Rating 2.1</span>
+      <div class="num stat-val" style="color:#f97316">1.34</div>
+      <div class="bar-row"><div class="bar-fill" style="width:94%;background:#f97316"></div></div>
+      <div class="trend up">▲ +0.12 vs avg</div>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-label">ADR</span>
+      <div class="num stat-val">92.1</div>
+      <div class="bar-row"><div class="bar-fill" style="width:82%;background:#fff"></div></div>
+      <div class="trend up">▲ +21.1</div>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-label">KAST</span>
+      <div class="num stat-val">76<span class="unit">%</span></div>
+      <div class="bar-row"><div class="bar-fill" style="width:76%;background:#fff"></div></div>
+      <div class="trend up">▲ +6%</div>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-label">HS%</span>
+      <div class="num stat-val">51<span class="unit">%</span></div>
+      <div class="bar-row"><div class="bar-fill" style="width:51%;background:#3f3f46"></div></div>
+      <div class="trend dn">▼ −7%</div>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-label">Entry%</span>
+      <div class="num stat-val">69<span class="unit">%</span></div>
+      <div class="bar-row"><div class="bar-fill" style="width:69%;background:#f97316"></div></div>
+      <div class="trend up">▲ +25%</div>
+    </div>
+  </div>
+</div>
+
+<!-- secondary stats -->
+<div class="scard">
+  <div class="sc-cell">
+    <span class="cap">// CLUTCH_1vX</span>
+    <div class="twobar">
+      <div class="tw-w" style="width:64%">WON 16</div>
+      <div class="tw-l">9 LOST</div>
+    </div>
+    <div class="trend neu" style="display:flex;justify-content:space-between"><span>WIN_RATE 64%</span><span>TOTAL 25</span></div>
+  </div>
+  <div class="sc-cell">
+    <span class="cap">// OPENING_DUELS</span>
+    <div style="display:flex;align-items:center;gap:10px;margin:8px 0 5px">
+      <div class="num" style="font-size:22px;color:#f97316">69<span style="font-size:11px;color:#71717a;font-style:normal;font-weight:700">%</span></div>
+      <div style="flex:1">
+        <div class="bar-row" style="height:3px;margin:0"><div class="bar-fill" style="width:69%;background:#f97316"></div></div>
+      </div>
+    </div>
+    <div class="trend neu" style="display:flex;justify-content:space-between"><span>SUCCESS_RATE</span><span>AVG 44%</span></div>
+  </div>
+</div>
+
+</body></html>

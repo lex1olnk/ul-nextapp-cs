@@ -1,0 +1,28 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,800;0,900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0a;color:#fff;font-family:"Nunito",sans-serif;width:700px;padding:26px}
+.meta{font-family:ui-monospace,Menlo,monospace;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:#52525b;margin:0 0 9px}
+.row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+/* thin button (idle + hover-filled shown) */
+.btn{position:relative;overflow:hidden;padding:7px 22px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.2em;color:#fff;border:1px solid #27272a;background:transparent}
+.btn.fill{color:#000;background:#fff;border-color:#fff}
+/* big choice toggles */
+.choice{padding:10px 22px;border:1px solid;font-weight:900;font-style:italic;letter-spacing:-.04em;text-transform:uppercase;font-size:22px}
+.choice.on{background:#fff;color:#000;border-color:#fff}
+.choice.off{background:transparent;color:#3f3f46;border-color:#18181b}
+</style></head><body>
+<p class="meta">THIN BUTTON · idle → hover (fill slides up)</p>
+<div class="row">
+  <button class="btn">Топ_15</button>
+  <button class="btn fill">Топ_15</button>
+  <span class="meta" style="margin:0">border-zinc-800 → border-white</span>
+</div>
+<p class="meta">LARGE CHOICE TOGGLE · active vs ghost</p>
+<div class="row" style="margin-bottom:0">
+  <button class="choice on">Major</button>
+  <button class="choice off">Blast</button>
+  <button class="choice off">IEM</button>
+</div>
+</body></html>

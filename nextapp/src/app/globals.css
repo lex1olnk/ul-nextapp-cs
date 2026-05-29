@@ -1,38 +1,290 @@
 @import "tailwindcss";
 
+/* ── Design tokens ─────────────────────────────────────────── */
 :root {
-  --background: #0c0c0c;
-  --light-dark: #242424;
-  --foreground: #171717;
-  --my-gray: #2b2b2b;
+  --page:          #0a0a0a;
+  --background:    #0c0c0c;
+  --foreground:    #171717;
+  --light-dark:    #242424;
+  --my-gray:       #2b2b2b;
+
+  --zinc-200: #e4e4e7;
+  --zinc-300: #d4d4d8;
+  --zinc-400: #a1a1aa;
+  --zinc-500: #71717a;
+  --zinc-600: #52525b;
+  --zinc-700: #3f3f46;
+  --zinc-800: #27272a;
+  --zinc-900: #18181b;
+  --zinc-950: #09090b;
+
+  --border:        var(--zinc-900);
+  --border-soft:   var(--zinc-800);
+  --border-corner: var(--zinc-600);
+
+  --orange: #f97316;
+  --green:  #22c55e;
+  --yellow: #facc15;
+
+  --font-sans: var(--font-nunito), "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
 
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-light-dark: var(--light-dark);
-  --color-my-gray: var(--my-gray);
+  --color-my-gray:    var(--my-gray);
 }
 
-body {
+/* ── Base ──────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  background: var(--page);
   color: #fff;
-  font-family: var(--font-nunito);
-  background-color: var(--background);
-  position: relative;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
 
-body::after {
+::selection {
+  background: #fff;
+  color: #000;
+}
+
+/* ── Fixed dot-grid background ─────────────────────────────── */
+body::before {
   content: "";
-  background-repeat: no-repeat;
-  background-color: var(--background);
-  background-image: url("/bg.jpg");
-  background-size: auto;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.12;
+  background-image: radial-gradient(#fff 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* ── Typography helpers ─────────────────────────────────────── */
+.h1 {
+  font-family: var(--font-sans);
+  font-size: clamp(3rem, 8vw, 7rem);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  line-height: 0.92;
+}
+
+.h2 {
+  font-family: var(--font-sans);
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  line-height: 0.92;
+}
+
+.num {
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* system-log caption */
+.cap {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  color: var(--zinc-500);
+}
+.cap--xs  { font-size: 8px; letter-spacing: 0.3em; }
+.cap--white { color: #fff; }
+.cap--meta  { color: var(--zinc-600); }
+
+/* ghost / watermark */
+.ghost { color: var(--zinc-800); }
+
+.watermark {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  opacity: 0.6; /* 70% прозрачность */
-  mix-blend-mode: lighten; /* режим наложения */
-  z-index: -1; /* отправляем фон на задний план */
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.04);
+  letter-spacing: -0.05em;
+  line-height: 0.8;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+/* ── Card ───────────────────────────────────────────────────── */
+.card {
+  position: relative;
+  border: 1px solid var(--zinc-900);
+  background: rgba(24,24,27,0.10);
+}
+.card--faint { background: rgba(24,24,27,0.05); }
+
+/* decorative L-corner ticks */
+.ticks::before,
+.ticks::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+}
+.ticks::before {
+  top: -1px; left: -1px;
+  border-top:  1px solid var(--zinc-600);
+  border-left: 1px solid var(--zinc-600);
+}
+.ticks::after {
+  bottom: -1px; right: -1px;
+  border-bottom: 1px solid var(--zinc-600);
+  border-right:  1px solid var(--zinc-600);
+}
+
+/* ── Hover inversion ────────────────────────────────────────── */
+.invert-row {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s;
+}
+.invert-row .wipe {
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  width: 2px;
+  background: #fff;
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.3s;
+}
+.invert-row .sub  { color: var(--zinc-600); transition: color 0.3s; }
+.invert-row:hover { background: #fff; color: #000; }
+.invert-row:hover .wipe  { transform: scaleY(1); }
+.invert-row:hover .sub   { color: rgba(0,0,0,0.5); }
+.invert-row:hover .ghost { color: rgba(0,0,0,0.15); }
+.invert-row:hover .bar-fill  { background: #000; }
+.invert-row:hover .bar-track { background: var(--zinc-200); }
+
+/* ── Progress bar ───────────────────────────────────────────── */
+.bar-track {
+  height: 3px;
+  background: var(--zinc-900);
+  overflow: hidden;
+  transition: background 0.3s;
+}
+.bar-fill {
+  height: 100%;
+  background: #fff;
+  transition: background 0.3s, width 0.6s ease-out;
+}
+
+/* ── Button ─────────────────────────────────────────────────── */
+.btn-cs {
+  position: relative;
+  overflow: hidden;
+  padding: 8px 22px;
+  font-size: 11px;
+  font-weight: 900;
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #fff;
+  border: 1px solid var(--zinc-800);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+.btn-cs .lbl { position: relative; z-index: 1; transition: color 0.3s; }
+.btn-cs .fill {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  transform: translateY(100%);
+  transition: transform 0.3s;
+}
+.btn-cs:hover { border-color: #fff; }
+.btn-cs:hover .lbl  { color: #000; }
+.btn-cs:hover .fill { transform: translateY(0); }
+
+/* choice toggle (big italic) */
+.choice-cs {
+  padding: 8px 20px;
+  border: 1px solid var(--zinc-900);
+  background: transparent;
+  color: var(--zinc-700);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  font-size: clamp(14px, 1.8vw, 22px);
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: var(--font-sans);
+}
+.choice-cs:hover  { border-color: var(--zinc-500); }
+.choice-cs.active { background: #fff; color: #000; border-color: #fff; }
+
+/* ── Status badge ───────────────────────────────────────────── */
+.status-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+
+/* ── Page header ────────────────────────────────────────────── */
+.pagehead {
+  border-left: 4px solid #fff;
+  padding-left: 32px;
+  margin-bottom: 56px;
+}
+.pagehead .tagrow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+.pagehead .hr-line {
+  height: 1px;
+  width: 96px;
+  background: var(--zinc-800);
+}
+
+/* ── Dividers ───────────────────────────────────────────────── */
+.hr-cs { height: 1px; background: var(--zinc-900); }
+.zebra {
+  height: 20px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--zinc-900), var(--zinc-900) 4px,
+    transparent 4px, transparent 10px
+  );
+  opacity: 0.4;
+}
+
+/* ── Container ──────────────────────────────────────────────── */
+.cs-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 48px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Slide-in animation ─────────────────────────────────────── */
+@keyframes slidein {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: none; }
+}
+.slidein {
+  opacity: 0;
+  animation: slidein 0.5s ease forwards;
 }
