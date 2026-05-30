@@ -125,10 +125,11 @@
 
 .stats-grid {
   display: grid;
-  /* rank | nickname | 16 stat cols. Each stat col keeps a real 58px min so
-     it never collapses to zero. min-width = sum of mins → wrapper scrolls
-     on narrow screens, while 1fr grows columns evenly on wide ones. */
+  /* rank | nickname | 16 stat cols. 58px min keeps stat cols from collapsing;
+     the container (1600px) is wide enough to show all 18 without scroll,
+     and the wrapper scrolls only on screens narrower than the min sum. */
   grid-template-columns: 48px minmax(150px, 1.6fr) repeat(16, minmax(58px, 1fr));
+  width: 100%;
   min-width: 1130px;
 }
 

@@ -25,8 +25,8 @@ export default async function PlayersStatsPage() {
         RANK
       </div>
 
-      <div className="cs-container">
-        {/* page header */}
+      {/* header shares the table's wide container so their left edges line up */}
+      <div style={{ maxWidth: 1600, margin: "0 auto", padding: "0 48px" }}>
         <header className="pagehead">
           <div className="tagrow">
             <Image src="/logo.png" alt="UL" width={28} height={28} style={{ display: "block" }} />
@@ -37,10 +37,13 @@ export default async function PlayersStatsPage() {
             UL_<span className="ghost">STATS</span>
           </h1>
         </header>
+      </div>
 
-        {players.length > 0 && tournaments ? (
-          <PlayersTable players={players} ulTournaments={tournaments} />
-        ) : (
+      {/* table lives outside .cs-container so its wider container can breathe */}
+      {players.length > 0 && tournaments ? (
+        <PlayersTable players={players} ulTournaments={tournaments} />
+      ) : (
+        <div style={{ maxWidth: 1600, margin: "0 auto", padding: "0 48px" }}>
           <div
             style={{
               border: "1px dashed var(--zinc-800)",
@@ -55,8 +58,8 @@ export default async function PlayersStatsPage() {
           >
             NO_DATA_FOR_TOURNAMENT
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </section>
   );
 }
