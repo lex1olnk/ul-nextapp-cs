@@ -38,7 +38,8 @@ export function IntroAnimation() {
     if (startedRef.current) return;
     if (typeof window === "undefined") return;
     // NOTE: uncomment to play only once per tab (currently always-on for dev)
-    //if (sessionStorage.getItem(STORAGE_KEY)) return;
+    return;
+    if (sessionStorage.getItem(STORAGE_KEY)) return;
 
     startedRef.current = true;
 
@@ -97,9 +98,7 @@ export function IntroAnimation() {
       data-tear={tearing}
       onClick={() => setPhase("tear")}
     >
-      {/* operators key-art, RGB-split layers */}
-      <div className="intro-art intro-art--r" />
-      <div className="intro-art intro-art--b" />
+      {/* operators key-art */}
       <div className="intro-art intro-art--base" />
 
       {/* scanlines + dot grid */}
@@ -179,16 +178,6 @@ function StyleBlock() {
         animation:artIn .5s steps(2) .15s forwards, artJitter 1.1s steps(3) .6s infinite;
         opacity:0;
       }
-      .intro-art--r{
-        mix-blend-mode:screen; filter:grayscale(1) brightness(.6);
-        background-color:#f00; background-blend-mode:multiply;
-        animation:rgbR 1s steps(2) .6s infinite; opacity:0;
-      }
-      .intro-art--b{
-        mix-blend-mode:screen; filter:grayscale(1) brightness(.6);
-        background-color:#00d0ff; background-blend-mode:multiply;
-        animation:rgbB 1s steps(2) .6s infinite; opacity:0;
-      }
       [data-phase="strobe"] .intro-art--base{ animation:artStrobe .6s steps(1) infinite; }
       @keyframes artIn{ to{ opacity:.7; } }
       @keyframes artStrobe{ 0%,100%{opacity:0;} 50%{opacity:.85;} }
@@ -197,16 +186,6 @@ function StyleBlock() {
         33%{ transform:translate(-4px,2px); }
         66%{ transform:translate(3px,-2px); }
       }
-      @keyframes rgbR{
-        0%,100%{ opacity:0; transform:translate(0,0); }
-        50%{ opacity:.28; transform:translate(-7px,0); }
-      }
-      @keyframes rgbB{
-        0%,100%{ opacity:0; transform:translate(0,0); }
-        50%{ opacity:.28; transform:translate(7px,0); }
-      }
-      [data-phase="lock"] .intro-art--r,
-      [data-phase="lock"] .intro-art--b{ animation:none; opacity:0; }
       [data-phase="lock"] .intro-art--base{ animation:none; opacity:.7; filter:grayscale(1) contrast(1.3) brightness(.6); }
 
       /* ── strobe white flash ── */
@@ -269,11 +248,11 @@ function StyleBlock() {
         clip-path:inset(0 0 0 0);
       }
       [data-phase="glitch"] .intro-wordmark.glitch::before{
-        color:#ff003c; left:3px; text-shadow:-2px 0 #ff003c;
+        color:#fff; left:4px;
         animation:glA .5s steps(2) infinite;
       }
       [data-phase="glitch"] .intro-wordmark.glitch::after{
-        color:#00e5ff; left:-3px; text-shadow:2px 0 #00e5ff;
+        color:var(--zinc-500); left:-4px;
         animation:glB .5s steps(2) infinite;
       }
       [data-phase="strobe"] .intro-wordmark{ animation:wmFlick .14s steps(1) infinite; }
@@ -335,7 +314,7 @@ function StyleBlock() {
         font-family:var(--font-mono); font-size:10px; letter-spacing:.22em;
         color:var(--zinc-400); display:flex; align-items:center; gap:8px;
       }
-      .intro-rec-dot{ width:8px; height:8px; background:#ff003c; border-radius:50%;
+      .intro-rec-dot{ width:8px; height:8px; background:var(--orange,#f97316); border-radius:50%;
         animation:recBlink .8s steps(1) infinite; }
       @keyframes recBlink{ 0%,100%{opacity:1;} 50%{opacity:.15;} }
 

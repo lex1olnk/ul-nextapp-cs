@@ -1,6 +1,7 @@
 "use server";
 
 import { api } from "@/lib/api";
+import { revalidatePath } from "next/cache";
 
 interface Tournament {
   id: string;
@@ -33,6 +34,7 @@ export async function createTournament(name: string) {
       },
     );
 
+    revalidatePath("/", "layout");
     return response.data.data.tournamentId;
   } catch (error) {
     console.error("API Error:", error);
@@ -54,6 +56,8 @@ export async function updateTournamentPlayers(id:string, name: string) {
         },
       },
     );
+
+    revalidatePath("/", "layout");
   } catch (error) {
     console.error("API Error:", error);
     return ""; // Возвращаем пустые данные вместо исключения
@@ -81,6 +85,8 @@ export async function postAndAttachMatches({
         "Content-Type": "application/json",
       },
     });
+
+    revalidatePath("/", "layout");
     return response.data.status;
   } catch (error) {
     console.error("API Error:", error);
@@ -108,6 +114,8 @@ export async function exportMatches({
         "Content-Type": "multipart/form-data",
       },
     });
+
+    revalidatePath("/", "layout");
     return response.data.status;
   } catch (error) {
     console.error("API Error:", error);

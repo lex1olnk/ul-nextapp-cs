@@ -122,6 +122,7 @@ export const RatingStatisticsSection = ({
             key={m.matchId || i}
             className="invert-row"
             style={{
+              position: "relative",
               display: "grid", gridTemplateColumns: COLS,
               padding: "0 20px",
               border: "1px solid var(--zinc-900)",
@@ -134,42 +135,48 @@ export const RatingStatisticsSection = ({
           >
             <div className="wipe" />
 
-            {/* ghost index */}
+            {/* ghost index — pinned to row's right edge, behind content */}
             <div className="num ghost" style={{
-              position: "absolute", left: 8, fontSize: 38,
-              transition: "color .3s", pointerEvents: "none", userSelect: "none",
+              position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)",
+              fontSize: 40, lineHeight: 1, zIndex: 0,
+              pointerEvents: "none", userSelect: "none",
             }}>{String(i + 1).padStart(2, "0")}</div>
 
             {/* date */}
-            <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: ".12em", color: "var(--zinc-500)" }}>
+            <div className="sub" style={{
+              position: "relative", zIndex: 1,
+              fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: ".12em",
+            }}>
               {dateStr}
             </div>
 
             {/* map */}
-            <div>
+            <div style={{ position: "relative", zIndex: 1 }}>
               <span className="num" style={{
                 fontSize: 13, letterSpacing: "-.02em",
-                color: m.isWinner ? "#fff" : "var(--zinc-500)",
+                color: m.isWinner ? "inherit" : "var(--zinc-500)",
               }}>
                 {m.map}
               </span>
               {m.isWinner && (
-                <span style={{ marginLeft: 8, fontFamily: "var(--font-mono)", fontSize: 7, letterSpacing: ".15em", color: "var(--green)" }}>WIN</span>
+                <span className="ms-win">WIN</span>
               )}
             </div>
 
             {/* kda */}
-            <div className="num sub" style={{ fontSize: 13 }}>
+            <div className="num sub" style={{ position: "relative", zIndex: 1, fontSize: 13 }}>
               {m.kills} / {m.deaths} / {m.assists}
             </div>
 
             {/* rating */}
-            <div className="num" style={{ fontSize: 18, color: ratingHigh ? "var(--orange)" : "#fff" }}>
+            <div className={`num${ratingHigh ? " ms-rating-hi" : ""}`} style={{
+              position: "relative", zIndex: 1, fontSize: 18,
+            }}>
               {rating}
             </div>
 
             {/* arrow */}
-            <div className="sub" style={{ fontFamily: "var(--font-mono)", fontSize: 9, textAlign: "right" }}>→</div>
+            <div className="sub" style={{ position: "relative", zIndex: 1, fontFamily: "var(--font-mono)", fontSize: 9, textAlign: "right" }}>→</div>
           </div>
         );
       })}

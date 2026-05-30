@@ -3,12 +3,9 @@ import MatchStatsSummary from "@/components/player/FaceitStats";
 import { MoreInformations } from "@/components/player/MoreInformations";
 import { PlayerStatsSection } from "@/components/player/PlayerStatsSection";
 import { RatingStatisticsSection } from "@/components/player/RatingStatisticsSection";
-import WindroseChart from "@/components/player/WindRose";
 import { api } from "@/lib/api";
 import axios from "axios";
 import Image from "next/image";
-
-export const dynamic = "force-dynamic";
 
 async function getPlayerData(id: string) {
   try {
@@ -97,19 +94,15 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
             </div>
           </div>
         </div>
-        {/* stats + windrose */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "start", marginBottom: 8 }}>
+        {/* stats — full width */}
+        <div style={{ marginBottom: 48 }}>
           <PlayerStatsSection playerStats={p} />
-          <WindroseChart maps={data.maps_stats} />
         </div>
 
-        <MoreInformations player={p} />
+        {/* map winrate + clutch — one section */}
+        <MoreInformations player={p} maps={data.maps_stats} />
 
         <div style={{ marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 10 }}>
-            <span className="cap cap--xs">// MATCH_HISTORY</span>
-            <div className="hr-cs" style={{ flex: 1 }} />
-          </div>
           <div className="relative">
             <RatingStatisticsSection playerId={id} ulTournaments={data.tournaments} />
           </div>

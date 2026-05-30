@@ -60,6 +60,7 @@ export interface PlayerComparison {
   playerID: number;
   nickname: string;
   uLRating: number;
+  rating: number;
   img: string;
   kills: number;
   deaths: number;
@@ -67,11 +68,18 @@ export interface PlayerComparison {
   firstKills: number;
   firstDeaths: number;
   kast: number;
+  impact: number;
+  winrate: number;
+  flashes: number;
+  exchanged: number;
+  nades: number;
+  maps: number;
   TargetWinrate: number;
   TargetKD: number;
   TargetHSRatio: number;
   TargetAvg: number;
   winrateAdv: number;
+  ratingAdv: number;
   kdAdv: number;
   hsAdv: number;
   avgAdv: number;

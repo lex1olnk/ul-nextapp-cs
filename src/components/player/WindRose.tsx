@@ -66,9 +66,8 @@ export const WindroseChart = ({ maps }: { maps: MapStat[] }) => {
   };
 
   return (
-    <div className="card ticks" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 12 }}>
-      <span className="cap cap--xs">// MAP_WINRATE</span>
-      <div style={{ width: 280, height: 280 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ width: "100%", maxWidth: 280, margin: "0 auto" }}>
         <Radar data={data} options={options} />
       </div>
       {/* legend */}

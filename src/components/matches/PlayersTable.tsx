@@ -93,10 +93,13 @@ const columnMapping: Record<SortableColumn, keyof PlayerStats | ((p: PlayerStats
   Rating: p => p.rating,
 };
 
+/* guard against NaN / Infinity (e.g. K/D when deaths === 0) */
+const safe = (n: number) => (Number.isFinite(n) ? n : 0);
+
 const renderCell = (player: PlayerStats, col: SortableColumn) => {
   const v = columnMapping[col];
   if (typeof v === "function") {
-    const n = v(player);
+    const n = safe(v(player));
     switch (col) {
       case "HS%":  return `${n.toFixed(0)}%`;
       case "ADR":
@@ -106,7 +109,8 @@ const renderCell = (player: PlayerStats, col: SortableColumn) => {
       default:     return n.toFixed(2);
     }
   }
-  return player[v];
+  /* integer columns (K/D/A/FK/FD/CExp/Maps) — round, never show raw floats */
+  return Math.round(safe(Number(player[v]))).toString();
 };
 
 export default function PlayersTable({
@@ -291,7 +295,7 @@ export default function PlayersTable({
                 style={{ display: "contents", textDecoration: "none" }}
               >
                 {/* rank cell */}
-                <div className="grid-item" style={{ position: "relative", justifyContent: "center" }}>
+                <div className="grid-item grid-item--rank" style={{ position: "relative", justifyContent: "center" }}>
                   {player.pick_number ? (
                     <Image
                       src={picks[player.pick_number - 1]}
@@ -311,7 +315,7 @@ export default function PlayersTable({
                 </div>
 
                 {/* nickname cell */}
-                <div className="grid-item" style={{ gap: 10 }}>
+                <div className="grid-item grid-item--nick" style={{ gap: 10 }}>
                   {player.img ? (
                     <Image
                       width={30} height={30}

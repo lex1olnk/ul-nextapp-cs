@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PLAYER // CS2 PARSER STATS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,700;0,800;0,900;1,800;1,900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#161618;
+  --z900:#1e1e20;--z800:#282828;--z700:#3a3a3c;--z600:#505052;--z500:#727274;--z400:#a0a0a2;
+  --orange:#c0522a;--green:#22c55e;--red:#ef4444;
+  --sans:"Nunito",ui-sans-serif,system-ui,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+html,body{background:var(--bg);color:#fff;font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:#fff;color:#000}
+.h1{font-weight:900;font-style:italic;letter-spacing:-.05em;text-transform:uppercase;line-height:.9}
+.num{font-weight:900;font-style:italic;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.cap{font-family:var(--mono);text-transform:uppercase;color:var(--z500);font-weight:700;letter-spacing:.35em;font-size:9px}
+.bt{height:3px;background:var(--z900)}
+.bf{height:100%;background:#fff;transition:width 1.2s cubic-bezier(0,.6,.3,1)}
+.fade{opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s}
+.fade.in{opacity:1;transform:none}
+.inv{transition:background .2s,color .2s;cursor:pointer}
+.inv:hover{background:#fff;color:#000}
+.zebra{height:14px;background:repeating-linear-gradient(-45deg,var(--z800),var(--z800) 3px,transparent 3px,transparent 8px);opacity:.6}
+.container{max-width:1200px;margin:0 auto;padding:0 48px}
+.sec{padding:64px 0}
+.sec-hd{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.sec-hd .zebra{flex:1}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+/* ══════════ DATA ══════════ */
+const PLAYERS = [
+  {
+    id:"zywoo",name:"ZywOo",team:"VITALITY",country:"FR",rank:1,top:"0.1%",
+    rating:1.34,adr:92.1,kast:76,hs:51,kd:1.41,clutchW:16,clutchL:9,entry:71,maps:42,node:"0x1A3F2B",rankTier:5,
+    statOfDay:{val:12,unit:"kills",quote:["You avenged your teammates.","Team player."]},
+    weapons:[
+      {name:"AK-47", kills:312,adr:82.4,hs:54,openK:71},
+      {name:"M4A4",  kills:89, adr:76.1,hs:48,openK:61},
+      {name:"AWP",   kills:67, adr:143, hs:12,openK:83},
+      {name:"DEAGLE",kills:41, adr:91,  hs:78,openK:54},
+    ],
+    pvp:{
+      me:{name:"ZywOo",kills:312,tag:41,p2:16,p3:8,p4:3},
+      them:{name:"donk",kills:341,tag:38,p2:14,p3:9,p4:4},
+    },
+    matches:[
+      {map:"INFERNO",opp:"SPIRIT",  score:"2:0",win:true, rating:1.48,adr:104,k:24,d:16},
+      {map:"MIRAGE", opp:"G2",      score:"2:1",win:true, rating:1.22,adr:87, k:19,d:18},
+      {map:"NUKE",   opp:"FAZE",    score:"2:0",win:true, rating:1.39,adr:97, k:22,d:14},
+      {map:"ANCIENT",opp:"MOUZ",    score:"1:2",win:false,rating:1.11,adr:80, k:17,d:21},
+      {map:"ANUBIS", opp:"HEROIC",  score:"2:0",win:true, rating:1.51,adr:109,k:26,d:13},
+    ],
+  },
+  {
+    id:"donk",name:"donk",team:"SPIRIT",country:"RU",rank:2,top:"0.2%",
+    rating:1.31,adr:95.7,kast:74,hs:58,kd:1.38,clutchW:14,clutchL:8,entry:69,maps:38,node:"0x4C2D1A",rankTier:5,
+    statOfDay:{val:26,unit:"kills",quote:["Flawless. Untouchable.","Solo carry."]},
+    weapons:[
+      {name:"AK-47",  kills:341,adr:87.1,hs:62,openK:74},
+      {name:"M4A1-S", kills:72, adr:74.3,hs:53,openK:59},
+      {name:"AWP",    kills:44, adr:137, hs:9, openK:78},
+      {name:"DEAGLE", kills:58, adr:95,  hs:82,openK:61},
+    ],
+    pvp:{
+      me:{name:"donk",   kills:341,tag:38,p2:14,p3:9,p4:4},
+      them:{name:"ZywOo",kills:312,tag:41,p2:16,p3:8,p4:3},
+    },
+    matches:[
+      {map:"INFERNO",opp:"VITALITY",score:"0:2",win:false,rating:1.20,adr:91,k:20,d:24},
+      {map:"MIRAGE", opp:"MOUZ",    score:"2:0",win:true, rating:1.42,adr:98,k:25,d:15},
+      {map:"NUKE",   opp:"LIQUID",  score:"2:1",win:true, rating:1.31,adr:93,k:22,d:18},
+      {map:"ANCIENT",opp:"HEROIC",  score:"2:0",win:true, rating:1.48,adr:102,k:27,d:14},
+      {map:"OVERPASS",opp:"NIP",    score:"2:1",win:true, rating:1.24,adr:87,k:20,d:17},
+    ],
+  },
+  {
+    id:"m0nesy",name:"m0NESY",team:"G2",country:"DE",rank:3,top:"1%",
+    rating:1.22,adr:84.0,kast:73,hs:49,kd:1.29,clutchW:11,clutchL:10,entry:62,maps:35,node:"0x77C0E1",rankTier:4,
+    statOfDay:{val:4,unit:"AWP kills",quote:["Cold-blooded opener.","Silent assassin."]},
+    weapons:[
+      {name:"AWP",    kills:198,adr:128,hs:10,openK:81},
+      {name:"AK-47",  kills:189,adr:79, hs:52,openK:65},
+      {name:"M4A1-S", kills:61, adr:72, hs:46,openK:54},
+      {name:"DEAGLE", kills:38, adr:88, hs:74,openK:58},
+    ],
+    pvp:{
+      me:{name:"m0NESY",kills:189,tag:36,p2:12,p3:6,p4:2},
+      them:{name:"NiKo",  kills:201,tag:40,p2:13,p3:8,p4:3},
+    },
+    matches:[
+      {map:"MIRAGE", opp:"FAZE",   score:"2:1",win:true, rating:1.33,adr:90,k:21,d:17},
+      {map:"INFERNO",opp:"SPIRIT", score:"1:2",win:false,rating:1.14,adr:80,k:18,d:20},
+      {map:"NUKE",   opp:"NAVI",   score:"2:0",win:true, rating:1.28,adr:87,k:23,d:16},
+      {map:"ANUBIS", opp:"MOUZ",   score:"2:1",win:true, rating:1.19,adr:83,k:20,d:18},
+      {map:"ANCIENT",opp:"LIQUID", score:"0:2",win:false,rating:1.09,adr:76,k:16,d:22},
+    ],
+  },
+];
+
+const CITIES=[
+  {lat:55.7,lng:37.6},{lat:48.8,lng:2.3},{lat:51.5,lng:-.1},{lat:40.7,lng:-74},
+  {lat:35.6,lng:139.6},{lat:1.3,lng:103.8},{lat:-33.9,lng:18.4},{lat:19.4,lng:-99.1},
+  {lat:55.9,lng:23.9},{lat:50.4,lng:30.5},{lat:53.9,lng:27.5},{lat:59.3,lng:18.1},
+  {lat:41.0,lng:28.9},{lat:52.2,lng:21.0},{lat:47.5,lng:19.1},{lat:43.7,lng:7.2},
+];
+
+/* ══════════ GLOBE ══════════ */
+function Globe({ size = 680 }) {
+  const ref = useRef(null);
+  const ang = useRef(0);
+  const raf = useRef(null);
+  useEffect(() => {
+    const cv = ref.current; if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const W = cv.width, H = cv.height, cx = W/2, cy = H/2, r = Math.min(W,H)*.44;
+    function proj(lat, lng, a) {
+      const phi = (90-lat)*Math.PI/180, th = (lng+a)*Math.PI/180;
+      return { x: cx+r*Math.sin(phi)*Math.cos(th), y: cy-r*Math.cos(phi), z: Math.sin(phi)*Math.sin(th) };
+    }
+    function arc(pts, col, lw) {
+      ctx.strokeStyle = col; ctx.lineWidth = lw;
+      let on = false; ctx.beginPath();
+      pts.forEach(p => {
+        if (p.z > -0.05) { on ? ctx.lineTo(p.x,p.y) : (ctx.moveTo(p.x,p.y), on=true); }
+        else { if (on) { ctx.stroke(); ctx.beginPath(); on = false; } }
+      });
+      if (on) ctx.stroke();
+    }
+    function draw() {
+      const a = ang.current;
+      ctx.clearRect(0,0,W,H);
+      const dim = 'rgba(155,155,155,0.09)';
+      for (let lat=-80; lat<=80; lat+=20) {
+        const pts=[]; for(let lng=0;lng<=361;lng+=2) pts.push(proj(lat,lng,a));
+        arc(pts, lat===0?'rgba(155,155,155,0.2)':dim, lat===0?1:.5);
+      }
+      for (let lng=0; lng<360; lng+=20) {
+        const pts=[]; for(let lat=-90;lat<=90;lat+=2) pts.push(proj(lat,lng,a));
+        arc(pts, dim, .5);
+      }
+      ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.strokeStyle='rgba(155,155,155,0.13)'; ctx.lineWidth=1; ctx.stroke();
+      CITIES.forEach(c => {
+        const p = proj(c.lat,c.lng,a);
+        if (p.z>.1) {
+          ctx.beginPath(); ctx.arc(p.x,p.y,7,0,Math.PI*2);
+          ctx.fillStyle='rgba(192,82,42,.16)'; ctx.fill();
+          ctx.beginPath(); ctx.arc(p.x,p.y,2.5,0,Math.PI*2);
+          ctx.fillStyle='#c0522a'; ctx.fill();
+        }
+      });
+    }
+    const step = () => { ang.current += .055; draw(); raf.current = requestAnimationFrame(step); };
+    step();
+    return () => cancelAnimationFrame(raf.current);
+  }, []);
+  return <canvas ref={ref} width={size} height={size} style={{ display:'block' }}/>;
+}
+
+/* ══════════ XXX MARK ══════════ */
+function XxxMark({ h = 188 }) {
+  const marks = [{ s:1,y:0 }, { s:.82,y:58 }, { s:.65,y:108 }];
+  return (
+    <svg width={h*.56} height={h} viewBox="0 0 66 188" fill="none">
+      {marks.map((m, i) => {
+        const cx=33, cy=m.y+28, a=19*m.s, d=7*m.s, sw=2.5*m.s;
+        return (
+          <g key={i}>
+            <line x1={cx-a} y1={cy-a} x2={cx+a} y2={cy+a} stroke="#fff" strokeWidth={sw}/>
+            <line x1={cx+a} y1={cy-a} x2={cx-a} y2={cy+a} stroke="#fff" strokeWidth={sw}/>
+            <rect x={cx-d} y={cy-d} width={d*2} height={d*2}
+              transform={`rotate(45,${cx},${cy})`} fill="none" stroke="#fff" strokeWidth={sw*.55}/>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* ══════════ PRIMITIVES ══════════ */
+function Fade({ children, delay=0, style, className='' }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    const t = setTimeout(() => el && el.classList.add('in'), 60+delay);
+    return () => clearTimeout(t);
+  }, []);
+  return <div ref={ref} className={'fade '+className} style={style}>{children}</div>;
+}
+function Bar({ value, accent }) {
+  const [w, setW] = useState(0);
+  useEffect(() => { setW(0); const t = setTimeout(() => setW(value*100), 300); return () => clearTimeout(t); }, [value]);
+  return <div className="bt"><div className="bf" style={{ width:w+'%', background:accent||undefined }}/></div>;
+}
+function SecHd({ label }) {
+  return (
+    <div className="sec-hd">
+      <span className="cap" style={{ fontSize:8, letterSpacing:'.3em' }}>{label}</span>
+      <div className="zebra"/>
+    </div>
+  );
+}
+
+/* ══════════ HERO ══════════ */
+function Hero({ player, onSwitch, clicks, onCardClick }) {
+  const s = player.statOfDay;
+  const RECTS = [
+    { left:'6%',  top:'8%',    width:'13%', height:'12%', op:.4  },
+    { left:'14%', top:'16%',   width:'21%', height:'47%', op:.2  },
+    { left:'5%',  top:'22%',   width:'8%',  height:'30%', op:.28 },
+    { left:'5%',  bottom:'13%',width:'14%', height:'22%', op:.37 },
+    { right:'4%', top:'8%',    width:'9%',  height:'13%', op:.42 },
+    { right:'0%', top:'8%',    width:'4%',  height:'13%', op:.3  },
+    { right:'12%',bottom:'18%',width:'7%',  height:'24%', op:.17 },
+  ];
+  return (
+    <div style={{ position:'relative', height:'100vh', minHeight:640, overflow:'hidden', background:'#161618' }}>
+      {/* Globe */}
+      <div style={{ position:'absolute', top:'50%', left:'40%', transform:'translate(-50%,-50%)', pointerEvents:'none' }}>
+        <Globe size={700}/>
+      </div>
+      {/* Mosaic rects */}
+      {RECTS.map((r,i) => (
+        <div key={i} style={{ position:'absolute', left:r.left, right:r.right, top:r.top, bottom:r.bottom,
+          width:r.width, height:r.height, background:`rgba(52,52,54,${r.op})`, pointerEvents:'none' }}/>
+      ))}
+      {/* Hatch */}
+      <div style={{ position:'absolute', left:'5%', bottom:'10%', width:'14%', height:'10%', pointerEvents:'none',
+        background:'repeating-linear-gradient(-45deg,rgba(80,80,80,.35),rgba(80,80,80,.35) 3px,transparent 3px,transparent 9px)' }}/>
+      {/* Orange connector dots */}
+      {[{left:'35%',top:'21%'},{right:'13%',top:'19%'},{left:'20%',bottom:'28%'}].map((d,i) => (
+        <div key={i} style={{ position:'absolute',...d, width:8, height:8, borderRadius:'50%',
+          background:'#c0522a', boxShadow:'0 0 14px rgba(192,82,42,.65)', pointerEvents:'none' }}/>
+      ))}
+      {/* Dashed connector line */}
+      <svg style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none' }}>
+        <line x1="65%" y1="21%" x2="53%" y2="30%" stroke="rgba(192,82,42,.3)" strokeWidth="1" strokeDasharray="5 4"/>
+      </svg>
+      {/* Tournament info */}
+      <div style={{ position:'absolute', top:36, left:48, fontFamily:'var(--mono)', fontSize:10,
+        color:'rgba(155,155,155,.6)', lineHeight:2.1 }}>
+        <div>Tournament#1</div><div>June 2026</div>
+      </div>
+      {/* Rank badge */}
+      <div style={{ position:'absolute', top:30, left:'50%', transform:'translateX(-50%)' }}>
+        <img src={`assets/rank${player.rankTier}.svg`} height="30" alt="rank"/>
+      </div>
+      {/* Stat card + quote wrapper */}
+      <div style={{ position:'absolute', right:'11%', top:'22%' }}>
+        <div className="cap" style={{ fontSize:8, letterSpacing:'.22em', color:'rgba(200,200,200,.5)',
+          marginBottom:10, textAlign:'right' }}>Stat of the Day</div>
+        {/* White card */}
+        <div onClick={onCardClick} style={{
+          width:'clamp(260px,22vw,350px)', background:'#fff', color:'#000',
+          clipPath:'polygon(0 0,100% 0,100% 86%,86% 100%,0 100%)',
+          padding:'32px 36px 48px', cursor:'pointer', userSelect:'none', position:'relative',
+        }}>
+          <div style={{ position:'absolute', top:10, left:10, width:13, height:13,
+            borderTop:'1.5px solid #000', borderLeft:'1.5px solid #000' }}/>
+          <div style={{ position:'absolute', top:10, right:10, width:13, height:13,
+            borderTop:'1.5px solid #000', borderRight:'1.5px solid #000' }}/>
+          <div style={{ display:'flex', alignItems:'flex-end', gap:10, lineHeight:1 }}>
+            <div className="num" style={{ fontSize:'clamp(76px,9vw,106px)', color:'#000', fontFamily:'var(--sans)' }}>
+              {s.val}
+            </div>
+            <div className="num" style={{ fontSize:20, color:'#888', marginBottom:20, fontFamily:'var(--sans)' }}>
+              {s.unit}
+            </div>
+          </div>
+        </div>
+        {/* Quote */}
+        <div style={{ marginTop:16, fontFamily:'var(--mono)', fontSize:10.5,
+          color:'rgba(205,205,205,.8)', letterSpacing:'.07em', lineHeight:2.0 }}>
+          {s.quote.map((l,i) => <div key={i}>&ldquo;{l}&rdquo;</div>)}
+        </div>
+      </div>
+      {/* XXX mark */}
+      <div style={{ position:'absolute', right:'1.5%', top:'24%', opacity:.9 }}>
+        <XxxMark h={188}/>
+      </div>
+      {/* Click counter */}
+      <div style={{ position:'absolute', left:48, bottom:52 }}>
+        <div style={{ fontFamily:'var(--mono)', fontSize:9, color:'rgba(115,115,115,.65)',
+          letterSpacing:'.2em', textTransform:'uppercase', marginBottom:8 }}>Click counter:</div>
+        <div className="num" style={{ fontSize:48, color:'rgba(185,185,185,.4)', fontFamily:'var(--sans)', lineHeight:1 }}>
+          {clicks}
+        </div>
+      </div>
+      {/* Player switcher */}
+      <div style={{ position:'absolute', bottom:46, left:'50%', transform:'translateX(-50%)', display:'flex', gap:6 }}>
+        {PLAYERS.map(p => (
+          <button key={p.id} onClick={() => onSwitch(p)} style={{
+            padding:'8px 20px', fontFamily:'var(--sans)', fontWeight:900, fontStyle:'italic',
+            fontSize:14, textTransform:'uppercase', letterSpacing:'-.03em', cursor:'pointer', transition:'all .25s',
+            background:player.id===p.id?'#fff':'transparent',
+            color:player.id===p.id?'#000':'rgba(255,255,255,.22)',
+            border:'1px solid '+(player.id===p.id?'#fff':'rgba(255,255,255,.1)'),
+          }}>{p.name}</button>
+        ))}
+      </div>
+      {/* Scroll hint */}
+      <div style={{ position:'absolute', right:44, bottom:44, display:'flex', flexDirection:'column',
+        alignItems:'center', gap:8, fontFamily:'var(--mono)', fontSize:7, letterSpacing:'.3em',
+        color:'rgba(255,255,255,.15)', textTransform:'uppercase' }}>
+        <div>SCROLL</div>
+        <div style={{ width:1, height:36, background:'rgba(255,255,255,.13)' }}/>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════ PLAYER HEADER ══════════ */
+function PlayerHeader({ player }) {
+  return (
+    <Fade>
+      <div style={{ background:'#101012', borderBottom:'1px solid var(--z900)', padding:'36px 0' }}>
+        <div className="container" style={{ display:'flex', alignItems:'flex-end', gap:20, flexWrap:'wrap' }}>
+          <div>
+            <div className="cap" style={{ fontSize:7, display:'block', marginBottom:10, color:'var(--z600)', letterSpacing:'.26em' }}>
+              DATA_EXTRACT // PLAYER_PROFILE // {player.node}
+            </div>
+            <h1 className="h1 num" style={{ fontSize:'clamp(44px,7.5vw,96px)' }}>
+              {player.name}
+              <span style={{ color:'var(--z800)', marginLeft:14 }}>[#{player.rank}]</span>
+            </h1>
+          </div>
+          <div style={{ marginBottom:10 }}>
+            <div style={{ display:'inline-block', background:'#fff', color:'#000',
+              padding:'4px 14px', fontWeight:900, fontSize:11, textTransform:'uppercase', letterSpacing:'.05em' }}>
+              {player.team}
+            </div>
+            <div className="cap" style={{ fontSize:7, marginTop:8, letterSpacing:'.2em', color:'var(--orange)' }}>
+              TOP {player.top}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Fade>
+  );
+}
+
+/* ══════════ STAT STRIP ══════════ */
+function StatStrip({ p }) {
+  const stats = [
+    { cap:"RATING_2.1",  val:p.rating.toFixed(2), pct:(p.rating-.5)/.9,  accent:'#c0522a', trend:"+0.12↑" },
+    { cap:"AVG_DMG_RND", val:p.adr.toFixed(1),    pct:p.adr/130,          accent:null,      trend:"+4.3↑"  },
+    { cap:"KAST%",       val:p.kast+"%",           pct:p.kast/100,         accent:null,      trend:"+2%↑"   },
+    { cap:"HS%",         val:p.hs+"%",             pct:p.hs/100,           accent:null,      trend:"−3%↓"   },
+    { cap:"K/D",         val:p.kd.toFixed(2),      pct:(p.kd-.5)/1.2,     accent:null,      trend:"+0.08↑" },
+  ];
+  return (
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)',
+      borderTop:'1px solid var(--z900)', borderLeft:'1px solid var(--z900)' }}>
+      {stats.map((s,i) => (
+        <Fade key={i} delay={i*55}>
+          <div style={{ padding:'22px 20px 18px', borderRight:'1px solid var(--z900)', borderBottom:'1px solid var(--z900)' }}>
+            <div className="cap" style={{ fontSize:7, letterSpacing:'.26em' }}>{s.cap}</div>
+            <div className="num" style={{ fontSize:'clamp(26px,2.5vw,38px)', color:s.accent||'#fff', margin:'10px 0 9px' }}>
+              {s.val}
+            </div>
+            <Bar value={s.pct} accent={s.accent}/>
+            <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:'.1em', marginTop:7,
+              color:s.trend.includes('↓')?'var(--red)':'var(--green)' }}>{s.trend} vs avg</div>
+          </div>
+        </Fade>
+      ))}
+    </div>
+  );
+}
+
+/* ══════════ WEAPON NODE DIAGRAM ══════════ */
+function WeaponNodes({ weapons }) {
+  return (
+    <div style={{ position:'relative', height:272, border:'1px solid var(--z900)', background:'rgba(20,20,22,.5)' }}>
+      <svg style={{ position:'absolute', inset:0, width:'100%', height:'100%' }}>
+        {/* left-to-junction */}
+        <line x1="22%" y1="27%" x2="41%" y2="50%" stroke="rgba(255,255,255,.13)" strokeWidth="1.2" strokeDasharray="4 3"/>
+        <line x1="22%" y1="73%" x2="41%" y2="50%" stroke="rgba(255,255,255,.13)" strokeWidth="1.2" strokeDasharray="4 3"/>
+        {/* central line */}
+        <line x1="41%" y1="50%" x2="59%" y2="50%" stroke="rgba(255,255,255,.22)" strokeWidth="1.5"/>
+        {/* junction-to-right */}
+        <line x1="59%" y1="50%" x2="78%" y2="27%" stroke="rgba(255,255,255,.13)" strokeWidth="1.2" strokeDasharray="4 3"/>
+        <line x1="59%" y1="50%" x2="78%" y2="73%" stroke="rgba(255,255,255,.13)" strokeWidth="1.2" strokeDasharray="4 3"/>
+        {/* junction nodes */}
+        <circle cx="41%" cy="50%" r="4" fill="rgba(255,255,255,.28)"/>
+        <circle cx="59%" cy="50%" r="4" fill="rgba(255,255,255,.28)"/>
+        {/* central orange node */}
+        <circle cx="50%" cy="50%" r="5.5" fill="#c0522a"/>
+        <circle cx="50%" cy="50%" r="12"  fill="rgba(192,82,42,.16)"/>
+        {/* endpoint dots */}
+        {['22% 27%','22% 73%','78% 27%','78% 73%'].map((xy,i) => {
+          const [x,y] = xy.split(' ');
+          return <circle key={i} cx={x} cy={y} r="2.5" fill="rgba(255,255,255,.22)"/>;
+        })}
+      </svg>
+      {/* Left weapon boxes */}
+      {weapons.slice(0,2).map((w,i) => (
+        <div key={w.name} style={{ position:'absolute', left:'2%', top:i===0?'11%':'58%',
+          width:168, background:'rgba(14,14,16,.96)', border:'1px solid rgba(255,255,255,.08)', padding:'12px 14px' }}>
+          <div className="cap" style={{ fontSize:7, letterSpacing:'.22em', display:'block', marginBottom:8 }}>{w.name}</div>
+          <div style={{ display:'flex', gap:16 }}>
+            {[['K',''+w.kills],['ADR',''+w.adr],['HS',w.hs+'%'],['OPEN',w.openK+'%']].map(([l,v]) => (
+              <div key={l}>
+                <div style={{ fontFamily:'var(--mono)', fontSize:6, color:'var(--z600)', letterSpacing:'.12em', marginBottom:3 }}>{l}</div>
+                <div className="num" style={{ fontSize:15 }}>{v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      {/* Right weapon boxes */}
+      {weapons.slice(2,4).map((w,i) => (
+        <div key={w.name} style={{ position:'absolute', right:'2%', top:i===0?'11%':'58%',
+          width:168, background:'rgba(14,14,16,.96)', border:'1px solid rgba(255,255,255,.08)', padding:'12px 14px' }}>
+          <div className="cap" style={{ fontSize:7, letterSpacing:'.22em', display:'block', marginBottom:8 }}>{w.name}</div>
+          <div style={{ display:'flex', gap:16 }}>
+            {[['K',''+w.kills],['ADR',''+w.adr],['HS',w.hs+'%'],['OPEN',w.openK+'%']].map(([l,v]) => (
+              <div key={l}>
+                <div style={{ fontFamily:'var(--mono)', fontSize:6, color:'var(--z600)', letterSpacing:'.12em', marginBottom:3 }}>{l}</div>
+                <div className="num" style={{ fontSize:15 }}>{v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ══════════ CLUTCH + GAUGE ══════════ */
+function ClutchGauge({ p }) {
+  const total = p.clutchW + p.clutchL;
+  const [barW, setBarW] = useState(0);
+  const [gPct, setGPct]  = useState(0);
+  useEffect(() => {
+    setBarW(0); setGPct(0);
+    const t = setTimeout(() => { setBarW(p.clutchW/total*100); setGPct(p.entry/100); }, 300);
+    return () => clearTimeout(t);
+  }, [p]);
+  const sz=172, r=sz/2-8, c=2*Math.PI*r, off=c-c*gPct;
+  return (
+    <div style={{ display:'grid', gridTemplateColumns:'1fr 248px', border:'1px solid var(--z900)' }}>
+      <div style={{ padding:'28px', borderRight:'1px solid var(--z900)' }}>
+        {/* Clutch bar */}
+        <div style={{ height:44, display:'flex', overflow:'hidden', border:'1px solid var(--z900)', marginBottom:10 }}>
+          <div style={{ width:barW+'%', background:'#fff', color:'#000', display:'flex', alignItems:'center',
+            padding:'0 16px', fontWeight:900, fontStyle:'italic', fontSize:14, whiteSpace:'nowrap',
+            transition:'width 1.2s cubic-bezier(0,.6,.3,1)' }}>WON {p.clutchW}</div>
+          <div style={{ flex:1, background:'var(--z900)', color:'var(--z500)', display:'flex', alignItems:'center',
+            justifyContent:'flex-end', padding:'0 16px', fontWeight:900, fontStyle:'italic', fontSize:14 }}>
+            {p.clutchL} LOST</div>
+        </div>
+        <div style={{ display:'flex', justifyContent:'space-between', fontFamily:'var(--mono)', fontSize:8,
+          letterSpacing:'.1em', textTransform:'uppercase', marginBottom:24 }}>
+          <span style={{ color:'var(--green)' }}>WIN_RATE {Math.round(p.clutchW/total*100)}%</span>
+          <span style={{ color:'var(--z500)' }}>TOTAL {total}</span>
+        </div>
+        {/* Mini stats */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
+          {[['MAPS',''+p.maps],['ENTRY%',p.entry+'%'],['AVG_ADR',p.adr.toFixed(0)]].map(([l,v]) => (
+            <div key={l} style={{ padding:'10px 12px', background:'rgba(20,20,22,.9)', border:'1px solid var(--z900)' }}>
+              <div className="cap" style={{ fontSize:7, display:'block', marginBottom:5 }}>{l}</div>
+              <div className="num" style={{ fontSize:22 }}>{v}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Gauge */}
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:28, gap:10 }}>
+        <div className="cap" style={{ fontSize:7, alignSelf:'flex-start', letterSpacing:'.24em' }}>// ENTRY_KILL_RATE</div>
+        <div style={{ position:'relative', width:sz, height:sz }}>
+          <svg width={sz} height={sz} style={{ transform:'rotate(-90deg)' }}>
+            <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="var(--z900)" strokeWidth="3"/>
+            <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="#fff" strokeWidth="4"
+              strokeDasharray={c} strokeDashoffset={off}
+              style={{ transition:'stroke-dashoffset 1.6s cubic-bezier(0,.6,.3,1)' }}/>
+          </svg>
+          <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', textAlign:'center' }}>
+            <div className="num" style={{ fontSize:38, lineHeight:1 }}>
+              {Math.round(gPct*100)}<span style={{ fontSize:16, color:'var(--z500)', fontStyle:'normal' }}>%</span>
+            </div>
+            <div className="cap" style={{ fontSize:6, display:'block', marginTop:5, letterSpacing:'.2em' }}>KILLS_TOTAL</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════ PLAYER VS PLAYER ══════════ */
+function PvP({ pvp }) {
+  const { me, them } = pvp;
+  const cats = [
+    { label:'Kills',    a:me.kills, b:them.kills },
+    { label:'Tag',      a:me.tag,   b:them.tag   },
+    { label:'2 Picks',  a:me.p2,    b:them.p2    },
+    { label:'3 Picks',  a:me.p3,    b:them.p3    },
+    { label:'4 Picks',  a:me.p4,    b:them.p4    },
+  ];
+  return (
+    <div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 140px 1fr', paddingBottom:14,
+        borderBottom:'1px solid var(--z900)', marginBottom:4 }}>
+        <div>
+          <div className="num" style={{ fontSize:'clamp(18px,2vw,26px)' }}>{me.name}</div>
+          <div className="cap" style={{ fontSize:7, marginTop:6, color:'var(--orange)', letterSpacing:'.2em' }}>YOU</div>
+        </div>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div className="cap" style={{ fontSize:7, letterSpacing:'.2em', color:'var(--z700)' }}>// PvP</div>
+        </div>
+        <div style={{ textAlign:'right' }}>
+          <div className="num" style={{ fontSize:'clamp(18px,2vw,26px)' }}>{them.name}</div>
+          <div className="cap" style={{ fontSize:7, marginTop:6, letterSpacing:'.2em' }}>OPPONENT</div>
+        </div>
+      </div>
+      {cats.map((cat,i) => {
+        const tot = cat.a+cat.b || 1;
+        const pA = cat.a/tot*100, pB = cat.b/tot*100;
+        const aW = cat.a >= cat.b;
+        return (
+          <Fade key={cat.label} delay={i*55}>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 140px 1fr', padding:'11px 0',
+              borderBottom:'1px solid var(--z900)', alignItems:'center' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', gap:14 }}>
+                <div className="num" style={{ fontSize:20, color:aW?'#fff':'var(--z600)' }}>{cat.a}</div>
+                <div style={{ width:'55%', height:5, background:'var(--z900)', overflow:'hidden' }}>
+                  <div style={{ height:'100%', width:pA+'%', background:aW?'#fff':'var(--z700)',
+                    marginLeft:'auto', transition:'width 1.2s cubic-bezier(0,.6,.3,1)' }}/>
+                </div>
+              </div>
+              <div style={{ textAlign:'center' }}>
+                <div className="cap" style={{ fontSize:7, letterSpacing:'.18em', color:'var(--z500)' }}>{cat.label}</div>
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+                <div style={{ width:'55%', height:5, background:'var(--z900)', overflow:'hidden' }}>
+                  <div style={{ height:'100%', width:pB+'%', background:!aW?'#fff':'var(--z700)',
+                    transition:'width 1.2s cubic-bezier(0,.6,.3,1)' }}/>
+                </div>
+                <div className="num" style={{ fontSize:20, color:!aW?'#fff':'var(--z600)' }}>{cat.b}</div>
+              </div>
+            </div>
+          </Fade>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ══════════ MATCH HISTORY ══════════ */
+function MatchHistory({ matches }) {
+  const COLS = '110px 90px 54px 68px 60px 40px 36px';
+  const HEADS = ['MAP','OPPONENT','SCORE','RATING','ADR','K','D'];
+  return (
+    <div>
+      <div style={{ display:'grid', gridTemplateColumns:COLS, padding:'8px 16px',
+        background:'rgba(20,20,22,.7)', border:'1px solid var(--z900)', borderBottom:'none' }}>
+        {HEADS.map(h => (
+          <div key={h} className="cap" style={{ padding:'0 6px', fontSize:7, letterSpacing:'.2em' }}>{h}</div>
+        ))}
+      </div>
+      {matches.map((m,i) => (
+        <Fade key={i} delay={i*50}>
+          <div className="inv" style={{ display:'grid', gridTemplateColumns:COLS, padding:'0 16px',
+            minHeight:52, alignItems:'center', border:'1px solid var(--z900)', borderTop:'none', position:'relative' }}>
+            <div className="num" style={{ position:'absolute', right:14, fontSize:48,
+              color:'var(--z900)', pointerEvents:'none', userSelect:'none', lineHeight:1 }}>
+              {String(i+1).padStart(2,'0')}
+            </div>
+            <div style={{ padding:'0 6px', fontWeight:900, fontStyle:'italic', fontSize:12, letterSpacing:'-.02em' }}>{m.map}</div>
+            <div style={{ padding:'0 6px', fontFamily:'var(--mono)', fontSize:8, letterSpacing:'.06em', color:'var(--z400)' }}>{m.opp}</div>
+            <div className="num" style={{ padding:'0 6px', fontSize:13, color:m.win?'#fff':'var(--z600)' }}>{m.score}</div>
+            <div className="num" style={{ padding:'0 6px', fontSize:17, color:m.rating>=1.3?'#c0522a':'#fff' }}>{m.rating.toFixed(2)}</div>
+            <div className="num" style={{ padding:'0 6px', fontSize:13, color:'var(--z400)' }}>{m.adr}</div>
+            <div className="num" style={{ padding:'0 6px', fontSize:17 }}>{m.k}</div>
+            <div className="num" style={{ padding:'0 6px', fontSize:13, color:'var(--z500)' }}>{m.d}</div>
+          </div>
+        </Fade>
+      ))}
+    </div>
+  );
+}
+
+/* ══════════ APP ══════════ */
+function App() {
+  const [player, setPlayer] = useState(PLAYERS[0]);
+  const [clicks, setClicks] = useState(0);
+  const [ver,    setVer]    = useState(0);
+  function switchPlayer(p) { setPlayer(p); setVer(v => v+1); setClicks(0); }
+  return (
+    <div style={{ background:'var(--bg)', minHeight:'100vh' }}>
+      <Hero key={'h'+ver} player={player} onSwitch={switchPlayer}
+        clicks={clicks} onCardClick={() => setClicks(c => c+1)}/>
+      <PlayerHeader key={'ph'+ver} player={player}/>
+      <div className="container" style={{ paddingTop:0 }}>
+        <StatStrip key={'ss'+ver} p={player}/>
+      </div>
+      <div className="container sec">
+        <SecHd label="// WEAPON_STATISTIC"/>
+        <Fade key={'wn'+ver} delay={60}><WeaponNodes weapons={player.weapons}/></Fade>
+      </div>
+      <div className="container" style={{ paddingBottom:72 }}>
+        <SecHd label="// CLUTCH_STATS"/>
+        <Fade key={'cg'+ver} delay={80}><ClutchGauge p={player}/></Fade>
+      </div>
+      <div className="container" style={{ paddingBottom:72 }}>
+        <SecHd label="// PLAYER_VS_PLAYER"/>
+        <Fade key={'pvp'+ver} delay={100}><PvP pvp={player.pvp}/></Fade>
+      </div>
+      <div className="container" style={{ paddingBottom:80 }}>
+        <SecHd label="// MATCH_HISTORY"/>
+        <MatchHistory key={'mh'+ver} matches={player.matches}/>
+      </div>
+      <div className="container" style={{ paddingBottom:48 }}>
+        <div style={{ borderTop:'1px solid var(--z900)', paddingTop:20, display:'flex',
+          justifyContent:'space-between', fontFamily:'var(--mono)', fontSize:8,
+          letterSpacing:'.2em', textTransform:'uppercase', color:'var(--z700)' }}>
+          <span>CS2_PARSER // PLAYER_STATS_MODULE</span>
+          <span>{player.node} // NET_OK</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

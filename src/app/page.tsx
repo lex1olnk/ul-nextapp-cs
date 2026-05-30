@@ -78,6 +78,7 @@ export default async function Home() {
       <div className="cs-container" style={{ zIndex: 2, paddingTop: 120, paddingBottom: 80 }}>
         {/* system tag */}
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
+          <Image src="/logo.png" alt="UL" width={34} height={34} style={{ display: "block" }} />
           <span className="cap">// SYSTEM_LOG</span>
           <div className="hr-cs" style={{ width: 64 }} />
           <span className="cap cap--meta">DATA_EXTRACT // PLAYERS_STAT</span>
@@ -86,10 +87,10 @@ export default async function Home() {
         {/* heading */}
         <div style={{ marginBottom: 48 }}>
           <h1 className="h1" style={{ marginBottom: 8 }}>
-            Top_<span className="ghost">Performers</span>
+            LETS_<span className="ghost">PLAY</span>
           </h1>
           <h1 className="h1">
-            <span className="ghost">[ </span>ULMIX<span className="ghost"> ]</span>
+            <span className="ghost">[ </span>ULMIXCUP<span className="ghost"> ]</span>
           </h1>
         </div>
 

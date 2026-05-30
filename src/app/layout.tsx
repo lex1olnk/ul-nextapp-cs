@@ -13,8 +13,8 @@ const shareTechMono = Share_Tech_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "CS2_PARSER // ULMIX",
-  description: "CS2 tournament & player statistics",
+  title: "ULMIXCUP",
+  description: "CS2STATS",
 };
 
 export default function RootLayout({

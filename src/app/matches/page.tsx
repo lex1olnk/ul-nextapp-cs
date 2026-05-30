@@ -1,3 +1,4 @@
+import Image from "next/image";
 import PlayersTable from "@/components/matches/PlayersTable";
 import { getTournaments } from "../upload/api";
 import { getMatches } from "./api";
@@ -28,11 +29,12 @@ export default async function PlayersStatsPage() {
         {/* page header */}
         <header className="pagehead">
           <div className="tagrow">
+            <Image src="/logo.png" alt="UL" width={28} height={28} style={{ display: "block" }} />
             <span className="cap">DATA_EXTRACT // PLAYERS_STAT</span>
             <div className="hr-line" />
           </div>
           <h1 className="h1">
-            Top_<span className="ghost">Performers</span>
+            UL_<span className="ghost">STATS</span>
           </h1>
         </header>
 

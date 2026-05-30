@@ -119,6 +119,23 @@ const PLAYERS = [
       {name:"AK-47",kills:312,adr:82.4,hs:54},{name:"M4A4",kills:89,adr:76.1,hs:48},
       {name:"AWP",kills:67,adr:143.2,hs:12},{name:"DESERT_EAGLE",kills:41,adr:91.3,hs:78},
     ],
+    statCols:[
+      { label:"Avg Damage", value:"92.1", top:"Top 0.1%",
+        rows:[{l:"Damage",v:"15 232"},{l:"WinDamage",v:"12 232"},{l:"Rounds",v:"3 124"}] },
+      { label:"K/D Ratio",  value:"1.41", top:"Top 0.1%",
+        rows:[{l:"Kills",v:"4 521"},{l:"Deaths",v:"3 201"},{l:"Assists",v:"421"},{l:"TKills",v:"18"}] },
+      { label:"Headshot%",  value:"51%",  top:"Top 5%",
+        rows:[{l:"Headshots",v:"2 341"},{l:"Kills",v:"4 521"}] },
+      { label:"Rating",     value:"1.34", top:"Top 0.1%",
+        rows:[{l:"KAST",v:"76%"},{l:"ADR",v:"92.1"},{l:"Impact",v:"1.48"},{l:"Utility",v:"42.1"}] },
+    ],
+    entryStats:{ pct:54.2, won:142, lost:108 },
+    misc:[
+      {l:"Matches",    v:"42"},  {hatch:true},
+      {l:"FlashKills", v:"312"}, {l:"GrDamage", v:"2 341"},
+      {l:"Clutches",   v:"25"},  {l:"Trades",   v:"411"},
+      {hatch:true},              {l:"Cast",      v:"892"},
+    ],
   },
   {
     id:"donk", name:"donk", team:"SPIRIT", country:"RU", rank:2, top:"0.2%",
@@ -140,6 +157,23 @@ const PLAYERS = [
       {name:"AK-47",kills:341,adr:87.1,hs:62},{name:"M4A1-S",kills:72,adr:74.3,hs:53},
       {name:"AWP",kills:44,adr:136.8,hs:9},{name:"DESERT_EAGLE",kills:58,adr:94.7,hs:82},
     ],
+    statCols:[
+      { label:"Avg Damage", value:"95.7", top:"Top 0.1%",
+        rows:[{l:"Damage",v:"16 441"},{l:"WinDamage",v:"13 802"},{l:"Rounds",v:"2 987"}] },
+      { label:"K/D Ratio",  value:"1.38", top:"Top 0.1%",
+        rows:[{l:"Kills",v:"4 882"},{l:"Deaths",v:"3 538"},{l:"Assists",v:"388"},{l:"TKills",v:"12"}] },
+      { label:"Headshot%",  value:"58%",  top:"Top 2%",
+        rows:[{l:"Headshots",v:"2 831"},{l:"Kills",v:"4 882"}] },
+      { label:"Rating",     value:"1.31", top:"Top 0.2%",
+        rows:[{l:"KAST",v:"74%"},{l:"ADR",v:"95.7"},{l:"Impact",v:"1.41"},{l:"Utility",v:"38.2"}] },
+    ],
+    entryStats:{ pct:69, won:162, lost:73 },
+    misc:[
+      {l:"Matches",    v:"38"},  {hatch:true},
+      {l:"FlashKills", v:"341"}, {l:"GrDamage", v:"1 882"},
+      {l:"Clutches",   v:"22"},  {l:"Trades",   v:"489"},
+      {hatch:true},              {l:"Cast",      v:"712"},
+    ],
   },
   {
     id:"m0nesy", name:"m0NESY", team:"G2", country:"DE", rank:3, top:"1%",
@@ -160,6 +194,23 @@ const PLAYERS = [
     weapons:[
       {name:"AWP",kills:198,adr:128.4,hs:10},{name:"AK-47",kills:189,adr:79.2,hs:52},
       {name:"M4A1-S",kills:61,adr:71.8,hs:46},{name:"DESERT_EAGLE",kills:38,adr:88.1,hs:74},
+    ],
+    statCols:[
+      { label:"Avg Damage", value:"84.0", top:"Top 1%",
+        rows:[{l:"Damage",v:"11 210"},{l:"WinDamage",v:"9 480"},{l:"Rounds",v:"2 341"}] },
+      { label:"K/D Ratio",  value:"1.29", top:"Top 1%",
+        rows:[{l:"Kills",v:"3 892"},{l:"Deaths",v:"3 018"},{l:"Assists",v:"302"},{l:"TKills",v:"8"}] },
+      { label:"Headshot%",  value:"49%",  top:"Top 8%",
+        rows:[{l:"Headshots",v:"1 907"},{l:"Kills",v:"3 892"}] },
+      { label:"Rating",     value:"1.22", top:"Top 1%",
+        rows:[{l:"KAST",v:"73%"},{l:"ADR",v:"84.0"},{l:"Impact",v:"1.31"},{l:"Utility",v:"35.4"}] },
+    ],
+    entryStats:{ pct:62, won:118, lost:72 },
+    misc:[
+      {l:"Matches",    v:"35"},  {hatch:true},
+      {l:"FlashKills", v:"198"}, {l:"GrDamage", v:"1 542"},
+      {l:"Clutches",   v:"21"},  {l:"Trades",   v:"361"},
+      {hatch:true},              {l:"Cast",      v:"621"},
     ],
   },
 ];
@@ -331,6 +382,100 @@ function StatStrip({ p }) {
   );
 }
 
+/* ─── STATS SECTION (Figma) ─────────────────────────────────── */
+function StatsSection({ p }) {
+  const sz = 148, r = 56, c = 2 * Math.PI * r;
+  const [off, setOff] = useState(c);
+  useEffect(() => {
+    setOff(c);
+    const t = setTimeout(() => setOff(c - c * (p.entryStats.pct / 100)), 400);
+    return () => clearTimeout(t);
+  }, [p]);
+  const DIV_H = { height: 1, background: "rgba(255,255,255,.08)" };
+  return (
+    <Fade delay={90} style={{ marginBottom: 64 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 10 }}>
+        <span className="cap cap-xs">// STATS</span>
+        <div className="zebra" style={{ flex: 1 }} />
+      </div>
+      <div style={{ display: "flex", border: "1px solid var(--z900)" }}>
+        {p.statCols.map((col, ci) => (
+          <div key={ci} style={{ flex: 1, minWidth: 0, borderRight: ci < 3 ? "1px solid var(--z900)" : undefined }}>
+            <div style={{ padding: "16px 16px 14px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                <span style={{ fontSize: 11, color: "var(--z400)", fontWeight: 600, lineHeight: 1.3, paddingTop: 2 }}>{col.label}</span>
+                <span className="num" style={{ fontSize: 21, lineHeight: 1, flexShrink: 0 }}>{col.value}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", margin: "3px 0 10px" }}>
+                <span className="cap cap-xs" style={{ color: "var(--z600)", letterSpacing: ".1em" }}>{col.top}</span>
+              </div>
+              <div style={DIV_H} />
+              <div style={{ marginTop: 10 }}>
+                {col.rows.map((row, ri) => (
+                  <div key={ri} style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "5px 0", borderBottom: ri < col.rows.length - 1 ? "1px solid var(--z900)" : undefined,
+                  }}>
+                    <span style={{ fontSize: 11, color: "var(--z500)" }}>{row.l}</span>
+                    <span style={{ fontWeight: 700, fontSize: 12 }}>{row.v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", border: "1px solid var(--z900)", borderTop: "none", minHeight: 160 }}>
+        <div style={{
+          flexShrink: 0, width: sz + 40,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: 20, borderRight: "1px solid var(--z900)",
+        }}>
+          <div style={{ position: "relative", width: sz, height: sz }}>
+            <svg width={sz} height={sz} style={{ transform: "rotate(-90deg)" }}>
+              <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="var(--z900)" strokeWidth="2" />
+              <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="rgba(255,255,255,.82)" strokeWidth="2"
+                strokeDasharray={c} strokeDashoffset={off}
+                style={{ transition: "stroke-dashoffset 1.5s cubic-bezier(0,.6,.3,1)" }} />
+            </svg>
+            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", textAlign: "center" }}>
+              <div className="num" style={{ fontSize: 26, lineHeight: 1.1 }}>{p.entryStats.pct}%</div>
+              <div className="cap cap-xs" style={{ display: "block", margin: "5px 0 3px", letterSpacing: ".06em" }}>entry success</div>
+              <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--z400)", letterSpacing: ".03em" }}>
+                {p.entryStats.won} | {p.entryStats.lost}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "repeat(4,1fr)", gridTemplateRows: "1fr 1fr" }}>
+          {p.misc.map((item, i) => (
+            <div key={i} style={{
+              borderRight: (i % 4) < 3 ? "1px solid var(--z900)" : undefined,
+              borderBottom: i < 4 ? "1px solid var(--z900)" : undefined,
+              overflow: "hidden", minHeight: 70,
+            }}>
+              {item.hatch ? (
+                <div style={{
+                  width: "100%", height: "100%",
+                  background: "repeating-linear-gradient(-45deg,var(--z900),var(--z900) 3px,transparent 3px,transparent 9px)",
+                }} />
+              ) : (
+                <div style={{ padding: "12px 14px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", gap: 5 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                    <div style={{ width: 10, height: 10, background: "var(--z700)", flexShrink: 0 }} />
+                    <span style={{ fontSize: 11, color: "var(--z500)" }}>{item.l}</span>
+                  </div>
+                  <div className="num" style={{ fontSize: 17, paddingLeft: 17 }}>{item.v}</div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </Fade>
+  );
+}
+
 /* ─── CLUTCH + DUELS ────────────────────────────────────────── */
 function ClutchSection({ p }) {
   const total = p.clutchW + p.clutchL;
@@ -468,7 +613,6 @@ function MatchHistory({ matches }) {
         <span className="cap cap-xs">// MATCH_HISTORY</span>
         <div className="zebra" style={{ flex: 1 }} />
       </div>
-      {/* header row */}
       <div style={{
         display: "grid", gridTemplateColumns: COLS, padding: "8px 20px",
         border: "1px solid var(--z900)", borderBottom: "none",
@@ -489,26 +633,19 @@ function MatchHistory({ matches }) {
             borderTop: "none", minHeight: 52, alignItems: "center",
           }}>
             <div className="wipe" />
-            {/* rank ghost */}
             <div className="num ghost-num" style={{
               position: "absolute", left: 8, fontSize: 40,
               color: "var(--z900)", transition: "color .3s", pointerEvents: "none",
             }}>{String(i + 1).padStart(2, "0")}</div>
-            <div style={{ padding: "0 8px", fontWeight: 900, fontStyle: "italic", fontSize: 13, letterSpacing: "-.03em" }}>
-              {m.map}
-            </div>
+            <div style={{ padding: "0 8px", fontWeight: 900, fontStyle: "italic", fontSize: 13, letterSpacing: "-.03em" }}>{m.map}</div>
             <div style={{ padding: "0 8px" }}>
-              <span className="sub" style={{ fontFamily: "var(--mono)", fontSize: 9, letterSpacing: ".08em", textTransform: "uppercase" }}>
-                vs {m.opp}
-              </span>
+              <span className="sub" style={{ fontFamily: "var(--mono)", fontSize: 9, letterSpacing: ".08em", textTransform: "uppercase" }}>vs {m.opp}</span>
             </div>
             <div style={{ padding: "0 8px" }}>
               <span className="num" style={{ fontSize: 14, color: m.win ? "#fff" : "var(--z500)" }}>{m.score}</span>
             </div>
             <div style={{ padding: "0 8px" }}>
-              <span className="num" style={{ fontSize: 16, color: m.rating >= 1.3 ? "var(--orange)" : "#fff" }}>
-                {m.rating.toFixed(2)}
-              </span>
+              <span className="num" style={{ fontSize: 16, color: m.rating >= 1.3 ? "var(--orange)" : "#fff" }}>{m.rating.toFixed(2)}</span>
             </div>
             <div style={{ padding: "0 8px" }}>
               <span className="num sub" style={{ fontSize: 14 }}>{m.adr.toFixed(1)}</span>
@@ -536,28 +673,20 @@ function MatchHistory({ matches }) {
 function PlayerPage() {
   const [player, setPlayer] = useState(PLAYERS[0]);
   const [ver, setVer] = useState(0);
-
   function pick(p) { setPlayer(p); setVer(v => v + 1); }
   const v = ver;
-
   return (
     <div style={{ background: "var(--page)", minHeight: "100vh", position: "relative" }}>
       <div className="dotgrid" />
       <Navbar />
-
       <div className="page">
-        {/* Watermark */}
         <div className="wm" style={{ top: "5vh", right: "-2vw", fontSize: "22vw" }}>
           {player.name.slice(0, 4).toUpperCase()}
         </div>
-        {/* Second watermark – match section anchor */}
         <div className="wm" style={{ bottom: "6vh", left: "-1vw", fontSize: "10vw", opacity: .6 }}>
           HIST.EXE
         </div>
-
         <div className="container">
-
-          {/* ── PAGE HEADER ── */}
           <Fade key={"hd" + v}>
             <header className="pagehead">
               <div className="tagrow">
@@ -572,18 +701,12 @@ function PlayerPage() {
             </header>
           </Fade>
 
-          {/* ── PLAYER SELECTOR ── */}
           <PlayerSelector current={player} onSelect={pick} />
-
-          {/* ── HERO CARD ── */}
           <HeroCard key={"hero" + v} p={player} />
-
           <div style={{ height: 16 }} />
-
-          {/* ── STAT STRIP ── */}
           <StatStrip key={"ss" + v} p={player} />
+          <StatsSection key={"sts" + v} p={player} />
 
-          {/* ── CLUTCH + ENTRY GAUGE ── */}
           <div key={"pg" + v} style={{ display: "grid", gridTemplateColumns: "repeat(12,1fr)", gap: 16, marginBottom: 64 }}>
             <div style={{ gridColumn: "span 8" }}>
               <ClutchSection p={player} />
@@ -600,16 +723,10 @@ function PlayerPage() {
             </div>
           </div>
 
-          {/* ── MAP PERFORMANCE ── */}
           <MapSection key={"mp" + v} maps={player.mapStats} />
-
-          {/* ── WEAPON LOADOUT ── */}
           <WeaponSection key={"wl" + v} weapons={player.weapons} />
-
-          {/* ── MATCH HISTORY ── */}
           <MatchHistory key={"mh" + v} matches={player.matchHistory} />
 
-          {/* ── FOOTER ── */}
           <div style={{
             borderTop: "1px solid var(--z900)", paddingTop: 24,
             display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -617,7 +734,6 @@ function PlayerPage() {
             <span className="cap cap-xs" style={{ color: "var(--z700)" }}>CS2_PARSER // PLAYER_STATS_MODULE</span>
             <span className="cap cap-xs" style={{ color: "var(--z700)" }}>NET_LINK_ESTABLISHED // NODE_01</span>
           </div>
-
         </div>
       </div>
     </div>
