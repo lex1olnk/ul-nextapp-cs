@@ -1,0 +1,26 @@
+# Используем официальный Node.js образ
+FROM node:18-alpine
+
+# Устанавливаем рабочую директорию в контейнере
+WORKDIR /app
+
+# Копируем package.json и package-lock.json
+COPY package*.json ./
+COPY *config.* ./
+
+# Устанавливаем зависимости
+RUN npm ci
+
+# Генерируем Prisma Client
+RUN npx prisma generate
+
+# Копируем остальной код
+COPY . .
+
+# Собираем приложение
+RUN npm run build
+
+EXPOSE 3000
+
+# Применяем миграции при запуске и запускаем сервер
+CMD npx prisma migrate deploy && npm start

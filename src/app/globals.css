@@ -26,6 +26,7 @@
   --green:  #22c55e;
   --yellow: #facc15;
 
+  --font-nunito: "Share tech Mono";
   --font-sans: var(--font-nunito), "Nunito", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }

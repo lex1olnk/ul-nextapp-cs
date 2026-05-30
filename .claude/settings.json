@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -Command \"$skill = Get-Content -Raw '.claude/skills/karpathy-guidelines/SKILL.MD'; $out = @{ hookSpecificOutput = @{ hookEventName = 'UserPromptSubmit'; additionalContext = \"Apply these behavioral guidelines to your response:`n$skill\" } } | ConvertTo-Json -Depth 5 -Compress; Write-Output $out\"",
+            "shell": "powershell"
+          }
+        ]
+      }
+    ]
+  }
+}

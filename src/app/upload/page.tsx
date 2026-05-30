@@ -1,15 +1,15 @@
 import MatchImporter from "@/components/tournaments/MatchImporter";
+import { UploadGuard } from "@/components/UploadGuard";
 import { getTournaments } from "./api";
 
-export const dynamic = 'force-dynamic'; // Важно!
-export const revalidate = 0; // Отключает ISR
+export const revalidate = 3600;
 
 export default async function UploadMatchesPage() {
   const tournaments = await getTournaments();
 
   return (
-    <div>
+    <UploadGuard>
       <MatchImporter tournaments={tournaments} />
-    </div>
+    </UploadGuard>
   );
 }

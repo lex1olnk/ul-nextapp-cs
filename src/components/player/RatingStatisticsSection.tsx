@@ -1,16 +1,12 @@
 "use client";
 
-import { getPlayerMatches } from '@/app/player/[id]/api';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { getPlayerMatches } from "@/app/player/[id]/api";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-interface Tournament {
-  id: string;
-  name: string;
-}
-
+interface Tournament { id: string; name: string; }
 interface MatchData {
   matchId: string;
-  finishedAt: string; // ISO строка даты
+  finishedAt: string;
   map: string;
   kills: number;
   deaths: number;
@@ -19,93 +15,174 @@ interface MatchData {
   isWinner: boolean;
 }
 
-export const RatingStatisticsSection = ({ playerId, ulTournaments }: { playerId: string, ulTournaments: Tournament[] }) => {
-  const [ulTournament, setUlTournament] = useState<string>("");
+const COLS = "88px 1fr 100px 80px 72px";
+const HEADS = ["DATE", "MAP", "K / D / A", "RATING", ""];
+
+export const RatingStatisticsSection = ({
+  playerId,
+  ulTournaments,
+}: {
+  playerId: string;
+  ulTournaments: Tournament[];
+}) => {
+  const [ulTournament, setUlTournament] = useState("");
   const [matches, setMatches] = useState<MatchData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Мемоизируем сортировку турниров
   const sortedTournaments = useMemo(() => {
-    const extractNumber = (name: string) => {
-      const numbers = name.match(/\d+/g);
-      return numbers ? parseInt(numbers[0]) : 0;
-    };
-
-    return [...ulTournaments].sort((a, b) => {
-      const numA = extractNumber(a.name);
-      const numB = extractNumber(b.name);
-      return numB - numA;
-    });
+    const num = (name: string) => { const m = name.match(/\d+/g); return m ? parseInt(m[0]) : 0; };
+    return [...ulTournaments].sort((a, b) => num(b.name) - num(a.name));
   }, [ulTournaments]);
 
-  // Функция загрузки данных
   const loadMatches = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await getPlayerMatches(playerId, ulTournament, 0);
-
       setMatches(res.data);
-    } catch (error) {
-      console.error("Failed to load matches", error);
+    } catch (e) {
+      console.error(e);
     } finally {
       setIsLoading(false);
     }
   }, [playerId, ulTournament]);
 
-  // Загружаем данные при изменении турнира
-  useEffect(() => {
-    loadMatches();
-  }, [loadMatches]);
+  useEffect(() => { loadMatches(); }, [loadMatches]);
 
   return (
-    <>
-      <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Select an option</label>
-      <select 
-        id="tournament" 
-        value={ulTournament}
-        className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-light-dark dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-        onChange={e => setUlTournament(e.target.value)}
-      >
-        <option value="">MIX</option>
-        {sortedTournaments.map(tournament => 
-          <option value={tournament.id} key={tournament.id}>{tournament.name}</option>
-        )}
-      </select>
-      
-      {isLoading && <div>...LOADING</div>}
-      
-      <table className="border-spacing-y-3 border-separate w-full bg-light-dark/90 text-left pl-8 py-2.5 pr-4">
-        <thead>
-          <tr className=" *:font-extralight text-gray-300">
-            <th className="font-extralight w-3/24">Date</th>
-            <th className="w-9/24">Map</th>
-            <th className=" w-5/24">K / D / A</th>
-            <th className="w-7/24">Rating</th>
-          </tr>
-        </thead>
-        <tbody>
-          {matches && matches.map((match, index) => {
-            const date = new Date(match.finishedAt);
-            const dateShow = `${date.toLocaleDateString("en-US", { day: "numeric" })} ${date.toLocaleDateString("en-US", { month: "short" })} `;
-            return (
-              <tr
-                key={match.matchId || index}
-                className=" hover:cursor-pointer border-b-2 hover:bg-my-gray hover:translate-x-1 hover:scale-x-[1.01] transition-all"
-                onClick={() => window.location.href = `https://cs2.fastcup.net/matches/${match.matchId}`}
-              >
-                <td>{dateShow}</td>
-                <td>
-                  <div className={`px-3 flex w-fit rounded-md ${match.isWinner ? "bg-green-800/30 text-green-200" : "bg-red-800/30 text-red"}`}>
-                    {match.map}
-                  </div>
-                </td>
-                <td>{match.kills} / {match.deaths} / {match.assists}</td>
-                <td>{match.rating?.toFixed(2)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </>
+    <div style={{ marginBottom: 64 }}>
+      {/* section header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+        <span className="cap cap--xs">// MATCH_HISTORY</span>
+        <div className="hr-cs" style={{ flex: 1 }} />
+        {/* tournament selector */}
+        <div style={{ position: "relative" }}>
+          <select
+            value={ulTournament}
+            onChange={e => setUlTournament(e.target.value)}
+            style={{
+              background: "transparent",
+              border: "1px solid var(--zinc-800)",
+              color: "var(--zinc-500)",
+              fontFamily: "var(--font-mono)",
+              fontSize: 9,
+              letterSpacing: ".2em",
+              textTransform: "uppercase",
+              padding: "6px 28px 6px 10px",
+              outline: "none",
+              cursor: "pointer",
+              appearance: "none",
+            }}
+          >
+            <option value="" style={{ background: "#111" }}>ALL_TOURNAMENTS</option>
+            {sortedTournaments.map(t =>
+              <option key={t.id} value={t.id} style={{ background: "#111" }}>{t.name}</option>
+            )}
+          </select>
+          <span style={{
+            position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+            fontFamily: "var(--font-mono)", fontSize: 8, color: "var(--zinc-600)", pointerEvents: "none",
+          }}>▾</span>
+        </div>
+      </div>
+
+      {/* header row */}
+      <div style={{
+        display: "grid", gridTemplateColumns: COLS,
+        padding: "8px 20px",
+        border: "1px solid var(--zinc-900)",
+        borderBottom: "none",
+        background: "rgba(24,24,27,.07)",
+      }}>
+        {HEADS.map(h => (
+          <div key={h} style={{
+            fontFamily: "var(--font-mono)", fontSize: 8,
+            letterSpacing: ".25em", textTransform: "uppercase", color: "var(--zinc-600)",
+          }}>{h}</div>
+        ))}
+      </div>
+
+      {isLoading && (
+        <div style={{
+          border: "1px solid var(--zinc-900)", padding: "32px 20px",
+          fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: ".3em",
+          color: "var(--zinc-600)", textAlign: "center",
+        }}>
+          LOADING_DATA...
+        </div>
+      )}
+
+      {!isLoading && matches.map((m, i) => {
+        const date = new Date(m.finishedAt);
+        const dateStr = `${date.getDate()} ${date.toLocaleDateString("en-US", { month: "short" })}`.toUpperCase();
+        const rating = m.rating?.toFixed(2);
+        const ratingHigh = m.rating >= 1.3;
+
+        return (
+          <div
+            key={m.matchId || i}
+            className="invert-row"
+            style={{
+              display: "grid", gridTemplateColumns: COLS,
+              padding: "0 20px",
+              border: "1px solid var(--zinc-900)",
+              borderTop: "none",
+              minHeight: 52,
+              alignItems: "center",
+              cursor: "pointer",
+            }}
+            onClick={() => window.open(`https://cs2.fastcup.net/matches/${m.matchId}`, "_blank")}
+          >
+            <div className="wipe" />
+
+            {/* ghost index */}
+            <div className="num ghost" style={{
+              position: "absolute", left: 8, fontSize: 38,
+              transition: "color .3s", pointerEvents: "none", userSelect: "none",
+            }}>{String(i + 1).padStart(2, "0")}</div>
+
+            {/* date */}
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: ".12em", color: "var(--zinc-500)" }}>
+              {dateStr}
+            </div>
+
+            {/* map */}
+            <div>
+              <span className="num" style={{
+                fontSize: 13, letterSpacing: "-.02em",
+                color: m.isWinner ? "#fff" : "var(--zinc-500)",
+              }}>
+                {m.map}
+              </span>
+              {m.isWinner && (
+                <span style={{ marginLeft: 8, fontFamily: "var(--font-mono)", fontSize: 7, letterSpacing: ".15em", color: "var(--green)" }}>WIN</span>
+              )}
+            </div>
+
+            {/* kda */}
+            <div className="num sub" style={{ fontSize: 13 }}>
+              {m.kills} / {m.deaths} / {m.assists}
+            </div>
+
+            {/* rating */}
+            <div className="num" style={{ fontSize: 18, color: ratingHigh ? "var(--orange)" : "#fff" }}>
+              {rating}
+            </div>
+
+            {/* arrow */}
+            <div className="sub" style={{ fontFamily: "var(--font-mono)", fontSize: 9, textAlign: "right" }}>→</div>
+          </div>
+        );
+      })}
+
+      {!isLoading && matches.length === 0 && (
+        <div style={{
+          border: "1px solid var(--zinc-900)", padding: "32px 20px",
+          fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: ".3em",
+          color: "var(--zinc-700)", textAlign: "center",
+        }}>
+          NO_DATA_FOUND
+        </div>
+      )}
+    </div>
   );
 };

@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
+import { Nunito, Share_Tech_Mono } from "next/font/google";
 import "./globals.css";
+import { IntroAnimation } from "@/components/IntroAnimation";
 import { Navbar } from "@/components/Navbar";
 
-const nunito = Nunito({
-  variable: "--font-nunito",
-  weight: ["400", "600", "700", "800", "900"],
-  style: ["normal", "italic"],
+const shareTechMono = Share_Tech_Mono({
+  variable: "--font-stm",
+  weight: ["400"],
+  style: ["normal"],
   subsets: ["latin"],
   display: "swap",
-});
+})
 
 export const metadata: Metadata = {
   title: "CS2_PARSER // ULMIX",
@@ -23,7 +24,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={nunito.variable}>
+      <body className={shareTechMono.variable}>
+        <IntroAnimation />
         <Navbar />
         <main>{children}</main>
       </body>

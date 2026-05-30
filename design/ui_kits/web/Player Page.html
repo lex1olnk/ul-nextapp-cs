@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PLAYER_PROFILE // CS2 Parser Stats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800;1,900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --page:#0a0a0a;
+  --z900:#18181b;--z800:#27272a;--z700:#3f3f46;--z600:#52525b;--z500:#71717a;--z400:#a1a1aa;
+  --orange:#f97316;--green:#22c55e;--yellow:#facc15;--red:#ef4444;
+  --sans:"Nunito",ui-sans-serif,system-ui,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+html,body{background:var(--page);color:#fff;font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:#fff;color:#000}
+
+/* dot grid */
+.dotgrid{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.13;
+  background-image:radial-gradient(#fff 1px,transparent 1px);background-size:50px 50px}
+
+/* navbar */
+.navwrap{position:fixed;top:0;left:0;right:0;z-index:50}
+.navbar{background:rgba(0,0,0,.84);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--z800);transform:translateY(calc(-100% + 4px));transition:transform .35s}
+.navwrap:hover .navbar{transform:translateY(0)}
+.navtab{position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:48px;height:4px;background:var(--z700)}
+.navinner{max-width:1280px;margin:0 auto;padding:14px 48px;display:flex;align-items:center;justify-content:space-between;gap:24}
+.navbrand{font-weight:900;font-style:italic;letter-spacing:-.04em;text-transform:uppercase;font-size:18px;cursor:pointer;white-space:nowrap}
+.navlinks{display:flex;gap:26px}
+.navlink{font-family:var(--mono);font-size:10px;letter-spacing:.25em;text-transform:uppercase;
+  color:var(--z500);cursor:pointer;background:none;border:none;transition:color .2s}
+.navlink:hover,.navlink.is-active{color:#fff}
+
+/* layout */
+.page{padding-top:120px;padding-bottom:120px;min-height:100vh;position:relative;overflow-x:hidden}
+.container{max-width:1280px;margin:0 auto;padding:0 48px;position:relative;z-index:1}
+
+/* watermark */
+.wm{position:absolute;font-weight:900;font-style:italic;text-transform:uppercase;
+  color:rgba(255,255,255,.032);letter-spacing:-.05em;line-height:.8;pointer-events:none;z-index:0;user-select:none}
+
+/* type */
+.h1{font-weight:900;font-style:italic;letter-spacing:-.05em;text-transform:uppercase;line-height:.92}
+.num{font-weight:900;font-style:italic;letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.cap{font-family:var(--mono);text-transform:uppercase;color:var(--z500);font-weight:700;letter-spacing:.4em;font-size:10px}
+.cap-xs{font-size:8px;letter-spacing:.3em}
+
+/* card */
+.card{position:relative;border:1px solid var(--z900);background:rgba(24,24,27,.1)}
+.ticks::before,.ticks::after{content:"";position:absolute;width:16px;height:16px}
+.ticks::before{top:-1px;left:-1px;border-top:1px solid var(--z600);border-left:1px solid var(--z600)}
+.ticks::after{bottom:-1px;right:-1px;border-bottom:1px solid var(--z600);border-right:1px solid var(--z600)}
+
+/* chips */
+.chip{display:inline-block;background:#fff;color:#000;padding:3px 9px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+.badge{display:inline-block;background:#000;border:1px solid var(--z800);color:#fff;padding:2px 7px;font-size:8px;font-weight:700;font-style:italic;text-transform:uppercase}
+
+/* progress bar */
+.bt{height:4px;background:var(--z900);overflow:hidden;transition:background .3s}
+.bf{height:100%;background:#fff;transition:width 1.2s cubic-bezier(0,.6,.3,1),background .3s}
+
+/* hover inversion */
+.inv{transition:background .3s,color .3s;cursor:pointer;overflow:hidden;position:relative}
+.inv .wipe{position:absolute;left:0;top:0;height:100%;width:2px;background:#fff;
+  transform:scaleY(0);transform-origin:top;transition:transform .3s}
+.inv .sub{color:var(--z600);transition:color .3s}
+.inv:hover{background:#fff;color:#000}
+.inv:hover .wipe{transform:scaleY(1)}
+.inv:hover .sub{color:rgba(0,0,0,.45)}
+.inv:hover .bf{background:#000}
+.inv:hover .bt{background:#e4e4e7}
+.inv:hover .ghost-num{color:rgba(0,0,0,.12)}
+
+/* fade */
+.fade{opacity:0;transform:translateY(12px);transition:opacity .55s,transform .55s}
+.fade.in{opacity:1;transform:none}
+
+/* zebra divider */
+.zebra{height:20px;background:repeating-linear-gradient(-45deg,var(--z900),var(--z900) 4px,transparent 4px,transparent 10px);opacity:.4}
+
+/* page header */
+.pagehead{border-left:4px solid #fff;padding-left:32px;margin-bottom:52px}
+.tagrow{display:flex;align-items:center;gap:16px;margin-bottom:12px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+/* ─── DATA ──────────────────────────────────────────────────── */
+const PLAYERS = [
+  {
+    id:"zywoo", name:"ZywOo", team:"VITALITY", country:"FR", rank:1, top:"0.1%",
+    rating:1.34, adr:92.1, kast:76, hs:51, kd:1.41,
+    clutchW:16, clutchL:9, entry:0.71, maps:42, node:"0x1A3F2B", rankTier:5,
+    tournament:"PGL_Major_2026",
+    matchHistory:[
+      {map:"INFERNO", opp:"SPIRIT",   score:"2:0",win:true, rating:1.48,adr:104.2,kast:81,k:24,d:16,hs:58},
+      {map:"MIRAGE",  opp:"G2",       score:"2:1",win:true, rating:1.22,adr:87.4, kast:72,k:19,d:18,hs:47},
+      {map:"NUKE",    opp:"FAZE",     score:"2:0",win:true, rating:1.39,adr:96.8, kast:77,k:22,d:14,hs:53},
+      {map:"ANCIENT", opp:"MOUZ",     score:"1:2",win:false,rating:1.11,adr:80.1, kast:68,k:17,d:21,hs:44},
+      {map:"ANUBIS",  opp:"HEROIC",   score:"2:0",win:true, rating:1.51,adr:109.3,kast:83,k:26,d:13,hs:62},
+      {map:"OVERPASS",opp:"NAVI",     score:"2:1",win:true, rating:1.28,adr:88.9, kast:74,k:21,d:17,hs:49},
+    ],
+    mapStats:[
+      {name:"INFERNO",w:11,l:4,rating:1.41},{name:"MIRAGE",w:9,l:4,rating:1.28},
+      {name:"NUKE",w:8,l:2,rating:1.38},{name:"ANUBIS",w:5,l:2,rating:1.44},{name:"ANCIENT",w:7,l:5,rating:1.19},
+    ],
+    weapons:[
+      {name:"AK-47",kills:312,adr:82.4,hs:54},{name:"M4A4",kills:89,adr:76.1,hs:48},
+      {name:"AWP",kills:67,adr:143.2,hs:12},{name:"DESERT_EAGLE",kills:41,adr:91.3,hs:78},
+    ],
+  },
+  {
+    id:"donk", name:"donk", team:"SPIRIT", country:"RU", rank:2, top:"0.2%",
+    rating:1.31, adr:95.7, kast:74, hs:58, kd:1.38,
+    clutchW:14, clutchL:8, entry:0.69, maps:38, node:"0x4C2D1A", rankTier:5,
+    tournament:"PGL_Major_2026",
+    matchHistory:[
+      {map:"INFERNO", opp:"VITALITY",score:"0:2",win:false,rating:1.20,adr:91.4, kast:74,k:20,d:24,hs:61},
+      {map:"MIRAGE",  opp:"MOUZ",    score:"2:0",win:true, rating:1.42,adr:98.1, kast:79,k:25,d:15,hs:64},
+      {map:"NUKE",    opp:"LIQUID",  score:"2:1",win:true, rating:1.31,adr:93.2, kast:72,k:22,d:18,hs:55},
+      {map:"ANCIENT", opp:"HEROIC",  score:"2:0",win:true, rating:1.48,adr:102.4,kast:81,k:27,d:14,hs:62},
+      {map:"OVERPASS",opp:"NIP",     score:"2:1",win:true, rating:1.24,adr:86.7, kast:70,k:20,d:17,hs:57},
+    ],
+    mapStats:[
+      {name:"INFERNO",w:9,l:5,rating:1.28},{name:"MIRAGE",w:11,l:3,rating:1.38},
+      {name:"NUKE",w:7,l:4,rating:1.29},{name:"ANUBIS",w:6,l:2,rating:1.41},{name:"ANCIENT",w:8,l:3,rating:1.35},
+    ],
+    weapons:[
+      {name:"AK-47",kills:341,adr:87.1,hs:62},{name:"M4A1-S",kills:72,adr:74.3,hs:53},
+      {name:"AWP",kills:44,adr:136.8,hs:9},{name:"DESERT_EAGLE",kills:58,adr:94.7,hs:82},
+    ],
+  },
+  {
+    id:"m0nesy", name:"m0NESY", team:"G2", country:"DE", rank:3, top:"1%",
+    rating:1.22, adr:84.0, kast:73, hs:49, kd:1.29,
+    clutchW:11, clutchL:10, entry:0.62, maps:35, node:"0x77C0E1", rankTier:4,
+    tournament:"PGL_Major_2026",
+    matchHistory:[
+      {map:"MIRAGE",  opp:"FAZE",    score:"2:1",win:true, rating:1.33,adr:90.2,kast:76,k:21,d:17,hs:51},
+      {map:"INFERNO", opp:"SPIRIT",  score:"1:2",win:false,rating:1.14,adr:79.8,kast:69,k:18,d:20,hs:46},
+      {map:"NUKE",    opp:"NAVI",    score:"2:0",win:true, rating:1.28,adr:87.4,kast:74,k:23,d:16,hs:50},
+      {map:"ANUBIS",  opp:"MOUZ",    score:"2:1",win:true, rating:1.19,adr:83.1,kast:71,k:20,d:18,hs:48},
+      {map:"ANCIENT", opp:"LIQUID",  score:"0:2",win:false,rating:1.09,adr:76.4,kast:67,k:16,d:22,hs:44},
+    ],
+    mapStats:[
+      {name:"MIRAGE",w:10,l:3,rating:1.31},{name:"INFERNO",w:7,l:5,rating:1.18},
+      {name:"NUKE",w:8,l:3,rating:1.26},{name:"ANUBIS",w:6,l:3,rating:1.22},{name:"ANCIENT",w:5,l:6,rating:1.12},
+    ],
+    weapons:[
+      {name:"AWP",kills:198,adr:128.4,hs:10},{name:"AK-47",kills:189,adr:79.2,hs:52},
+      {name:"M4A1-S",kills:61,adr:71.8,hs:46},{name:"DESERT_EAGLE",kills:38,adr:88.1,hs:74},
+    ],
+  },
+];
+
+/* ─── PRIMITIVES ────────────────────────────────────────────── */
+function Fade({ children, delay = 0, style, className = "" }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    const t = setTimeout(() => el && el.classList.add("in"), 40 + delay);
+    return () => clearTimeout(t);
+  }, []);
+  return <div ref={ref} className={"fade " + className} style={style}>{children}</div>;
+}
+
+function Bar({ value, max = 1, accent }) {
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    setW(0);
+    const t = setTimeout(() => setW((value / max) * 100), 280);
+    return () => clearTimeout(t);
+  }, [value, max]);
+  return (
+    <div className="bt">
+      <div className="bf" style={{ width: w + "%", background: accent || undefined }} />
+    </div>
+  );
+}
+
+function Gauge({ value, size = 128 }) {
+  const r = size / 2 - 3;
+  const c = 2 * Math.PI * r;
+  const [off, setOff] = useState(c);
+  useEffect(() => {
+    setOff(c);
+    const t = setTimeout(() => setOff(c - c * value), 400);
+    return () => clearTimeout(t);
+  }, [value]);
+  return (
+    <div style={{ position: "relative", width: size, height: size }}>
+      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#18181b" strokeWidth="2" />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#fff" strokeWidth="3"
+          strokeDasharray={c} strokeDashoffset={off}
+          style={{ transition: "stroke-dashoffset 1.5s cubic-bezier(0,.6,.3,1)" }} />
+      </svg>
+      <div className="num" style={{
+        position: "absolute", top: "50%", left: "50%",
+        transform: "translate(-50%,-50%)", fontSize: size * .2, textAlign: "center", lineHeight: 1,
+      }}>
+        {Math.round(value * 100)}<span style={{ fontSize: size * .1, color: "var(--z500)", fontStyle: "normal" }}>%</span>
+      </div>
+    </div>
+  );
+}
+
+/* ─── NAVBAR ────────────────────────────────────────────────── */
+function Navbar() {
+  return (
+    <div className="navwrap">
+      <div className="navbar">
+        <div className="navinner">
+          <div className="navbrand">CS2_PARSER</div>
+          <div className="navlinks">
+            {["HOME", "MATCHES", "TOURNAMENT", "PLAYERS"].map(n => (
+              <button key={n} className={"navlink" + (n === "PLAYERS" ? " is-active" : "")}>{n}</button>
+            ))}
+          </div>
+          <div style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--z600)", letterSpacing: ".15em", whiteSpace: "nowrap" }}>
+            STATUS: <span style={{ color: "var(--green)" }}>[ ONLINE ]</span>
+          </div>
+        </div>
+        <div className="navtab" />
+      </div>
+    </div>
+  );
+}
+
+/* ─── PLAYER SELECTOR ───────────────────────────────────────── */
+function PlayerSelector({ current, onSelect }) {
+  return (
+    <div style={{ display: "flex", gap: 8, marginBottom: 40, flexWrap: "wrap" }}>
+      {PLAYERS.map(p => (
+        <button key={p.id} onClick={() => onSelect(p)} style={{
+          padding: "8px 22px", fontWeight: 900, fontStyle: "italic",
+          letterSpacing: "-.04em", textTransform: "uppercase",
+          fontSize: "clamp(14px, 1.5vw, 20px)", cursor: "pointer",
+          transition: "all .3s", fontFamily: "var(--sans)",
+          background: current.id === p.id ? "#fff" : "transparent",
+          color: current.id === p.id ? "#000" : "var(--z700)",
+          border: "1px solid " + (current.id === p.id ? "#fff" : "var(--z900)"),
+        }}>{p.name}</button>
+      ))}
+    </div>
+  );
+}
+
+/* ─── HERO CARD ─────────────────────────────────────────────── */
+function HeroCard({ p }) {
+  const totalKills = p.weapons.reduce((s, w) => s + w.kills, 0);
+  return (
+    <Fade>
+      <div className="card ticks" style={{
+        padding: 40, display: "grid",
+        gridTemplateColumns: "1fr auto", alignItems: "flex-end", gap: 32, marginBottom: 16,
+      }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <span className="chip">{p.team}</span>
+            <span className="badge">TOP {p.top}</span>
+            <span className="cap cap-xs" style={{ color: "var(--z700)" }}>{p.tournament}</span>
+          </div>
+          <h1 className="h1 num" style={{ fontSize: "clamp(52px,7.5vw,104px)" }}>{p.name}</h1>
+          <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
+            {[["COUNTRY", p.country], ["MAPS_PLAYED", String(p.maps)], ["TOTAL_KILLS", String(totalKills)], ["NODE", p.node]].map(([k, v]) => (
+              <div key={k}>
+                <div className="cap cap-xs" style={{ display: "block", marginBottom: 5 }}>{k}</div>
+                <div className="num" style={{ fontSize: 13, color: k === "NODE" ? "var(--z500)" : "#fff" }}>{v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 14 }}>
+          <div>
+            <div className="cap cap-xs" style={{ display: "block", marginBottom: 8 }}>RATING_2.1</div>
+            <div className="num" style={{ fontSize: "clamp(60px,6.5vw,90px)", lineHeight: 1, color: "var(--orange)" }}>
+              {p.rating.toFixed(2)}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span className="cap cap-xs" style={{ color: "var(--z600)" }}>#0{p.rank}&nbsp;OVERALL</span>
+            <img src={`assets/rank${p.rankTier}.svg`} height="26" alt={"T" + p.rankTier} />
+          </div>
+        </div>
+      </div>
+    </Fade>
+  );
+}
+
+/* ─── STAT STRIP ────────────────────────────────────────────── */
+function StatStrip({ p }) {
+  const stats = [
+    { cap: "// RATING_2.1",  val: p.rating.toFixed(2), accent: "var(--orange)", pct: (p.rating - .5) / 1,   trend: "+0.12", up: true  },
+    { cap: "// AVG_DMG_RND", val: p.adr.toFixed(1),    accent: null,            pct: p.adr / 130,            trend: "+21.1", up: true  },
+    { cap: "// KAST",        val: p.kast + "%",         accent: null,            pct: p.kast / 100,           trend: "+6%",   up: true  },
+    { cap: "// HEADSHOT%",   val: p.hs + "%",           accent: null,            pct: p.hs / 100,             trend: "−7%",   up: false },
+    { cap: "// K/D_RATIO",   val: p.kd.toFixed(2),     accent: null,            pct: (p.kd - .5) / 1.2,     trend: "+0.21", up: true  },
+  ];
+  return (
+    <Fade delay={80} style={{ marginBottom: 64 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", border: "1px solid var(--z900)" }}>
+        {stats.map((s, i) => (
+          <div key={i} style={{ padding: "20px 20px 16px", borderRight: i < 4 ? "1px solid var(--z900)" : undefined }}>
+            <span className="cap cap-xs">{s.cap}</span>
+            <div className="num" style={{ fontSize: "clamp(26px,2.8vw,38px)", color: s.accent || "#fff", margin: "10px 0 8px" }}>
+              {s.val}
+            </div>
+            <Bar value={s.pct} accent={s.accent || undefined} />
+            <div style={{
+              fontFamily: "var(--mono)", fontSize: 8, letterSpacing: ".08em", marginTop: 6,
+              color: s.up ? "var(--green)" : "var(--red)",
+            }}>
+              {s.up ? "▲" : "▼"} {s.trend} vs avg
+            </div>
+          </div>
+        ))}
+      </div>
+    </Fade>
+  );
+}
+
+/* ─── CLUTCH + DUELS ────────────────────────────────────────── */
+function ClutchSection({ p }) {
+  const total = p.clutchW + p.clutchL;
+  const winPct = Math.round(p.clutchW / total * 100);
+  const [barW, setBarW] = useState(0);
+  useEffect(() => {
+    setBarW(0);
+    const t = setTimeout(() => setBarW(p.clutchW / total * 100), 320);
+    return () => clearTimeout(t);
+  }, [p]);
+  return (
+    <div className="card" style={{ padding: 24, height: "100%", display: "flex", flexDirection: "column", gap: 22 }}>
+      <span className="cap cap-xs">// CLUTCH_1vX</span>
+      <div>
+        <div style={{
+          display: "flex", height: 40, border: "1px solid var(--z900)",
+          overflow: "hidden", marginBottom: 8,
+        }}>
+          <div style={{
+            width: barW + "%", background: "#fff", color: "#000",
+            display: "flex", alignItems: "center", padding: "0 14px",
+            fontWeight: 900, fontStyle: "italic", fontSize: 14, whiteSpace: "nowrap",
+            transition: "width 1.2s cubic-bezier(0,.6,.3,1)",
+          }}>WON {p.clutchW}</div>
+          <div style={{
+            flex: 1, background: "var(--z900)", color: "var(--z500)",
+            display: "flex", alignItems: "center", justifyContent: "flex-end",
+            padding: "0 14px", fontWeight: 900, fontStyle: "italic", fontSize: 14, whiteSpace: "nowrap",
+          }}>{p.clutchL} LOST</div>
+        </div>
+        <div style={{
+          display: "flex", justifyContent: "space-between",
+          fontFamily: "var(--mono)", fontSize: 9, letterSpacing: ".12em", textTransform: "uppercase",
+        }}>
+          <span style={{ color: "var(--green)" }}>WIN_RATE {winPct}%</span>
+          <span style={{ color: "var(--z500)" }}>TOTAL {total}</span>
+        </div>
+      </div>
+      <div>
+        <span className="cap cap-xs" style={{ display: "block", marginBottom: 12 }}>// OPENING_DUELS</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 8 }}>
+          <div className="num" style={{ fontSize: 32, color: "var(--orange)", lineHeight: 1, minWidth: 64 }}>
+            {Math.round(p.entry * 100)}<span style={{ fontSize: 14, color: "var(--z500)", fontStyle: "normal" }}>%</span>
+          </div>
+          <div style={{ flex: 1 }}><Bar value={p.entry} accent="var(--orange)" /></div>
+        </div>
+        <div style={{
+          display: "flex", justifyContent: "space-between",
+          fontFamily: "var(--mono)", fontSize: 9, letterSpacing: ".12em",
+          textTransform: "uppercase", color: "var(--z500)",
+        }}>
+          <span>SUCCESS_RATE</span><span>AVG 44%</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── MAP PERFORMANCE ───────────────────────────────────────── */
+function MapSection({ maps }) {
+  return (
+    <Fade delay={140} style={{ marginBottom: 64 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 10 }}>
+        <span className="cap cap-xs">// MAP_PERFORMANCE</span>
+        <div className="zebra" style={{ flex: 1 }} />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 8 }}>
+        {maps.map((m, i) => {
+          const tot = m.w + m.l;
+          const pct = Math.round(m.w / tot * 100);
+          return (
+            <Fade key={m.name} delay={i * 60}>
+              <div className="card inv" style={{ padding: 18 }}>
+                <div className="wipe" />
+                <span className="cap cap-xs" style={{ display: "block", marginBottom: 10 }}>{m.name}</span>
+                <div className="num" style={{ fontSize: 30, marginBottom: 8 }}>
+                  {pct}<span style={{ fontSize: 12, color: "var(--z500)", fontStyle: "normal" }}>%</span>
+                </div>
+                <div className="bt"><div className="bf" style={{ width: pct + "%" }} /></div>
+                <div style={{
+                  display: "flex", justifyContent: "space-between", marginTop: 8,
+                  fontFamily: "var(--mono)", fontSize: 8, textTransform: "uppercase", letterSpacing: ".1em",
+                }}>
+                  <span className="sub">{m.w}W / {m.l}L</span>
+                  <span className="sub">RTG {m.rating.toFixed(2)}</span>
+                </div>
+              </div>
+            </Fade>
+          );
+        })}
+      </div>
+    </Fade>
+  );
+}
+
+/* ─── WEAPON LOADOUT ────────────────────────────────────────── */
+function WeaponSection({ weapons }) {
+  const maxK = Math.max(...weapons.map(w => w.kills));
+  return (
+    <Fade delay={160} style={{ marginBottom: 64 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 10 }}>
+        <span className="cap cap-xs">// WEAPON_LOADOUT</span>
+        <div className="zebra" style={{ flex: 1 }} />
+      </div>
+      <div className="card" style={{ padding: "0 24px" }}>
+        {weapons.map((w, i) => (
+          <div key={w.name} style={{
+            display: "flex", alignItems: "center", gap: 20, padding: "16px 0",
+            borderBottom: i < weapons.length - 1 ? "1px solid var(--z900)" : undefined,
+          }}>
+            <div style={{ flex: 1 }}>
+              <span className="cap cap-xs" style={{ display: "block", marginBottom: 7 }}>{w.name}</span>
+              <Bar value={w.kills / maxK} />
+            </div>
+            {[["K", String(w.kills), "#fff"], ["ADR", w.adr.toFixed(1), "var(--z400)"], ["HS%", String(w.hs), "var(--z500)"]].map(([lbl, val, col]) => (
+              <div key={lbl} style={{ textAlign: "right", minWidth: 40 }}>
+                <div className="cap" style={{ fontSize: 7, letterSpacing: ".2em", marginBottom: 4 }}>{lbl}</div>
+                <div className="num" style={{ fontSize: 20, color: col }}>{val}</div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </Fade>
+  );
+}
+
+/* ─── MATCH HISTORY ─────────────────────────────────────────── */
+function MatchHistory({ matches }) {
+  const COLS = "120px 100px 60px 80px 72px 64px 48px 48px 56px";
+  const HEADS = ["MAP", "OPPONENT", "SCORE", "RATING", "ADR", "KAST", "K", "D", "HS%"];
+  return (
+    <Fade delay={200} style={{ marginBottom: 64 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 10 }}>
+        <span className="cap cap-xs">// MATCH_HISTORY</span>
+        <div className="zebra" style={{ flex: 1 }} />
+      </div>
+      {/* header row */}
+      <div style={{
+        display: "grid", gridTemplateColumns: COLS, padding: "8px 20px",
+        border: "1px solid var(--z900)", borderBottom: "none",
+        background: "rgba(24,24,27,.07)",
+      }}>
+        {HEADS.map(h => (
+          <div key={h} style={{
+            padding: "0 8px", fontFamily: "var(--mono)", fontSize: 8,
+            letterSpacing: ".25em", textTransform: "uppercase", color: "var(--z600)",
+          }}>{h}</div>
+        ))}
+      </div>
+      {matches.map((m, i) => (
+        <Fade key={i} delay={i * 55}>
+          <div className="inv" style={{
+            display: "grid", gridTemplateColumns: COLS,
+            padding: "0 20px", border: "1px solid var(--z900)",
+            borderTop: "none", minHeight: 52, alignItems: "center",
+          }}>
+            <div className="wipe" />
+            {/* rank ghost */}
+            <div className="num ghost-num" style={{
+              position: "absolute", left: 8, fontSize: 40,
+              color: "var(--z900)", transition: "color .3s", pointerEvents: "none",
+            }}>{String(i + 1).padStart(2, "0")}</div>
+            <div style={{ padding: "0 8px", fontWeight: 900, fontStyle: "italic", fontSize: 13, letterSpacing: "-.03em" }}>
+              {m.map}
+            </div>
+            <div style={{ padding: "0 8px" }}>
+              <span className="sub" style={{ fontFamily: "var(--mono)", fontSize: 9, letterSpacing: ".08em", textTransform: "uppercase" }}>
+                vs {m.opp}
+              </span>
+            </div>
+            <div style={{ padding: "0 8px" }}>
+              <span className="num" style={{ fontSize: 14, color: m.win ? "#fff" : "var(--z500)" }}>{m.score}</span>
+            </div>
+            <div style={{ padding: "0 8px" }}>
+              <span className="num" style={{ fontSize: 16, color: m.rating >= 1.3 ? "var(--orange)" : "#fff" }}>
+                {m.rating.toFixed(2)}
+              </span>
+            </div>
+            <div style={{ padding: "0 8px" }}>
+              <span className="num sub" style={{ fontSize: 14 }}>{m.adr.toFixed(1)}</span>
+            </div>
+            <div style={{ padding: "0 8px" }}>
+              <span className="num sub" style={{ fontSize: 14 }}>{m.kast}%</span>
+            </div>
+            <div style={{ padding: "0 8px" }}>
+              <span className="num" style={{ fontSize: 16 }}>{m.k}</span>
+            </div>
+            <div style={{ padding: "0 8px" }}>
+              <span className="num sub" style={{ fontSize: 14 }}>{m.d}</span>
+            </div>
+            <div style={{ padding: "0 8px" }}>
+              <span className="num sub" style={{ fontSize: 14 }}>{m.hs}%</span>
+            </div>
+          </div>
+        </Fade>
+      ))}
+    </Fade>
+  );
+}
+
+/* ─── MAIN PAGE ─────────────────────────────────────────────── */
+function PlayerPage() {
+  const [player, setPlayer] = useState(PLAYERS[0]);
+  const [ver, setVer] = useState(0);
+
+  function pick(p) { setPlayer(p); setVer(v => v + 1); }
+  const v = ver;
+
+  return (
+    <div style={{ background: "var(--page)", minHeight: "100vh", position: "relative" }}>
+      <div className="dotgrid" />
+      <Navbar />
+
+      <div className="page">
+        {/* Watermark */}
+        <div className="wm" style={{ top: "5vh", right: "-2vw", fontSize: "22vw" }}>
+          {player.name.slice(0, 4).toUpperCase()}
+        </div>
+        {/* Second watermark – match section anchor */}
+        <div className="wm" style={{ bottom: "6vh", left: "-1vw", fontSize: "10vw", opacity: .6 }}>
+          HIST.EXE
+        </div>
+
+        <div className="container">
+
+          {/* ── PAGE HEADER ── */}
+          <Fade key={"hd" + v}>
+            <header className="pagehead">
+              <div className="tagrow">
+                <span className="cap cap-xs" style={{ color: "var(--z600)" }}>DATA_EXTRACT // PLAYER_PROFILE</span>
+                <div style={{ height: 1, width: 96, background: "var(--z800)" }} />
+                <span className="cap cap-xs" style={{ color: "var(--z700)" }}>{player.node}</span>
+              </div>
+              <div className="h1 num" style={{ fontSize: "clamp(52px,9vw,116px)" }}>
+                {player.name}
+                <span style={{ color: "var(--z800)", marginLeft: 14 }}>[#0{player.rank}]</span>
+              </div>
+            </header>
+          </Fade>
+
+          {/* ── PLAYER SELECTOR ── */}
+          <PlayerSelector current={player} onSelect={pick} />
+
+          {/* ── HERO CARD ── */}
+          <HeroCard key={"hero" + v} p={player} />
+
+          <div style={{ height: 16 }} />
+
+          {/* ── STAT STRIP ── */}
+          <StatStrip key={"ss" + v} p={player} />
+
+          {/* ── CLUTCH + ENTRY GAUGE ── */}
+          <div key={"pg" + v} style={{ display: "grid", gridTemplateColumns: "repeat(12,1fr)", gap: 16, marginBottom: 64 }}>
+            <div style={{ gridColumn: "span 8" }}>
+              <ClutchSection p={player} />
+            </div>
+            <div style={{ gridColumn: "span 4" }}>
+              <div className="card" style={{
+                padding: 24, height: "100%", display: "flex",
+                flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20,
+              }}>
+                <span className="cap cap-xs" style={{ alignSelf: "flex-start" }}>// ENTRY_SUCCESS</span>
+                <Gauge key={"g" + v} value={player.entry} size={140} />
+                <span className="cap cap-xs" style={{ color: "var(--z600)" }}>OPENING_KILL_RATE</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── MAP PERFORMANCE ── */}
+          <MapSection key={"mp" + v} maps={player.mapStats} />
+
+          {/* ── WEAPON LOADOUT ── */}
+          <WeaponSection key={"wl" + v} weapons={player.weapons} />
+
+          {/* ── MATCH HISTORY ── */}
+          <MatchHistory key={"mh" + v} matches={player.matchHistory} />
+
+          {/* ── FOOTER ── */}
+          <div style={{
+            borderTop: "1px solid var(--z900)", paddingTop: 24,
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+          }}>
+            <span className="cap cap-xs" style={{ color: "var(--z700)" }}>CS2_PARSER // PLAYER_STATS_MODULE</span>
+            <span className="cap cap-xs" style={{ color: "var(--z700)" }}>NET_LINK_ESTABLISHED // NODE_01</span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<PlayerPage />);
+</script>
+</body>
+</html>

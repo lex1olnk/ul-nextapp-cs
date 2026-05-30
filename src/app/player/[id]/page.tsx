@@ -1,7 +1,6 @@
 import { StatsChart } from "@/components/player/Chart";
 import MatchStatsSummary from "@/components/player/FaceitStats";
 import { MoreInformations } from "@/components/player/MoreInformations";
-import { PlayerInfoSection } from "@/components/player/PlayerInfo";
 import { PlayerStatsSection } from "@/components/player/PlayerStatsSection";
 import { RatingStatisticsSection } from "@/components/player/RatingStatisticsSection";
 import WindroseChart from "@/components/player/WindRose";
@@ -9,119 +8,138 @@ import { api } from "@/lib/api";
 import axios from "axios";
 import Image from "next/image";
 
-export const dynamic = 'force-dynamic'; // Важно!
-export const revalidate = 0; // Отключает ISR
+export const dynamic = "force-dynamic";
 
 async function getPlayerData(id: string) {
   try {
     const response = await api.get(`/api/player/${id}`);
     return response.data.data;
-  } catch (error) {
-    console.error("API Error:", error);
-    return []; // Возвращаем пустые данные вместо исключения
+  } catch {
+    return null;
   }
 }
 
 async function getFaceitData(nickname: string) {
-  if (!nickname) {
-    return {}
-  }
-
+  if (!nickname) return {};
   try {
     const response = await axios.get(`https://open.faceit.com/data/v4/players?nickname=${nickname}`, {
-      headers: {
-        Authorization: `Bearer ${process.env.FACEIT_CLIENT_ID}`,
-        'Accept-Encoding': 'application/json',
-      },
+      headers: { Authorization: `Bearer ${process.env.FACEIT_CLIENT_ID}`, "Accept-Encoding": "application/json" },
     });
-
-    return response.data
-  } catch (error) {
-    console.error("API Error:", error);
-    return {}
+    return response.data;
+  } catch {
+    return {};
   }
 }
 
 async function getFaceitPlayerStats(id: string) {
-  if (!id) {
-    return {}
-  }
-
+  if (!id) return {};
   try {
     const response = await axios.get(`https://open.faceit.com/data/v4/players/${id}/games/cs2/stats`, {
-      headers: {
-        Authorization: `Bearer ${process.env.FACEIT_CLIENT_ID}`,
-        'Accept-Encoding': 'application/json',
-      },
+      headers: { Authorization: `Bearer ${process.env.FACEIT_CLIENT_ID}`, "Accept-Encoding": "application/json" },
     });
-
-    return response.data
-  } catch (error) {
-    console.error("API Error:", error);
-    return {}
+    return response.data;
+  } catch {
+    return {};
   }
 }
 
-export default async function PlayerPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function PlayerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const data = await getPlayerData(id);
-  const faceit = await getFaceitData(data.player_stats.faceit);
-  const stats = await getFaceitPlayerStats(faceit.player_id)
-
-  //const { firstKills, firstDeaths,  }
 
   if (!data) {
     return (
-      <div className=" bg-[--light-dark] text-gray-100 min-h-screen p-8 flex items-center justify-center">
-        <p>Данные игрока не найдены</p>
-      </div>
+      <section style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div className="card ticks" style={{ padding: "48px 64px", textAlign: "center" }}>
+          <span className="cap cap--xs" style={{ display: "block", marginBottom: 16 }}>ERROR // PLAYER_NOT_FOUND</span>
+          <div className="h1" style={{ fontSize: 48, color: "var(--zinc-700)" }}>404</div>
+        </div>
+      </section>
     );
   }
-  
+
+  const p = data.player_stats;
+  const faceit = await getFaceitData(p.faceit);
+  const stats = await getFaceitPlayerStats(faceit.player_id);
+
   return (
-    <div className="h-screen flex flex-col max-w-[1080px] mx-auto pt-4">
-      <div className="flex lg:flex-row md:flex-col sm:flex-col justify-between">
-        <div className="flex flex-col max-w-[717px]">
-          <PlayerInfoSection
-            nickname={data?.player_stats.nickname}
-            userId={data?.player_stats.playerID}
-            src={data?.player_stats.img}
-          />
-          <div className="relative">
-            <PlayerStatsSection playerStats={data.player_stats} />
-          </div>
-        </div>
-        <WindroseChart maps={data?.maps_stats} />
+    <section style={{ minHeight: "100vh", position: "relative", paddingTop: 100, paddingBottom: 100 }}>
+
+      {/* watermarks */}
+      <div className="watermark" style={{ top: "4vh", right: "-2vw", fontSize: "22vw" }}>
+        {p.nickname?.slice(0, 4)?.toUpperCase()}
+      </div>
+      <div className="watermark" style={{ bottom: "8vh", left: "-1vw", fontSize: "10vw", opacity: 0.5 }}>
+        HIST.EXE
       </div>
 
-      <MoreInformations 
-        player={data?.player_stats}
-      />
-      <div className="relative">
-        <RatingStatisticsSection playerId={id} ulTournaments={data.tournaments} />
-        <Image
-          className="absolute top-4 left-5"
-          width={1044}
-          height={34}
-          alt="Vector"
-          src="https://c.animaapp.com/m9uwos437IZJ3W/img/vector-2.svg"
-        />
-        <div className="absolute w-5 h-5 top-6 left-[1037px] rounded-sm border border-solid border-white" />
-        <div className="absolute top-[25px] left-[955px] font-normal text-white text-sm">
-          match_stats
+      <div className="cs-container">
+
+
+        {/* page header */}
+        <div className="pagehead">
+          <div className="tagrow">
+            <span className="cap cap--xs" style={{ color: "var(--zinc-600)" }}>DATA_EXTRACT // PLAYER_PROFILE</span>
+            <div style={{ height: 1, width: 96, background: "var(--zinc-800)" }} />
+            <span className="cap cap--xs" style={{ color: "var(--zinc-700)" }}>NODE_{p.playerID}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+            <Image
+              src={`https://cdn.fastcup.net/avatars/users/${p.img}`}
+              alt="player avatar"
+              width={90}
+              height={90}
+              style={{ borderRadius: 45, border: "2px solid #fff", background: "#2b2b2b", flexShrink: 0 }}
+            />
+            <div className="h1" style={{ fontSize: "clamp(52px,9vw,110px)" }}>
+              {p.nickname}
+              <span style={{ color: "var(--zinc-800)", marginLeft: 16 }}>[#{p.playerID}]</span>
+            </div>
+          </div>
         </div>
+        {/* stats + windrose */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "start", marginBottom: 8 }}>
+          <PlayerStatsSection playerStats={p} />
+          <WindroseChart maps={data.maps_stats} />
+        </div>
+
+        <MoreInformations player={p} />
+
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 10 }}>
+            <span className="cap cap--xs">// MATCH_HISTORY</span>
+            <div className="hr-cs" style={{ flex: 1 }} />
+          </div>
+          <div className="relative">
+            <RatingStatisticsSection playerId={id} ulTournaments={data.tournaments} />
+          </div>
+        </div>
+
+        {stats?.items && (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "32px 0 10px" }}>
+              <span className="cap cap--xs">// FACEIT_STATS</span>
+              <div className="hr-cs" style={{ flex: 1 }} />
+            </div>
+            <MatchStatsSummary items={stats.items} faceit={faceit} />
+            <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "32px 0 10px" }}>
+              <span className="cap cap--xs">// PERFORMANCE_CHART</span>
+              <div className="hr-cs" style={{ flex: 1 }} />
+            </div>
+            <StatsChart items={stats.items} />
+          </>
+        )}
+
+        {/* footer */}
+        <div style={{
+          borderTop: "1px solid var(--zinc-900)", marginTop: 64, paddingTop: 24,
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+        }}>
+          <span className="cap cap--xs" style={{ color: "var(--zinc-700)" }}>CS2_PARSER // PLAYER_STATS_MODULE</span>
+          <span className="cap cap--xs" style={{ color: "var(--zinc-700)" }}>NET_LINK_ESTABLISHED // NODE_01</span>
+        </div>
+
       </div>
-      
-      {stats && <MatchStatsSummary
-        items={stats.items}
-        faceit={faceit} 
-      />}
-      {stats && <StatsChart items={stats.items}/>}
-      
-    </div>
+    </section>
   );
 }

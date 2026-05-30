@@ -7,13 +7,13 @@ import { usePathname } from "next/navigation";
 const links = [
   { href: "/",        label: "Home" },
   { href: "/matches", label: "Players" },
+  { href: "/upload",  label: "Upload" },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
 
   return (
-    /* outer wrapper — full width, centers the nav */
     <div className="fixed top-0 left-0 right-0 z-50 flex justify-center"
          style={{ pointerEvents: "none" }}>
       <nav

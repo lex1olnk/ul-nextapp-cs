@@ -2,8 +2,6 @@ import PlayersTable from "@/components/matches/PlayersTable";
 import { getTournaments } from "../upload/api";
 import { getMatches } from "./api";
 
-export const revalidate = 3600;
-
 export default async function PlayersStatsPage() {
   const players     = await getMatches();
   const tournaments = await getTournaments();

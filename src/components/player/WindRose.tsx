@@ -2,131 +2,89 @@
 
 import { MapStat } from "@/types/types";
 import {
-  ArcElement,
-  Chart as ChartJS,
-  Legend,
-  LineElement,
-  PointElement,
-  RadialLinearScale,
-  Title,
-  Tooltip,
+  ArcElement, Chart as ChartJS, Legend, LineElement,
+  PointElement, RadialLinearScale, Title, Tooltip,
 } from "chart.js";
 import { Radar } from "react-chartjs-2";
 
-// Регистрируем необходимые компоненты
-ChartJS.register(
-  RadialLinearScale,
-  ArcElement,
-  Tooltip,
-  Legend,
-  Title,
-  PointElement,
-  LineElement,
-);
+ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend, Title, PointElement, LineElement);
 
-function prepareRadarData(mapsStats: MapStat[]) {
-  // Создаем карту сыгранных карт для быстрого доступа
-  const playedMaps = new Map(mapsStats.map((map) => [map.map, map]));
-  const mapsNames = [
-    "Dust II",
-    "Mirage",
-    "Inferno",
-    "Anubis",
-    "Nuke",
-    "Train",
-    "Ancient",
-  ];
-  // Формируем данные для всех 7 карт
-  return mapsNames.map((mapName) => {
-    const mapData = playedMaps.get(mapName);
+const MAP_NAMES = ["Dust II", "Mirage", "Inferno", "Anubis", "Nuke", "Train", "Ancient"];
 
-    return {
-      map: mapName,
-      avg_rating: mapData?.avgRating || 0,
-      matches: mapData?.matches || 0,
-      winrate: mapData?.winrate || 0,
-      wins: mapData?.wins || 0,
-    };
+function prepareData(mapsStats: MapStat[]) {
+  const byMap = new Map(mapsStats.map(m => [m.map, m]));
+  return MAP_NAMES.map(name => {
+    const d = byMap.get(name);
+    return { map: name, winrate: d?.winrate || 0, matches: d?.matches || 0, avgRating: d?.avgRating || 0 };
   });
 }
 
 export const WindroseChart = ({ maps }: { maps: MapStat[] }) => {
-  // Пример данных для 7 категорий CS2
-  const normalizedData = prepareRadarData(maps);
-  const labels = normalizedData.map((map) => `${map.map}`);
-  const playedMaps = new Map(normalizedData.map((map) => [map.map, map]));
+  const normalized = prepareData(maps);
+  const byMap = new Map(normalized.map(m => [m.map, m]));
 
   const data = {
-    labels: labels,
-    datasets: [
-      {
-        label: "Успешность на карте (%)",
-        data: normalizedData.map((map) => map.winrate), // Пример процентов успеха
-        backgroundColor: "rgba(255, 255, 255, 1)",
-        borderColor: "rgba(255, 99, 132, 1)",
-        fill: true,
-        pointBackgroundColor: "rgba(255, 99, 132, 1)",
-        pointBorderColor: "#fff",
-      },
-    ],
+    labels: normalized.map(m => m.map.toUpperCase()),
+    datasets: [{
+      data: normalized.map(m => m.winrate),
+      backgroundColor: "rgba(255,255,255,0.06)",
+      borderColor: "rgba(255,255,255,0.7)",
+      borderWidth: 1,
+      pointBackgroundColor: "#fff",
+      pointBorderColor: "#000",
+      pointRadius: 3,
+    }],
   };
 
   const options = {
     responsive: true,
+    maintainAspectRatio: true,
     scales: {
       r: {
-        angleLines: {
-          display: true,
-          color: "rgba(255, 255, 255, 0.1)",
+        angleLines: { color: "rgba(255,255,255,0.08)" },
+        grid: { color: "rgba(255,255,255,0.08)" },
+        pointLabels: {
+          color: "var(--zinc-500)",
+          font: { size: 9, family: "ui-monospace,monospace" },
         },
-        grid: {
-          color: "rgba(255, 255, 255, 0.2)",
-        },
-        ticks: {
-          display: false,
-          backdropColor: "transparent",
-        },
+        ticks: { display: false, backdropColor: "transparent" },
         suggestedMin: 0,
         suggestedMax: 100,
       },
     },
     plugins: {
-      legend: {
-        position: "top" as const,
-        labels: {
-          color: "#fff",
-          font: {
-            size: 14,
-          },
-        },
-      },
-      title: {
-        display: true,
-        text: "Статистика по картам CS2",
-        color: "#fff",
-        font: {
-          size: 16,
-        },
-      },
+      legend: { display: false },
       tooltip: {
         callbacks: {
-          label: (context) =>
-            `Сыграно ${playedMaps.get(context.label)?.matches} матчей WR: ${context.raw}%`,
+          label: (ctx) => {
+            const d = byMap.get(ctx.label?.replace(/_/g, " ") || "");
+            return d ? `WR ${ctx.raw}% · ${d.matches} maps · RTG ${d.avgRating?.toFixed(2)}` : `${ctx.raw}%`;
+          },
         },
       },
     },
   };
 
   return (
-    <div
-      style={{
-        width: "330px",
-        height: "357px",
-        padding: "4px",
-      }}
-      className="bg-light-dark/90 relative"
-    >
-      <Radar data={data} options={options} />
+    <div className="card ticks" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 12 }}>
+      <span className="cap cap--xs">// MAP_WINRATE</span>
+      <div style={{ width: 280, height: 280 }}>
+        <Radar data={data} options={options} />
+      </div>
+      {/* legend */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {normalized.filter(m => m.matches > 0).slice(0, 4).map(m => (
+          <div key={m.map} style={{ display: "grid", gridTemplateColumns: "80px 1fr 36px", alignItems: "center", gap: 8 }}>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 8, letterSpacing: ".1em", color: "var(--zinc-500)", textTransform: "uppercase" }}>
+              {m.map.split(" ")[0]}
+            </span>
+            <div style={{ height: 2, background: "var(--zinc-900)", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: m.winrate + "%", background: "#fff", transition: "width 1s" }} />
+            </div>
+            <span className="num" style={{ fontSize: 12, textAlign: "right" }}>{m.winrate}%</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

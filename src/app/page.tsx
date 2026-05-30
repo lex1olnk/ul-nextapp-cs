@@ -8,8 +8,6 @@ interface Player {
   nickname: string;
 }
 
-export const revalidate = 3600;
-
 async function getPlayers() {
   try {
     const response = await api.get<{ data: { players: Player[] } }>("/api/players");

@@ -1,166 +1,82 @@
+"use client";
+
 import { getRatingColor } from "@/lib/utils";
 import { PlayerComparison } from "@/types/types";
-import Image from "next/image";
-import { Card, CardContent } from "./Card";
+import { useEffect, useState } from "react";
 
-export const PlayerStatsSection = ({
-  playerStats,
-}: {
-  playerStats: PlayerComparison;
-}) => {
-  // Data for main stats cards
+function AnimBar({ value, color }: { value: number; color: string }) {
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    setW(0);
+    const t = setTimeout(() => setW(Math.min(Math.max(value, 0), 100)), 280);
+    return () => clearTimeout(t);
+  }, [value]);
+  return (
+    <div style={{ height: 3, background: "var(--zinc-900)", overflow: "hidden" }}>
+      <div style={{ height: "100%", width: w + "%", background: color, transition: "width 1.2s cubic-bezier(0,.6,.3,1)" }} />
+    </div>
+  );
+}
+
+export const PlayerStatsSection = ({ playerStats }: { playerStats: PlayerComparison }) => {
   const mainStats = [
-    {
-      title: "Damage/Round",
-      key: "TargetAvg",
-      percentile: "avgAdv",
-    },
-    {
-      title: "K/D Ratio",
-      key: "TargetKD",
-      percentile: "kdAdv",
-    },
-    {
-      title: "Headshot %",
-      key: "TargetHSRatio",
-      percentile: "hsAdv",
-    },
-    {
-      title: "Rating",
-      key: "rating",
-      percentile: "ratingAdv",
-    },
+    { title: "Damage/Round", key: "TargetAvg",     percentile: "avgAdv" },
+    { title: "K/D Ratio",    key: "TargetKD",       percentile: "kdAdv"  },
+    { title: "Headshot %",   key: "TargetHSRatio",  percentile: "hsAdv"  },
+    { title: "Rating",       key: "rating",         percentile: "ratingAdv" },
   ];
 
-  // Data for secondary stats cards
   const secondaryStats = [
-    {
-      title: "Kills",
-      key: "kills",
-    },
-    {
-      title: "Deaths",
-      key: "deaths",
-    },
-    {
-      title: "Assists",
-      key: "assists",
-    },
-    {
-      title: "KAST",
-      key: "kast",
-    },
-    {
-      title: "Impact",
-      key: "impact",
-    },
-    {
-      title: "Winrate",
-      key: "winrate",
-    },
+    { title: "Kills",   key: "kills"   },
+    { title: "Deaths",  key: "deaths"  },
+    { title: "Assists", key: "assists" },
+    { title: "KAST",    key: "kast"    },
+    { title: "Impact",  key: "impact"  },
+    { title: "Winrate", key: "winrate" },
   ];
 
   return (
-    <section className="relative w-[737px] h-[203px] bg-light-dark/90">
-      <Image
-        className="absolute top-[8px] left-[8px]"
-        width={12}
-        height={12}
-        alt="Line"
-        src="https://c.animaapp.com/m9uwos437IZJ3W/img/line-8.svg"
-      />
-      <Image
-        width={12}
-        height={12}
-        className="absolute bottom-[8px] left-[8px]"
-        alt="Line"
-        src="https://c.animaapp.com/m9uwos437IZJ3W/img/line-10.svg"
-      />
-      <Image
-        width={12}
-        height={12}
-        className="absolute bottom-[8px] right-[8px]"
-        alt="Line"
-        src="https://c.animaapp.com/m9uwos437IZJ3W/img/line-9.svg"
-      />
-      <Image
-        width={12}
-        height={12}
-        className="absolute top-[8px] right-[8px]"
-        alt="Line"
-        src="https://c.animaapp.com/m9uwos437IZJ3W/img/line-8-1.svg"
-      />
-      
-      <div className="relative w-full top-1/2 -translate-y-1/2 py-8 px-5">
-        <Image
-          width={172}
-          height={172}
-          className="absolute top-[24px] left-[16px] -z-10"
-          alt="Intersect"
-          src="https://c.animaapp.com/m9uwos437IZJ3W/img/intersect.svg"
-        />
-        <div className="flex justify-between">
-          {mainStats.map((stat, index) => (
-            <Card
-              key={index}
-              className="w-40 h-[81px] bg-light-dark shadow-[0px_4px_4px_#00000040] rounded-none border-0"
+    <section className="card ticks" style={{ padding: "20px 20px 16px", marginBottom: 0 }}>
+      {/* main stats row */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", borderBottom: "1px solid var(--zinc-900)", marginBottom: 12 }}>
+        {mainStats.map((stat, i) => {
+          const pct = playerStats[stat.percentile] ?? 0;
+          const barColor = getRatingColor(59 * (1 - pct / 100), 10, 59);
+          return (
+            <div
+              key={i}
+              style={{
+                padding: "12px 16px 14px",
+                borderRight: i < 3 ? "1px solid var(--zinc-900)" : undefined,
+              }}
             >
-              <CardContent className="p-0 h-full">
-                <div className="relative h-full">
-                  <div
-                    className="relative w-1 h-[59px] top-[11px] left-[9px]"
-                    style={{
-                      backgroundColor: getRatingColor(
-                        59 * (1 - playerStats[stat.percentile] / 100),
-                        10,
-                        59,
-                      ),
-                    }}
-                  >
-                    <div
-                      className="relative -top-0.5 bg-neutral-900"
-                      style={{
-                        height: 59 * (playerStats[stat.percentile] / 100),
-                      }}
-                    />
-                  </div>
-                  <div className="absolute w-auto h-[51px] top-[13px] left-[25px]">
-                    <div className="font-normal text-[#c7c7c7] text-sm">
-                      {stat.title}
-                    </div>
-                    <div className="font-medium text-white text-base">
-                      {playerStats[stat.key]}
-                    </div>
-                    <div className="font-normal text-[#c7c7c7] text-[11px]">
-                      Top {playerStats[stat.percentile]}%
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 8, letterSpacing: ".25em", textTransform: "uppercase", color: "var(--zinc-600)", marginBottom: 8 }}>
+                {stat.title}
+              </div>
+              <div className="num" style={{ fontSize: "clamp(20px,2vw,28px)", marginBottom: 8 }}>
+                {playerStats[stat.key]}
+              </div>
+              <AnimBar value={pct} color={barColor} />
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 8, letterSpacing: ".1em", marginTop: 5, color: "var(--zinc-600)" }}>
+                TOP {pct}%
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
-        {/* Secondary stats row */}
-        <div className="flex justify-between mt-4">
-          {secondaryStats.map((stat, index) => (
-            <Card
-              key={index}
-              className="w-[96px] h-[60px] bg-[#2b2b2b] shadow-[0px_4px_4px_#00000040] rounded-none border-0"
-            >
-              <CardContent className="p-0 h-full">
-                <div className="relative w-full h-full p-2.5">
-                  <div className="font-normal text-[#c7c7c7] text-sm">
-                    {stat.title}
-                  </div>
-                  <div className="font-normal text-white text-sm">
-                    {playerStats[stat.key]}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      {/* secondary stats row */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: 4 }}>
+        {secondaryStats.map((stat, i) => (
+          <div key={i} style={{ padding: "10px 12px", background: "rgba(24,24,27,0.4)" }}>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 8, letterSpacing: ".2em", textTransform: "uppercase", color: "var(--zinc-600)", marginBottom: 4 }}>
+              {stat.title}
+            </div>
+            <div className="num" style={{ fontSize: 16 }}>
+              {playerStats[stat.key]}
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );
