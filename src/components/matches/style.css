@@ -1,8 +1,8 @@
 /* ── PlayersTable — brutalist/terminal skin ──────────────────── */
 
-/* page wrapper */
+/* page wrapper — wide table needs more room than the 1280 content grid */
 .players-stats-container {
-  max-width: 1280px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 0 48px 80px;
 }
@@ -125,17 +125,22 @@
 
 .stats-grid {
   display: grid;
-  grid-template-columns: 64px 190px repeat(16, minmax(54px, 1fr));
-  min-width: 1240px;
+  /* rank | nickname | 16 stat cols. Each stat col keeps a real 58px min so
+     it never collapses to zero. min-width = sum of mins → wrapper scrolls
+     on narrow screens, while 1fr grows columns evenly on wide ones. */
+  grid-template-columns: 48px minmax(150px, 1.6fr) repeat(16, minmax(58px, 1fr));
+  min-width: 1130px;
 }
 
 /* headers */
 .grid-header {
-  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  padding: 8px 8px;
   font-family: var(--font-mono);
   font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--zinc-600);
   background: transparent;
@@ -144,7 +149,16 @@
   user-select: none;
 }
 .grid-header:hover { color: var(--zinc-400); cursor: pointer; }
-.grid-header:first-child { color: var(--zinc-700); }
+
+/* stat-column headers sit above right-aligned numbers */
+.grid-header--stat {
+  justify-content: flex-end;
+  cursor: pointer;
+}
+.grid-header--rank {
+  justify-content: center;
+  color: var(--zinc-700);
+}
 
 /* rows */
 .grid-row {

@@ -264,14 +264,13 @@ export default function PlayersTable({
         <div className="stats-grid">
 
           {/* headers */}
-          <div className="grid-header">#</div>
+          <div className="grid-header grid-header--rank">#</div>
           <div className="grid-header">NICKNAME</div>
           {cols.map(col => (
             <div
               key={col}
-              className="grid-header"
+              className="grid-header grid-header--stat"
               onClick={() => handleSort(col)}
-              style={{ cursor: "pointer" }}
             >
               {col}
               {filters.sortColumn === col && (
